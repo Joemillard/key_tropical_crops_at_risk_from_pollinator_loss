@@ -1,5 +1,6 @@
-# This script explores the climate data, produces anomalies and associated maps.
+# script for climate anomaly
 ### Note: 2005 is the mean year for insect data
+# try split up into three panels: overall (1901-2006), earlier (1901-1950), latter (1950-2006)
 
 # load required libraries
 library(raster)
