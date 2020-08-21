@@ -64,20 +64,3 @@ anom_df %>%
         axis.title = element_blank())
 
 ggsave("global_climate_anomaly.png", scale = 1.2, dpi = 350)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
