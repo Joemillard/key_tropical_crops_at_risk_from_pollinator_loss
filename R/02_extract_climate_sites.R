@@ -23,27 +23,43 @@ PRED_sites <- PREDICTS_pollinators %>% select(Latitude, Longitude, Sample_end_la
   mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest))
 
 #### calculate the means and standard deviation for the beginning of the series
-
 # take names of values for 1901 to 1905
 tmp1901_1905 <- tmp[[names(tmp)[1:60]]]
 
-# calc baseline (mean and sd) and convert to dataframes for each coordinate
-# work, but need to get the sd and mean and mean for each PREDICTS coordinate
-convert_baseline <- function(data_file, func){
-  data_fin <- calc(data_file, func)
-  data_fin <- as(data_fin, "SpatialPixelsDataFrame") %>%
-    as.data.frame()
-  colnames(data_fin) <- c("value", "x", "y")
+# extract the points for each the predicts coordinates
+PRED_sites_sp <- PRED_sites %>%
+  select(Longitude, Latitude) %>%
+  SpatialPoints()
+
+# calc baseline (mean and sd)
+calc_baseline <- function(data_file, func, pred_points, pred_points_sp){
+  
+  # calcualte either the mean or standard error for baseline, then extract points for predicts sites
+  data_fin <- calc(data_file, func) %>%
+    extract(pred_points_sp)
+  
+  # bind the extracted values back onto the predicts coordinates
+  data_fin <- data.frame(pred_points[,1:2 ], data_fin)
+  
   return(data_fin)
+  
 }
 
-climate_start_mean <- convert_baseline(data_file = tmp1901_1905, func = mean)
-climate_start_sd <- convert_baseline(data_file = tmp1901_1905, func = stats::sd)
+# calculate the mean baseline, and convert to character for merging
+climate_start_mean <- calc_baseline(tmp1901_1905, 
+                                    func = mean, 
+                                    pred_points = PRED_sites, 
+                                    pred_points_sp = PRED_sites_sp) %>%
+  mutate(Latitude = as.character(Latitude)) %>%
+  mutate(Longitude = as.character(Longitude))
 
-# convert the climate anomaly raster for the beginning of the series to a spatial pixels data frame, and then rename the columns
-climate_start <- as(tmp1901_1905sd, "SpatialPixelsDataFrame")
-climate_start_df <- as.data.frame(climate_start)
-colnames(climate_start_df) <- c("value", "x", "y")
+# calculate the sd baseline, and convert to character for merging
+climate_start_sd <- calc_baseline(tmp1901_1905, 
+                                    func = stats::sd, 
+                                    pred_points = PRED_sites, 
+                                    pred_points_sp = PRED_sites_sp) %>%
+  mutate(Latitude = as.character(Latitude)) %>%
+  mutate(Longitude = as.character(Longitude))
 
 # calculate the mean temperatures for each predicts site, 11 months previously
 # set up empty list for each dataframe
@@ -94,24 +110,16 @@ rbindlist(raster_means) %>%
   geom_point(aes(x = x, y = y, colour = mean_value)) + 
   scale_colour_viridis()
 
-
-
-
-
-
-
-
-
-
-# extract data for the years 2004-2006
-tmp2004_6 <- tmp[[names(tmp)[1237:1272]]]
-
-### Calculate the standardised anomaly ###
-# calc the mean for present time period
-tmp2004_6mean <- calc(tmp[[names(tmp)[1237:1272]]], mean)
-
-# calc mean for baseline
-tmp2004_6_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1905mean)
-
-# standardise the baseline
-tmp2004_6std_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1905mean) / tmp1901_1905sd
+## adjust the mean value for each site for the baseline at that site
+# first, merge the baseline sd and mean by coordinate for each site
+rbindlist(raster_means) %>%
+  mutate(x = as.character(x)) %>%
+  mutate(y = as.character(y)) %>%
+  select(-end_date) %>%
+  unique() %>%
+  inner_join(climate_start_mean, by = c("x" = "Longitude", "y" = "Latitude")) %>%
+  rename("mean_base" = "data_fin") %>%
+  inner_join(climate_start_sd, by = c("x" = "Longitude", "y" = "Latitude")) %>%
+  rename("sd_base" = "data_fin") %>%
+  mutate(anomaly = mean_value - mean_base) %>%
+  mutate(standard_anom = anomaly / sd_base)
