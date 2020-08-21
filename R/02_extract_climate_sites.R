@@ -6,6 +6,8 @@
 library(raster)
 library(ggplot2)
 library(dplyr)
+library(data.table)
+library(viridis)
 
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
@@ -25,20 +27,29 @@ PRED_sites <- PREDICTS_pollinators %>% select(Latitude, Longitude, Sample_end_la
 # take names of values for 1901 to 1905
 tmp1901_1905 <- tmp[[names(tmp)[1:60]]]
 
-# calculate the mean and sd of the baseline values as rasters
-tmp1901_1905mean <- calc(tmp1901_1905, mean)
-tmp1901_1905sd <- calc(tmp1901_1905, stats::sd)
+# calc baseline (mean and sd) and convert to dataframes for each coordinate
+# work, but need to get the sd and mean and mean for each PREDICTS coordinate
+convert_baseline <- function(data_file, func){
+  data_fin <- calc(data_file, func)
+  data_fin <- as(data_fin, "SpatialPixelsDataFrame") %>%
+    as.data.frame()
+  colnames(data_fin) <- c("value", "x", "y")
+  return(data_fin)
+}
+
+climate_start_mean <- convert_baseline(data_file = tmp1901_1905, func = mean)
+climate_start_sd <- convert_baseline(data_file = tmp1901_1905, func = stats::sd)
 
 # convert the climate anomaly raster for the beginning of the series to a spatial pixels data frame, and then rename the columns
 climate_start <- as(tmp1901_1905sd, "SpatialPixelsDataFrame")
 climate_start_df <- as.data.frame(climate_start)
 colnames(climate_start_df) <- c("value", "x", "y")
 
-####
-
+# calculate the mean temperatures for each predicts site, 11 months previously
 # set up empty list for each dataframe
 raster_means <- list()
 
+# time the length of the loop over each unique date in predicts sites
 system.time(
   # for each unique site month, select the pixels for that date, and 11 months previously, and then convert each raster set to a dataframe
   for(i in 1:length(unique(PRED_sites$Sample_end_latest))){
@@ -72,13 +83,16 @@ system.time(
     raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(Longitude, Latitude)), rowMeans(ind_raster_values))
     colnames(raster_means[[i]]) <- c("end_date", "x", "y", "mean_value")
 
-    # print 
+    # print the iteration number
     print(i)
   }
 )
 
-# join the mean temperatures back onto the PREDICTS sites by minimising distance between coordinates
-
+# checking the average temperate 11 months previous to each predicts site
+rbindlist(raster_means) %>%
+  ggplot() +
+  geom_point(aes(x = x, y = y, colour = mean_value)) + 
+  scale_colour_viridis()
 
 
 
