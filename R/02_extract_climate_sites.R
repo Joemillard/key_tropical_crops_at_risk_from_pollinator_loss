@@ -8,6 +8,7 @@ library(ggplot2)
 library(dplyr)
 library(data.table)
 library(viridis)
+library(yarg)
 
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
@@ -15,12 +16,44 @@ tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 # read in the predicts pollinators
 PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_5.rds")
 
+# PREDICTS data compilation
+
+# filter cannot decide factors
+PREDICTS_pollinators <- PREDICTS_pollinators %>%
+  #dplyr::filter(Predominant_land_use %in% c("Cropland")) %>%
+  dplyr::filter(Order %in% c("Hymenoptera", "Lepidoptera", "Diptera", "Coleoptera", "Apodiformes", "Passeriformes")) %>%
+  mutate(confidence_fct = factor(confidence)) %>%
+  droplevels()
+
+# correct for sampling effort
+PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
+
+# create object as list of pollinator subsets, and then use apply to calculate metrics
+# split diversity data into list of four for each order
+diversityOrder <- split(x = PREDICTS_pollinators, f = PREDICTS_pollinators$Order)
+
+# drop unused levels from each list
+diversityOrder <- lapply(diversityOrder, function(x) return(droplevels(x)))
+
+# Remove empty rows
+diversityOrder <- Filter(function(x) dim(x)[1] > 0, diversityOrder)
+
+# calculate site metrics for each of the four order level subsets
+order.sites.div <- do.call('rbind',lapply(X = diversityOrder, FUN = SiteMetrics,
+                                          extra.cols = c("SSB", "SSBS","Biome", "Sampling_method",
+                                                         "Study_common_taxon", "Sampling_effort", "Sample_end_latest",
+                                                         "Sampling_effort_unit", "Realm",
+                                                         "Predominant_land_use", "Order", "Order_use", "confidence_fct"),
+                                          sites.are.unique = TRUE, srEstimators = TRUE))
+# set if column
+order.sites.div$id_col <- 1:nrow(order.sites.div)
+
+
 # PREDICTS sites with the month of the recording
-PRED_sites <- PREDICTS_pollinators %>% select(Latitude, Longitude, Sample_end_latest) %>%
-  filter(!is.na(Latitude)) %>%
-  unique() %>%
+PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
   mutate(Sample_end_latest = paste("X", substr(Sample_end_latest, start = 1, stop = 7), sep = "")) %>%
-  mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest))
+  mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest)) %>%
+  filter(!is.na(Latitude))
 
 #### calculate the means and standard deviation for the beginning of the series
 # take names of values for 1901 to 1905
@@ -29,6 +62,7 @@ tmp1901_1905 <- tmp[[names(tmp)[1:60]]]
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
   select(Longitude, Latitude) %>%
+  filter(!is.na(Latitude)) %>%
   SpatialPoints()
 
 # calc baseline (mean and sd)
@@ -39,7 +73,7 @@ calc_baseline <- function(data_file, func, pred_points, pred_points_sp){
     extract(pred_points_sp)
   
   # bind the extracted values back onto the predicts coordinates
-  data_fin <- data.frame(pred_points[,1:2 ], data_fin)
+  data_fin <- data.frame(pred_points[,1:3 ], data_fin)
   
   return(data_fin)
   
@@ -86,18 +120,23 @@ system.time(
       select(Longitude, Latitude) %>%
       SpatialPoints()
     
+    # identify site ids for merging
+    site_ids <- PRED_sites %>%
+      filter(Sample_end_latest == pred_dates[i]) %>%
+      select(id_col, Longitude, Latitude)
+    
     # filter the raster for that date for the locations we have predicts sites
-    PRED_coords <- cbind(PRED_sites_filt@coords, extract(ind_raster, PRED_sites_filt, na.rm = FALSE))
-  
+    PRED_coords <- cbind(site_ids, extract(ind_raster, PRED_sites_filt, na.rm = FALSE))
+    
     # convert that set of dates to a dataframe
     ind_raster_frame <- as.data.frame(PRED_coords)
     
     # remove the extra coordinate columns for calculating the row means
-    ind_raster_values <- ind_raster_frame %>% select(-Longitude, -Latitude)
+    ind_raster_values <- ind_raster_frame %>% select(-id_col, -Longitude, -Latitude)
   
     # calculate the mean values for each coordinate and bind back onto the coordinates
-    raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(Longitude, Latitude)), rowMeans(ind_raster_values))
-    colnames(raster_means[[i]]) <- c("end_date", "x", "y", "mean_value")
+    raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(id_col, Longitude, Latitude)), rowMeans(ind_raster_values))
+    colnames(raster_means[[i]]) <- c("end_date", "id_col", "x", "y", "mean_value")
 
     # print the iteration number
     print(i)
@@ -112,14 +151,37 @@ rbindlist(raster_means) %>%
 
 ## adjust the mean value for each site for the baseline at that site
 # first, merge the baseline sd and mean by coordinate for each site
-rbindlist(raster_means) %>%
-  mutate(x = as.character(x)) %>%
-  mutate(y = as.character(y)) %>%
+adjusted_climate <- rbindlist(raster_means) %>%
   select(-end_date) %>%
   unique() %>%
-  inner_join(climate_start_mean, by = c("x" = "Longitude", "y" = "Latitude")) %>%
+  inner_join(climate_start_mean, by = "id_col") %>%
   rename("mean_base" = "data_fin") %>%
-  inner_join(climate_start_sd, by = c("x" = "Longitude", "y" = "Latitude")) %>%
+  inner_join(climate_start_sd, by = "id_col") %>%
   rename("sd_base" = "data_fin") %>%
   mutate(anomaly = mean_value - mean_base) %>%
   mutate(standard_anom = anomaly / sd_base)
+
+# plot the standardised climate anomaly
+adjusted_climate %>%
+  ggplot() +
+  geom_point(aes(x = x, y = y, colour = standard_anom)) + 
+  scale_colour_viridis()
+
+# bind the adjusted climate data back onto the predicts sites
+predicts_climate <- full_join(order.sites.div, adjusted_climate, by = "id_col")
+
+# save climate/predicts data
+
+# plot the climate anom for each taxonomic order
+predicts_climate %>%
+  ggplot() +
+  geom_point(aes(x = x, y = y, colour = standard_anom)) + 
+  facet_wrap(~Order) +
+  scale_colour_viridis() +
+  #coord_map(projection = "mollweide") +
+  theme(panel.background = element_blank(),
+        panel.grid = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(), 
+        axis.title = element_blank())
+
