@@ -9,6 +9,11 @@ library(dplyr)
 library(data.table)
 library(viridis)
 library(yarg)
+library(rworldmap) 
+library(rworldxtra)
+
+# source in additional functions
+source("R/00_functions.R")
 
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
@@ -17,8 +22,7 @@ tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_5.rds")
 
 # PREDICTS data compilation
-
-# filter cannot decide factors
+# filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
   #dplyr::filter(Predominant_land_use %in% c("Cropland")) %>%
   dplyr::filter(Order %in% c("Hymenoptera", "Lepidoptera", "Diptera", "Coleoptera", "Apodiformes", "Passeriformes")) %>%
@@ -45,9 +49,9 @@ order.sites.div <- do.call('rbind',lapply(X = diversityOrder, FUN = SiteMetrics,
                                                          "Sampling_effort_unit", "Realm",
                                                          "Predominant_land_use", "Order", "Order_use", "confidence_fct"),
                                           sites.are.unique = TRUE, srEstimators = TRUE))
-# set if column
-order.sites.div$id_col <- 1:nrow(order.sites.div)
 
+# set id column for merging back into correct place
+order.sites.div$id_col <- 1:nrow(order.sites.div)
 
 # PREDICTS sites with the month of the recording
 PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
@@ -55,7 +59,7 @@ PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end
   mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest)) %>%
   filter(!is.na(Latitude))
 
-#### calculate the means and standard deviation for the beginning of the series
+# calculate the means and standard deviation for the beginning of the series
 # take names of values for 1901 to 1905
 tmp1901_1905 <- tmp[[names(tmp)[1:60]]]
 
@@ -168,20 +172,43 @@ adjusted_climate %>%
   scale_colour_viridis()
 
 # bind the adjusted climate data back onto the predicts sites
-predicts_climate <- full_join(order.sites.div, adjusted_climate, by = "id_col")
+predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col")
 
-# save climate/predicts data
+# group the categories of climate anomaly into factors
+predicts_climate$value_group[predicts_climate$standard_anom > 2] <- "> 2"
+predicts_climate$value_group[predicts_climate$standard_anom > 1 & predicts_climate$standard_anom <= 2] <- "1 - 2"
+predicts_climate$value_group[predicts_climate$standard_anom > 0.5 & predicts_climate$standard_anom <= 1] <- "0.5 - 1"
+predicts_climate$value_group[predicts_climate$standard_anom > 0.25 & predicts_climate$standard_anom <= 0.5] <- "0.25 - 0.5"
+predicts_climate$value_group[predicts_climate$standard_anom >= 0 & predicts_climate$standard_anom <= 0.25] <- "0 - 0.25"
+predicts_climate$value_group[predicts_climate$standard_anom < 0] <- "< 0"
+
+# order the levels of those factors
+predicts_climate$value_group <- factor(predicts_climate$value_group, levels = c("> 2", "1 - 2", "0.5 - 1", "0.25 - 0.5", "0 - 0.25", "< 0"))
+
+# bring in basemap for climate site plot 
+base_map <- get_basemap()
+
+# fortify the main map
+map_fort <- fortify(base_map)
 
 # plot the climate anom for each taxonomic order
 predicts_climate %>%
+  filter(!is.na(value_group)) %>%
   ggplot() +
-  geom_point(aes(x = x, y = y, colour = standard_anom)) + 
+  geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "lightgrey") +
+  geom_point(aes(x = x, y = y, colour = value_group), alpha = 0.5) + 
   facet_wrap(~Order) +
-  scale_colour_viridis() +
-  #coord_map(projection = "mollweide") +
+  scale_colour_manual("Standardised climate anomaly", values = c("#000000", "darkred", "#D55E00", "#E69F00", "#F0E442", "#56B4E9")) +
+  coord_map(projection = "mollweide") +
   theme(panel.background = element_blank(),
         panel.grid = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank(), 
-        axis.title = element_blank())
+        axis.title = element_blank(),
+        legend.position = "bottom")
+
+# save the plot for standardised climate anomaly by pollinating order
+ggsave("stan-climate-anom_taxa.png", scale = 1.2, dpi = 350)
+
+# save climate/predicts data
 
