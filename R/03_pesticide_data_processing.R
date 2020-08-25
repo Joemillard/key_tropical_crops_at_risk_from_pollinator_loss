@@ -14,6 +14,7 @@ library(raster)
 library(ggplot2)
 library(maps)
 library(viridis)
+library(dplyr)
 
 # set up the load directory
 data_dir <- "data/ferman-v1-pest-chemgrids_geotiff/ApplicationRate/GEOTIFF"
@@ -40,7 +41,6 @@ pest_H_total <- calc(x = pest_H, fun = sum, na.rm = TRUE)
 
 # take a look at the total application rates
 plot(pest_H_total$layer)
-pest_H_total_data <- as.data.frame(pest_H_total, xy = TRUE)
 
 # save the raster of high estimate totals
 writeRaster(pest_H_total, filename = paste0(outdir, "/Pesticide_totalAPR_High.tif"))
@@ -60,10 +60,9 @@ plot(pest_L_total$layer)
 # save the raster of low application rates
 writeRaster(pest_L_total, filename = paste0(outdir, "/Pesticide_totalAPR_Low.tif"))
 
-##### plot of the datasets for supplementary info  #####
-pest_L_total <- raster(paste0(outdir, "data/Pesticide_totalAPR_Low.tif"))
-pest_H_total <- raster(paste0(outdir, "data/Pesticide_totalAPR_High.tif"))  
-
+# plot of the pesticide datasets
+pest_L_total <- raster("data/Pesticide_totalAPR_Low.tif")
+pest_H_total <- raster("data/Pesticide_totalAPR_High.tif")
 
 # mask out the sea area that is set to 0
 data("wrld_simpl", package = 'maptools')
@@ -71,6 +70,10 @@ pest_L_total_crop <- mask(pest_L_total$Pesticide_totalAPR_Low, wrld_simpl)
 pest_L_total_crop <- crop(pest_L_total_crop, wrld_simpl)
 pest_H_total_crop <- mask(pest_H_total$Pesticide_totalAPR_High, wrld_simpl)
 pest_H_total_crop <- crop(pest_H_total_crop, wrld_simpl)
+
+# reproject rasters as mollweide projection
+pest_L_total_crop <- projectRaster(pest_L_total_crop, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+pest_H_total_crop <- projectRaster(pest_H_total_crop, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
 # convert for use in ggplot
 pest_H_data <- as.data.frame(pest_H_total_crop, xy = TRUE)
@@ -80,7 +83,7 @@ pest_L_data <- as.data.frame(pest_L_total_crop, xy = TRUE)
 pest_H_data <- pest_H_data[!is.na(pest_H_data$Pesticide_totalAPR_High), ]
 pest_L_data <- pest_L_data[!is.na(pest_L_data$Pesticide_totalAPR_Low), ]
 
-# 
+# assign column for high or low estimate
 pest_H_data$est <- "High"
 pest_L_data$est <- "Low"
 
@@ -89,24 +92,25 @@ names(pest_L_data)[3] <- "APR"
 
 
 pest_data <- rbind(pest_H_data, pest_L_data)
-pest_data$est <- factor(pest_data$est, levels = c("Low", "High"))
+pest_data$est <- factor(pest_data$est, levels = c("High", "Low"))
 
 # set breaks
-brk <- c(0, 1, 3, 10, 30, 100, 300)
+brk <- c(0, 10, 100, 300)
 
 # plot of high and low pesticide application
-ggplot(data = pest_data) +
-  geom_raster(aes(x = x, y = y, fill = APR)) +
-  facet_grid(~ est) +
-  scale_fill_gradientn(name = "Total APR\nkg/ha", breaks = brk, trans = "log1p", colours = viridis(10), labels = brk) + 
-  theme_bw() +
-  theme(panel.grid = element_blank(), 
-        axis.title = element_blank(), 
-        axis.ticks = element_blank(), 
-        axis.text = element_blank(),
-        legend.position = "bottom", 
-        legend.key.width = unit(2,"cm")) 
+pest_data %>%
+  ggplot() +
+    geom_tile(aes(x = x, y = y, fill = APR)) +
+    facet_grid(est~., switch = "y") +
+    scale_fill_gradientn(name = "Total application rate\n(kg/ha)", breaks = brk, trans = "log1p", colours = viridis(10), labels = brk) + 
+    theme_bw() +
+    guides(fill = guide_colourbar(ticks = FALSE)) +
+    theme(panel.grid = element_blank(), 
+          axis.title = element_blank(), 
+          axis.ticks = element_blank(), 
+          axis.text = element_blank(),
+          strip.text.y.left = element_text(size = 11, angle = 45)) 
 
-# save
-ggsave(filename = paste0(outdir, "/SuppFigs/Pesticide_data_maps.pdf"), width = 8, height = 4)
+# save the map of pesticides
+ggsave("pesticide_data_maps.png", dpi = 300, scale = 1)
 
