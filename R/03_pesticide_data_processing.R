@@ -1,5 +1,5 @@
 #### Pesticide data processing
-# Author: Charlotte L. Outhwaite
+# Original author: Charlotte L. Outhwaite
 
 # This script pulls together the PEST CHEM-GRID data into one raster of
 # total pesticide application per grid cell.
@@ -12,12 +12,13 @@
 # load libraries
 library(raster)
 library(ggplot2)
-library(maps)
+#library(maps)
 library(viridis)
 library(dplyr)
 
 # set up the load directory
 data_dir <- "data/ferman-v1-pest-chemgrids_geotiff/ApplicationRate/GEOTIFF"
+out_dir <- "outputs"
 
 # list the files
 files <- list.files(data_dir) # 1200 files
@@ -25,7 +26,7 @@ files <- list.files(data_dir) # 1200 files
 # just select the 2015 maps
 files <- list.files(data_dir, pattern = "2015") # 400 files, high and low estimates
 
-### Summarise the data across crops and active ingredients ###
+# summarise the data across crops and active ingredients
 # separate out the low and high estimates
 files_H <- files[grep(files, pattern = "5_H")] # 200 files
 files_L <- files[grep(files, pattern = "5_L")] # 200 files
@@ -42,9 +43,6 @@ pest_H_total <- calc(x = pest_H, fun = sum, na.rm = TRUE)
 # take a look at the total application rates
 plot(pest_H_total$layer)
 
-# save the raster of high estimate totals
-writeRaster(pest_H_total, filename = paste0(outdir, "/Pesticide_totalAPR_High.tif"))
-
 # same for the low estimates
 pest_L <- stack(paste0(data_dir, "/", files_L))
 
@@ -57,7 +55,8 @@ pest_L_total <- calc(x = pest_L, fun = sum, na.rm = TRUE)
 # take a look at the total application rates
 plot(pest_L_total$layer)
 
-# save the raster of low application rates
+# save the raster of low and high estimate totals
+writeRaster(pest_H_total, filename = paste0(outdir, "/Pesticide_totalAPR_High.tif"))
 writeRaster(pest_L_total, filename = paste0(outdir, "/Pesticide_totalAPR_Low.tif"))
 
 # plot of the pesticide datasets
@@ -70,6 +69,10 @@ pest_L_total_crop <- mask(pest_L_total$Pesticide_totalAPR_Low, wrld_simpl)
 pest_L_total_crop <- crop(pest_L_total_crop, wrld_simpl)
 pest_H_total_crop <- mask(pest_H_total$Pesticide_totalAPR_High, wrld_simpl)
 pest_H_total_crop <- crop(pest_H_total_crop, wrld_simpl)
+
+# resave the high and low rasters for pesticide application before projecting into mollweide projection
+writeRaster(pest_L_total_crop, filename = paste0(out_dir, "/Pesticide_totalAPR_Low_cropped.tif"))
+writeRaster(pest_H_total_crop, filename = paste0(out_dir, "/Pesticide_totalAPR_High_cropped.tif"))
 
 # reproject rasters as mollweide projection
 pest_L_total_crop <- projectRaster(pest_L_total_crop, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -87,14 +90,15 @@ pest_L_data <- pest_L_data[!is.na(pest_L_data$Pesticide_totalAPR_Low), ]
 pest_H_data$est <- "High"
 pest_L_data$est <- "Low"
 
+# set APR column name
 names(pest_H_data)[3] <- "APR"
 names(pest_L_data)[3] <- "APR"
 
-
+# bind together the high and low estimate pesticide application dataa, and then sort the factors as high and low for plot
 pest_data <- rbind(pest_H_data, pest_L_data)
 pest_data$est <- factor(pest_data$est, levels = c("High", "Low"))
 
-# set breaks
+# set breaks for a facetted plot of high and low pesticide application
 brk <- c(0, 10, 100, 300)
 
 # plot of high and low pesticide application
