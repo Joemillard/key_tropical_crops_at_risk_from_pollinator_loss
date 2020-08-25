@@ -1,6 +1,5 @@
 # script for climate anomaly - dataframe rewrite to try and avoid repeated raster trim/crops
 ### Note: 2005 is the mean year for insect data
-# try split up into three panels: overall (1901-2006), earlier (1901-1950), latter (1950-2006)
 
 # load required libraries
 library(raster)
@@ -211,4 +210,4 @@ predicts_climate %>%
 ggsave("stan-climate-anom_taxa.png", scale = 1.2, dpi = 350)
 
 # save climate/predicts data
-
+saveRDS(predicts_climate, "PREDICT_pollinators_5_climate.rds")
