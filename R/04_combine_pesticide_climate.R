@@ -4,6 +4,7 @@ library(raster)
 library(rworldmap)
 library(rworldxtra)
 library(ggplot2)
+library(lme4)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -39,7 +40,7 @@ map_fort <- fortify(base_map)
 climate_pest_predicts %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "lightgrey") +
-  geom_point(aes(x = x, y = y, colour = high_estimate), alpha = 0.5) + 
+  geom_point(aes(x = x, y = y, colour = high_estimate, alpha = 0.5) + 
   facet_wrap(~Order) +
   #scale_colour_manual("Standardised climate anomaly", values = c("#000000", "darkred", "#D55E00", "#E69F00", "#F0E442", "#56B4E9")) +
   coord_map(projection = "mollweide") +
@@ -49,3 +50,10 @@ climate_pest_predicts %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank(),
         legend.position = "bottom")
+
+# build some simple models for climate and pesticide application
+model_1 <- glmer(Species_richness ~ high_estimate * standard_anom + (1|SS), data = climate_pest_predicts, family = "poisson")
+model_1a <- glmer(Species_richness ~ high_estimate * standard_anom * Order + (1|SS) + (1|SSB), data = climate_pest_predicts, family = "poisson")
+model_1b <- glmer(Species_richness ~ high_estimate * standard_anom * Order + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = "poisson")
+
+
