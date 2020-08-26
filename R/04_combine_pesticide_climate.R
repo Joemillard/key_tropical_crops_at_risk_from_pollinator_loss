@@ -38,11 +38,13 @@ map_fort <- fortify(base_map)
 
 # plot map for pesticide application
 climate_pest_predicts %>%
+  filter(!is.na(value_group)) %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "lightgrey") +
-  geom_point(aes(x = x, y = y, colour = high_estimate, alpha = 0.5) + 
+  geom_point(aes(x = x, y = y, colour = value_group, size = high_estimate), alpha = 0.3) + 
   facet_wrap(~Order) +
-  #scale_colour_manual("Standardised climate anomaly", values = c("#000000", "darkred", "#D55E00", "#E69F00", "#F0E442", "#56B4E9")) +
+  scale_colour_manual("Standardised climate anomaly", values = c("#000000", "darkred", "#D55E00", "#E69F00", "#F0E442", "#56B4E9")) +
+  scale_size_continuous("Pesticide application rate") +
   coord_map(projection = "mollweide") +
   theme(panel.background = element_blank(),
         panel.grid = element_blank(),
@@ -50,6 +52,10 @@ climate_pest_predicts %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank(),
         legend.position = "bottom")
+
+# save plot for climate and pesticide application
+ggsave("pesticide_climate.png", scale = 1.2, dpi = 350)
+
 
 # build some simple models for climate and pesticide application
 model_1 <- glmer(Species_richness ~ high_estimate * standard_anom + (1|SS), data = climate_pest_predicts, family = "poisson")
