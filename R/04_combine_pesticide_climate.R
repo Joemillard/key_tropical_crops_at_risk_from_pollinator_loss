@@ -56,6 +56,24 @@ climate_pest_predicts %>%
 # save plot for climate and pesticide application
 ggsave("pesticide_climate.png", scale = 1.2, dpi = 350)
 
+## exploratory plots for relationship between climate, pesticide application, and taxa
+climate_pest_predicts %>%
+  ggplot() +
+    #geom_point(aes(x = high_estimate, y = log10(Total_abundance), colour = value_group)) +
+    geom_smooth(aes(x = high_estimate, y = log1p(Total_abundance), colour = value_group), method = "lm") +
+    facet_wrap(~Order)
+
+climate_pest_predicts %>%
+  ggplot() +
+  geom_smooth(aes(x = low_estimate, y = log1p(Total_abundance)), method = "lm") +
+  facet_wrap(~Order)
+
+climate_pest_predicts %>%
+  filter(!is.na(value_group)) %>%
+  ggplot() +
+  geom_boxplot(aes(x = value_group, y = log10(Total_abundance))) +
+  facet_wrap(~Order)
+
 
 # build some simple models for climate and pesticide application
 model_1 <- glmer(Species_richness ~ high_estimate * standard_anom + (1|SS), data = climate_pest_predicts, family = "poisson")
