@@ -59,9 +59,7 @@ ggsave("pesticide_climate.png", scale = 1.2, dpi = 350)
 ## exploratory plots for relationship between climate, pesticide application, and taxa
 climate_pest_predicts %>%
   ggplot() +
-    #geom_point(aes(x = high_estimate, y = log10(Total_abundance), colour = value_group)) +
-    geom_smooth(aes(x = high_estimate, y = log1p(Total_abundance), colour = value_group), method = "lm") +
-    facet_wrap(~Order)
+    geom_smooth(aes(x = high_estimate, y = log1p(Total_abundance), colour = value_group), method = "lm")
 
 climate_pest_predicts %>%
   ggplot() +
