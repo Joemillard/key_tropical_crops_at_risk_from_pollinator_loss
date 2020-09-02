@@ -10,6 +10,7 @@ library(viridis)
 library(yarg)
 library(rworldmap) 
 library(rworldxtra)
+library(lme4)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -254,4 +255,32 @@ climate_pest_predicts %>%
   ggplot() +
   geom_boxplot(aes(x = value_group, y = log10(Total_abundance)))
 
+# add 1 for abundance and simpson diversity
+climate_pest_predicts$Total_abundance <- climate_pest_predicts$Total_abundance + 1
+climate_pest_predicts$Simpson_diversity <- climate_pest_predicts$Simpson_diversity + 1
+
 # glmer plot for relationship between climate, pesticide application, and biodiversity
+# species richness, 2 continuous
+model_1a <- glmer(Species_richness ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS), data = climate_pest_predicts, family = poisson) 
+model_1b <- glmer(Species_richness ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS) + (1|SSB), data = climate_pest_predicts, family = poisson) 
+model_1c <- glmer(Species_richness ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+
+# check the AIC values
+AIC(model_1a, model_1b, model_1c) # model_1c has the lowest AIC values
+
+# species richness, standard anom as a factor
+model_1a_fct <- glmer(Species_richness ~ value_group * log1p(high_estimate) + (1|SS), data = climate_pest_predicts, family = poisson) 
+model_1b_fct <- glmer(Species_richness ~ value_group * log1p(high_estimate) + (1|SS) + (1|SSB), data = climate_pest_predicts, family = poisson) 
+model_1c_fct <- glmer(Species_richness ~ value_group * log1p(high_estimate) + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+
+# check the AIC values
+AIC(model_1a_fct, model_1b_fct, model_1c_fct) # model_1c is the lowest again
+
+# plot predicted values 
+
+# total abundance models
+model_2a <- lmer(log(Total_abundance) ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS), data = climate_pest_predicts) 
+model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+
+# check the AIC values
+AIC(model_2a, model_2b) # model_2b is the lowest
