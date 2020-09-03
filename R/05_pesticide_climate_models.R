@@ -284,3 +284,6 @@ model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * log1p(high_estima
 
 # check the AIC values
 AIC(model_2a, model_2b) # model_2b is the lowest
+
+# plot predicted values 
+
