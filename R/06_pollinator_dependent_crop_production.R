@@ -17,6 +17,22 @@ cropdirs <- list.dirs("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/Ha
 # read in the Klein pollinator dependent crops
 klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops/data_cleaned.csv"))
 
+# select those with semi colon into a multiple rows
+semi_colon_crop <- klein_cleaned$MonfredaCrop[grepl(";", klein_cleaned$MonfredaCrop)]
+
+# subset those with semi colon and bind as duplicates onto the bottom of dataframe
+semi_colon_crop <- klein_cleaned %>% filter(MonfredaCrop %in% semi_colon_crop) %>%
+  mutate(MonfredaCrop = gsub("lemonlime; ", "", MonfredaCrop)) %>%
+  mutate(MonfredaCrop = gsub("rasberry; ", "", MonfredaCrop)) %>%
+  mutate(MonfredaCrop = gsub("cashew; ", "", MonfredaCrop))
+
+# bind the rows for semi colon crops back onto the original klein data
+klein_cleaned <- rbind(klein_cleaned, semi_colon_crop) %>% 
+  mutate(MonfredaCrop = gsub("; citrusnes", "", MonfredaCrop)) %>%
+  mutate(MonfredaCrop = gsub("; berrynes", "", MonfredaCrop)) %>%
+  mutate(MonfredaCrop = gsub("; cashewapple", "", MonfredaCrop))
+  
+
 # loop through each directory and create a list of all files
 all.ras <- NULL
 crop.files <- list()
@@ -32,7 +48,7 @@ rate_rasters <- list()
 
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
-pollinated_crops <- unique(grep(paste(klein_cleaned$MonfredaCrop, collapse = "|"), unlisted_crops, value = TRUE))
+pollinated_crops <- grep(paste(unique(paste("/", klein_cleaned$MonfredaCrop, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
 pollinat_crops_simp <- gsub("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
@@ -59,13 +75,30 @@ klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollinati
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "great"] <- 0.65
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "essential"] <- 0.95
 
+# calculate average and standard deviation of pollination dependence for each Monfreda crop
+klein_cleaned_av <- klein_cleaned %>%
+  group_by(MonfredaCrop) %>%
+  mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
+  mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(MonfredaCrop, av, standard_dev) %>%
+  unique()
+
 # subset klein_cleaned for those with crop data
-klein_cleaned_filt <- klein_cleaned %>%
-  filter(MonfredaCrop %in% pollinat_crops_simp)
+klein_cleaned_filt <- klein_cleaned_av %>%
+  filter(MonfredaCrop %in% pollinat_crops_simp) %>%
+  arrange(MonfredaCrop)
+
+# multiply each raster by its pollination dependence for that crop
+rate_rasters_adj <- list()
+for(i in 1:length(rate_rasters)){
+  rate_rasters_adj[[i]] <- rate_rasters[[i]] * klein_cleaned_filt$av[i]
+  print(i)
+}
 
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
-stacked_rasters <- stack(rate_rasters)
+stacked_rasters <- stack(unlist(rate_rasters_adj))
 crop.total <- sum(stacked_rasters, na.rm = F)
 
 # test plot
@@ -93,7 +126,7 @@ crop_df %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "lightgrey") +
   geom_tile(aes(x = x, y = y, fill = log10(layer))) +
-  scale_fill_viridis("Pollination dependent production \n (kg)", na.value = "transparent") +
+  scale_fill_viridis("Pollination dependent production \n (kg)", na.value = "transparent", option = "plasma") +
   coord_equal() +
   guides(fill = guide_colourbar(ticks = FALSE)) +
   theme(panel.background = element_blank(),
