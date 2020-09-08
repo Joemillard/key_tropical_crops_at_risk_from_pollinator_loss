@@ -98,8 +98,8 @@ for(i in 1:length(rate_rasters)){
 
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
-stacked_rasters <- stack(unlist(rate_rasters_adj))
-crop.total <- sum(stacked_rasters, na.rm = F)
+stacked_rasters <- stack(rate_rasters_adj)
+crop.total <- sum(stacked_rasters, na.rm = T)
 
 # test plot
 plot(crop.total)
@@ -122,13 +122,25 @@ base_map <- spTransform(base_map, CRS = CRS("+proj=moll +datum=WGS84 +ellps=WGS8
 # fortify the main map
 map_fort <- fortify(base_map)
 
+# split the pollination dependent production into a new variable of factors
+crop_df$layer_group[crop_df$layer < 10^0] <- "<0"
+crop_df$layer_group[crop_df$layer >= 10^0 & crop_df$layer < 10^1] <- "0-1"
+crop_df$layer_group[crop_df$layer >= 10^1 & crop_df$layer < 10^2] <- "1-2"
+crop_df$layer_group[crop_df$layer >= 10^2 & crop_df$layer < 10^3] <- "2-3"
+crop_df$layer_group[crop_df$layer >= 10^3 & crop_df$layer < 10^4] <- "3-4"
+crop_df$layer_group[crop_df$layer >= 10^4 & crop_df$layer < 10^5] <- "4-5"
+
+# assign new factor labels for 6 factors of production weight
+crop_df$layer_group <- factor(crop_df$layer_group, labels = c("10,000-100,000", "1,000-10,000", "100-1,000", "10-100", "1-10", "<1"), levels = c("4-5", "3-4", "2-3", "1-2", "0-1", "<0"))
+
+# global pollination dependence figure
 crop_df %>%
+  filter(!is.na(layer_group)) %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "lightgrey") +
-  geom_tile(aes(x = x, y = y, fill = log10(layer))) +
-  scale_fill_viridis("Pollination dependent production \n (kg)", na.value = "transparent", option = "plasma") +
+  geom_tile(aes(x = x, y = y, fill = layer_group)) +
+  scale_fill_viridis_d("Pollination dependent crop production \n (kg)", na.value = "transparent", option = "plasma") +
   coord_equal() +
-  guides(fill = guide_colourbar(ticks = FALSE)) +
   theme(panel.background = element_blank(),
         panel.bord = element_blank(),
         panel.grid = element_blank(), 
@@ -136,4 +148,4 @@ crop_df %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank())
 
-ggsave("pollinated_crop_production.png", scale = 1, dpi = 350)
+ggsave("pollination_dep_crop_production.png", scale = 1.2, dpi = 350)
