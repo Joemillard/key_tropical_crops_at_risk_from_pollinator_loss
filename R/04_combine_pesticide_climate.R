@@ -72,10 +72,3 @@ climate_pest_predicts %>%
   geom_boxplot(aes(x = value_group, y = log10(Total_abundance))) +
   facet_wrap(~Order)
 
-
-# build some simple models for climate and pesticide application
-model_1 <- glmer(Species_richness ~ high_estimate * standard_anom + (1|SS), data = climate_pest_predicts, family = "poisson")
-model_1a <- glmer(Species_richness ~ high_estimate * standard_anom * Order + (1|SS) + (1|SSB), data = climate_pest_predicts, family = "poisson")
-model_1b <- glmer(Species_richness ~ high_estimate * standard_anom * Order + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = "poisson")
-
-
