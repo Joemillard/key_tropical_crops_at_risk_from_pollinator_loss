@@ -65,6 +65,7 @@ for(i in 1:length(pollinated_crops)){
 # 0 = no increase
 # 0.05 = little
 # 0.25 = modest
+# 0.45 = modest/great
 # 0.65 = great
 # 0.95 = essential
 
@@ -74,6 +75,7 @@ klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollinati
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest"] <- 0.25
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "great"] <- 0.65
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "essential"] <- 0.95
+klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest/great"] <- 0.45
 
 # calculate average and standard deviation of pollination dependence for each Monfreda crop
 klein_cleaned_av <- klein_cleaned %>%
@@ -135,11 +137,14 @@ crop_df$layer_group <- factor(crop_df$layer_group, labels = c("10,000-100,000", 
 
 # global pollination dependence figure
 crop_df %>%
-  filter(!is.na(layer_group)) %>%
+  #filter(!is.na(layer_group)) %>%
   ggplot() +
-  geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "lightgrey") +
+  geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
   geom_tile(aes(x = x, y = y, fill = layer_group)) +
-  scale_fill_viridis_d("Pollination dependent crop production \n (kg)", na.value = "transparent", option = "plasma") +
+  scale_fill_viridis_d("Pollination dependent crop production \n (kg)", 
+                       na.value = "transparent", 
+                       option = "plasma",
+                       labels = c("10,000-100,000", "1,000-10,000", "100-1,000", "10-100", "1-10", "<1", "0")) +
   coord_equal() +
   theme(panel.background = element_blank(),
         panel.bord = element_blank(),
