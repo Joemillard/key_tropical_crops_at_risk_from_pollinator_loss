@@ -137,7 +137,6 @@ crop_df$layer_group <- factor(crop_df$layer_group, labels = c("10,000-100,000", 
 
 # global pollination dependence figure
 crop_df %>%
-  #filter(!is.na(layer_group)) %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
   geom_tile(aes(x = x, y = y, fill = layer_group)) +
