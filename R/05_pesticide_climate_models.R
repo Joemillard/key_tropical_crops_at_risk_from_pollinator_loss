@@ -237,6 +237,26 @@ climate_pest_predicts %>%
         axis.title = element_blank(),
         legend.position = "bottom")
 
+# read in the fertiliser data 
+fert_data <- raster("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/fertiliser_application_rate.tif")
+
+# subset for unqiue sites
+sites.sub_xy <- climate_pest_predicts %>%
+  dplyr::select(Longitude, Latitude) %>%
+  filter(!is.na(Longitude)) %>%
+  filter(!is.na(Latitude)) %>%
+  unique() %>%
+  SpatialPoints()
+
+# extract the fertislier values and join back onto the coordinates
+sites.sub_xy$fert <- extract(fert_data, sites.sub_xy, na.rm = FALSE)
+
+# turn the spatial points into a dataframe with the fertiliser data
+fert_dat <- data.frame(coords = sites.sub_xy@coords, fert = sites.sub_xy@data$fert)
+
+climate_pest_predicts <- inner_join(climate_pest_predicts, fert_dat, by = c("Longitude" = "coords.Longitude", "Latitude" = "coords.Latitude"))
+
+
 ## exploratory plots for relationship between climate, pesticide application, and taxa
 climate_pest_predicts %>%
   ggplot() +
@@ -249,6 +269,10 @@ climate_pest_predicts %>%
 climate_pest_predicts %>%
   ggplot() +
   geom_smooth(aes(x = standard_anom, y = log1p(Total_abundance)), method = "lm")
+
+climate_pest_predicts %>%
+  ggplot() +
+  geom_smooth(aes(x = log10(fert), y = log1p(Total_abundance), colour = value_group), method = "lm")
 
 climate_pest_predicts %>%
   filter(!is.na(value_group)) %>%
