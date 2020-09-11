@@ -104,16 +104,16 @@ brk <- c(0, 10, 100, 300)
 # plot of high and low pesticide application
 pest_data %>%
   ggplot() +
-    geom_tile(aes(x = x, y = y, fill = APR)) +
-    facet_grid(est~., switch = "y") +
-    scale_fill_gradientn(name = "Total application rate\n(kg/ha)", breaks = brk, trans = "log1p", colours = viridis(10), labels = brk) + 
-    theme_bw() +
-    guides(fill = guide_colourbar(ticks = FALSE)) +
-    theme(panel.grid = element_blank(), 
-          axis.title = element_blank(), 
-          axis.ticks = element_blank(), 
-          axis.text = element_blank(),
-          strip.text.y.left = element_text(size = 11, angle = 45)) 
+  geom_tile(aes(x = x, y = y, fill = APR)) +
+  facet_grid(est~., switch = "y") +
+  scale_fill_gradientn(name = "Total application rate\n(kg/ha)", breaks = brk, trans = "log1p", colours = viridis(10), labels = brk) + 
+  theme_bw() +
+  guides(fill = guide_colourbar(ticks = FALSE)) +
+  theme(panel.grid = element_blank(), 
+        axis.title = element_blank(), 
+        axis.ticks = element_blank(), 
+        axis.text = element_blank(),
+        strip.text.y.left = element_text(size = 11, angle = 45)) 
 
 # save the map of pesticides
 ggsave("pesticide_data_maps.png", dpi = 300, scale = 1)
