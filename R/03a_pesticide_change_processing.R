@@ -142,11 +142,18 @@ names(pesticide_change)[3] <- "APR"
 pesticide_change %>%
   ggplot() +
   geom_tile(aes(x = x, y = y, fill = APR)) +
-  scale_fill_viridis(name = "Change in total application rate\n(kg/ha)") + 
+  scale_fill_gradient2(
+    low = 'blue', mid = 'lightgrey', high = 'red',
+    midpoint = 0, guide = 'colourbar', aesthetics = 'fill'
+  ) +  
   theme_bw() +
   guides(fill = guide_colourbar(ticks = FALSE)) +
-  theme(panel.grid = element_blank(), 
+  theme(panel.grid = element_blank(),
+        panel.bord = element_blank(),
+        panel.background = element_blank(),
         axis.title = element_blank(), 
         axis.ticks = element_blank(), 
         axis.text = element_blank(),
         strip.text.y.left = element_text(size = 11, angle = 45)) 
+
+ggsave("total_pesticide_change_2015-2025.png", scale = 1.2, dpi = 350)
