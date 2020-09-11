@@ -81,31 +81,28 @@ writeRaster(pest_H_total_2025, filename = paste0(out_dir, "/", "2025_Pesticide_t
 pest_H_total_2015 <- raster(paste0(out_dir, "/", "2015_Pesticide_totalAPR_High_cropped.tif"))
 pest_H_total_2025 <- raster(paste0(out_dir, "/", "2025_Pesticide_totalAPR_High_cropped.tif"))
 
-# raster change
-pesticide_change <- pest_H_total_2025 - pest_H_total_2015
-
 # reproject rasters as mollweide projection
 pest_H_total_2015 <- projectRaster(pest_H_total_2015, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 pest_H_total_2025 <- projectRaster(pest_H_total_2025, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
   
 # convert for use in ggplot
-pest_H_total_2015 <- as.data.frame(pest_H_total_2015, xy = TRUE)
-pest_H_total_2025 <- as.data.frame(pest_H_total_2025, xy = TRUE)
+pest_H_total_2015_frame <- as.data.frame(pest_H_total_2015, xy = TRUE)
+pest_H_total_2025_frame <- as.data.frame(pest_H_total_2025, xy = TRUE)
   
 # remove NAs
-pest_H_total_2015 <- pest_H_total_2015[!is.na(pest_H_total_2015$X2015_Pesticide_totalAPR_High_cropped), ]
-pest_H_total_2025 <- pest_H_total_2025[!is.na(pest_H_total_2025$X2025_Pesticide_totalAPR_High_cropped), ]
+pest_H_total_2015_frame <- pest_H_total_2015_frame[!is.na(pest_H_total_2015_frame$X2015_Pesticide_totalAPR_High_cropped), ]
+pest_H_total_2025_frame <- pest_H_total_2025_frame[!is.na(pest_H_total_2025_frame$X2025_Pesticide_totalAPR_High_cropped), ]
   
 # assign column for high or low estimate
-pest_H_total_2015$est <- "2015"
-pest_H_total_2025$est <- "2025"
+pest_H_total_2015_frame$est <- "2015"
+pest_H_total_2025_frame$est <- "2025"
   
 # set APR column name
-names(pest_H_total_2015)[3] <- "APR"
-names(pest_H_total_2025)[3] <- "APR"
+names(pest_H_total_2015_frame)[3] <- "APR"
+names(pest_H_total_2025_frame)[3] <- "APR"
   
 # bind together the high and low estimate pesticide application dataa, and then sort the factors as high and low for plot
-pest_data <- rbind(pest_H_total_2015, pest_H_total_2025)
+pest_data <- rbind(pest_H_total_2015_frame, pest_H_total_2025_frame)
 pest_data$est <- factor(pest_data$est, levels = c("2015", "2025"))
 
 # set breaks for a facetted plot of high and low pesticide application
@@ -129,3 +126,27 @@ pest_data %>%
 ggsave("pesticide_data_maps.png", dpi = 300, scale = 1)
 
 # calculate change in pesticide application for 2015 and 2025
+# raster change
+pesticide_change <- pest_H_total_2025 - pest_H_total_2015
+
+# convert for use in ggplot
+pesticide_change <- as.data.frame(pesticide_change, xy = TRUE)
+
+# remove NAs
+pesticide_change <- pesticide_change[!is.na(pesticide_change$layer), ]
+
+# set APR column name
+names(pesticide_change)[3] <- "APR"
+
+# plot of high and low pesticide application
+pesticide_change %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = APR)) +
+  scale_fill_viridis(name = "Change in total application rate\n(kg/ha)") + 
+  theme_bw() +
+  guides(fill = guide_colourbar(ticks = FALSE)) +
+  theme(panel.grid = element_blank(), 
+        axis.title = element_blank(), 
+        axis.ticks = element_blank(), 
+        axis.text = element_blank(),
+        strip.text.y.left = element_text(size = 11, angle = 45)) 
