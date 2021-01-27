@@ -166,7 +166,8 @@ adjusted_climate %>%
   scale_colour_viridis()
 
 # bind the adjusted climate data back onto the predicts sites
-predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col")
+predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col") %>%
+  mutate(standard_anom  = standard_anom + 0.5)
 
 # group the categories of climate anomaly into factors
 predicts_climate$value_group[predicts_climate$standard_anom > 2] <- "> 2"
@@ -312,7 +313,7 @@ AIC(model_1c_1, model_1c_2, model_1c_3, model_1c_4) # model_1c_1 is the lowest a
 summary(model_1c_1)
 anova(model_1c_1)
 
-# total abundance, 2 continuous
+## total abundance, 2 continuous
 model_2a <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS), data = climate_pest_predicts) 
 model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 
@@ -320,15 +321,30 @@ model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (
 AIC(model_2a, model_2b) # model_1c has the lowest AIC values
 
 # species richness, standard anom as a factor
-model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_2 <- lmer(log(Total_abundance) ~ log1p(standard_anom) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_3 <- lmer(log(Total_abundance) ~ Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_4 <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 
-
+# check AIC values and summary
 AIC(model_2c_1, model_2c_2, model_2c_3, model_2c_4)
 summary(model_2c_1)
 
+# run predictions for the model of standard anomaly
+abundance_model <- predict_continuous(model = model_2c_1,
+                   model_data = climate_pest_predicts,
+                   response_variable = "Total_abundance",
+                   categorical_variable = c("Use_intensity"),
+                   continuous_variable = c("standard_anom"),
+                   continuous_transformation = log1p,
+                   random_variable = c("SS", "SSB", "SSBS"))
 
 
+
+ggplot(abundance_model) +
+  geom_line(aes(x = standard_anom, y = y_value, colour = Use_intensity), size = 1.5) +
+  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Use_intensity, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+  #scale_x_continuous(breaks = c(-1, 0, 1, 2, 2.39794, 2.69897, 3, 3.39794), labels = c(0.1, 1, 10, 100, 250, 500, 1000, 2500)) +
+  theme_bw() +
+  theme(panel.grid = element_blank())
 
