@@ -24,7 +24,7 @@ PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - under
 # PREDICTS data compilation
 # filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
-  dplyr::filter(Predominant_land_use %in% c("Cropland", "Plantation")) %>%
+  dplyr::filter(Predominant_land_use %in% c("Cropland", "Plantation", "Urban", "Pasture")) %>%
   dplyr::filter(Use_intensity != "Cannot decide") %>%
   droplevels()
 
@@ -329,6 +329,7 @@ model_2c_4 <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_p
 # check AIC values and summary
 AIC(model_2c_1, model_2c_2, model_2c_3, model_2c_4)
 summary(model_2c_1)
+anova(model_2c_1)
 
 # run predictions for the model of standard anomaly
 abundance_model <- predict_continuous(model = model_2c_1,
@@ -336,7 +337,7 @@ abundance_model <- predict_continuous(model = model_2c_1,
                    response_variable = "Total_abundance",
                    categorical_variable = c("Use_intensity"),
                    continuous_variable = c("standard_anom"),
-                   continuous_transformation = log1p,
+                   continuous_transformation = log10,
                    random_variable = c("SS", "SSB", "SSBS"))
 
 
