@@ -19,14 +19,13 @@ source("R/00_functions.R")
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # read in the predicts pollinators
-PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_5.rds")
+PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds")
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
-  dplyr::filter(Predominant_land_use %in% c("Cropland")) %>%
-  #dplyr::filter(Order %in% c("Hymenoptera", "Lepidoptera", "Diptera", "Coleoptera", "Apodiformes", "Passeriformes")) %>%
-  mutate(confidence_fct = factor(confidence)) %>%
+  dplyr::filter(Predominant_land_use %in% c("Cropland", "Plantation")) %>%
+  dplyr::filter(Use_intensity != "Cannot decide") %>%
   droplevels()
 
 # correct for sampling effort
@@ -40,6 +39,13 @@ order.sites.div <- SiteMetrics(diversity = PREDICTS_pollinators,
 
 # set id column for merging back into correct place
 order.sites.div$id_col <- 1:nrow(order.sites.div)
+
+# assign new variable for tropical/temperate, convert to factor, and filter out NA
+order.sites.div$zone <- ifelse(order.sites.div$Latitude >= -23.5 & order.sites.div$Latitude <= 23.5, "Tropics", "Temperate")
+order.sites.div$zone <- factor(order.sites.div$zone, levels = c("Temperate", "Tropics"))
+order.sites.div <- order.sites.div %>%
+  filter(zone == "Tropics") %>% 
+  droplevels()
 
 # PREDICTS sites with the month of the recording
 PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
@@ -283,31 +289,46 @@ climate_pest_predicts %>%
 climate_pest_predicts$Total_abundance <- climate_pest_predicts$Total_abundance + 1
 climate_pest_predicts$Simpson_diversity <- climate_pest_predicts$Simpson_diversity + 1
 
-# glmer plot for relationship between climate, pesticide application, and biodiversity
+# glmer plot for relationship between climate change and use intensity
 # species richness, 2 continuous
-model_1a <- glmer(Species_richness ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS), data = climate_pest_predicts, family = poisson) 
-model_1b <- glmer(Species_richness ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS) + (1|SSB), data = climate_pest_predicts, family = poisson) 
-model_1c <- glmer(Species_richness ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+model_1a <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS), data = climate_pest_predicts, family = poisson) 
+model_1b <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts, family = poisson) 
+model_1c <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
 
 # check the AIC values
 AIC(model_1a, model_1b, model_1c) # model_1c has the lowest AIC values
 
 # species richness, standard anom as a factor
-model_1a_fct <- glmer(Species_richness ~ value_group * log1p(high_estimate) + (1|SS), data = climate_pest_predicts, family = poisson) 
-model_1b_fct <- glmer(Species_richness ~ value_group * log1p(high_estimate) + (1|SS) + (1|SSB), data = climate_pest_predicts, family = poisson) 
-model_1c_fct <- glmer(Species_richness ~ value_group * log1p(high_estimate) + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+model_1c_1 <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+model_1c_2 <- glmer(Species_richness ~ log1p(standard_anom) + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+model_1c_3 <- glmer(Species_richness ~ Use_intensity + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+model_1c_4 <- glmer(Species_richness ~ 1 + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
+
 
 # check the AIC values
-AIC(model_1a_fct, model_1b_fct, model_1c_fct) # model_1c is the lowest again
+AIC(model_1c_1, model_1c_2, model_1c_3, model_1c_4) # model_1c_1 is the lowest again, but check unequal number of observations
 
 # plot predicted values 
+summary(model_1c_1)
+anova(model_1c_1)
 
-# total abundance models
-model_2a <- lmer(log(Total_abundance) ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS), data = climate_pest_predicts) 
-model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * log1p(high_estimate) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+# total abundance, 2 continuous
+model_2a <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS), data = climate_pest_predicts) 
+model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 
 # check the AIC values
-AIC(model_2a, model_2b) # model_2b is the lowest
+AIC(model_2a, model_2b) # model_1c has the lowest AIC values
 
-# plot predicted values 
+# species richness, standard anom as a factor
+model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_2 <- lmer(log(Total_abundance) ~ log1p(standard_anom) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_3 <- lmer(log(Total_abundance) ~ Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_4 <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+
+
+AIC(model_2c_1, model_2c_2, model_2c_3, model_2c_4)
+summary(model_2c_1)
+
+
+
 
