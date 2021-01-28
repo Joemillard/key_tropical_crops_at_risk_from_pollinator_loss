@@ -26,9 +26,6 @@ PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - under
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   dplyr::filter(Class %in% c("Insecta")) %>%
-  dplyr::filter(Order %in% c( "Hymenoptera", "Diptera", "Coleoptera", 
-                              "Thysanoptera")) %>%
-  dplyr::filter(!Family %in% c("Siricidae", "Tenthredinidae")) %>%
   droplevels()
 
 # correct for sampling effort
@@ -324,7 +321,7 @@ model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (
 AIC(model_2a, model_2b) # model_1c has the lowest AIC values
 
 # species richness, standard anom as a factor
-model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * Predominant_land_use + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 0.16) * Predominant_land_use + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_2 <- lmer(log(Total_abundance) ~ log1p(standard_anom) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_3 <- lmer(log(Total_abundance) ~ Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_4 <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_pest_predicts) 
@@ -347,7 +344,11 @@ abundance_model <- predict_continuous(model = model_2c_1,
 ggplot(abundance_model) +
   geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
   geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  #scale_x_continuous(breaks = c(-1, 0, 1, 2, 2.39794, 2.69897, 3, 3.39794), labels = c(0.1, 1, 10, 100, 250, 500, 1000, 2500)) +
+  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+  xlab("Standardised climate anomaly") +
+  ylab("Total abundance") +
   theme_bw() +
   theme(panel.grid = element_blank())
 
+# save the insect pollinator anomaly plot
