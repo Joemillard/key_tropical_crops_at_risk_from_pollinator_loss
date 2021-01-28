@@ -24,8 +24,11 @@ PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - under
 # PREDICTS data compilation
 # filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators %>%
-  dplyr::filter(Predominant_land_use %in% c("Cropland", "Plantation", "Urban", "Pasture")) %>%
-  dplyr::filter(Use_intensity != "Cannot decide") %>%
+  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
+  dplyr::filter(Class %in% c("Insecta")) %>%
+  dplyr::filter(Order %in% c( "Hymenoptera", "Diptera", "Coleoptera", 
+                              "Thysanoptera")) %>%
+  dplyr::filter(!Family %in% c("Siricidae", "Tenthredinidae")) %>%
   droplevels()
 
 # correct for sampling effort
@@ -33,7 +36,7 @@ PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
 
 # calculate site metrics including all species (confirmed and not confirmed pollinator)
 order.sites.div <- SiteMetrics(diversity = PREDICTS_pollinators,
-                                  extra.cols = c("SSB", "SSBS", "LUI", "UN_region"),
+                                  extra.cols = c("SSB", "SSBS", "Predominant_land_use", "UN_region"),
                                   sites.are.unique = TRUE,
                                   srEstimators = TRUE)
 
@@ -41,11 +44,11 @@ order.sites.div <- SiteMetrics(diversity = PREDICTS_pollinators,
 order.sites.div$id_col <- 1:nrow(order.sites.div)
 
 # assign new variable for tropical/temperate, convert to factor, and filter out NA
-order.sites.div$zone <- ifelse(order.sites.div$Latitude >= -23.5 & order.sites.div$Latitude <= 23.5, "Tropics", "Temperate")
-order.sites.div$zone <- factor(order.sites.div$zone, levels = c("Temperate", "Tropics"))
-order.sites.div <- order.sites.div %>%
-  filter(zone == "Tropics") %>% 
-  droplevels()
+#order.sites.div$zone <- ifelse(order.sites.div$Latitude >= -23.5 & order.sites.div$Latitude <= 23.5, "Tropics", "Temperate")
+#order.sites.div$zone <- factor(order.sites.div$zone, levels = c("Temperate", "Tropics"))
+#order.sites.div <- order.sites.div %>%
+#  filter(zone == "Tropics") %>% 
+#  droplevels()
 
 # PREDICTS sites with the month of the recording
 PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
@@ -166,8 +169,8 @@ adjusted_climate %>%
   scale_colour_viridis()
 
 # bind the adjusted climate data back onto the predicts sites
-predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col") %>%
-  mutate(standard_anom  = standard_anom + 0.5)
+predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col") #%>%
+  #mutate(standard_anom  = standard_anom + 0.5)
 
 # group the categories of climate anomaly into factors
 predicts_climate$value_group[predicts_climate$standard_anom > 2] <- "> 2"
@@ -321,7 +324,7 @@ model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (
 AIC(model_2a, model_2b) # model_1c has the lowest AIC values
 
 # species richness, standard anom as a factor
-model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * Predominant_land_use + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_2 <- lmer(log(Total_abundance) ~ log1p(standard_anom) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_3 <- lmer(log(Total_abundance) ~ Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_4 <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_pest_predicts) 
@@ -335,7 +338,7 @@ anova(model_2c_1)
 abundance_model <- predict_continuous(model = model_2c_1,
                    model_data = climate_pest_predicts,
                    response_variable = "Total_abundance",
-                   categorical_variable = c("Use_intensity"),
+                   categorical_variable = c("Predominant_land_use"),
                    continuous_variable = c("standard_anom"),
                    continuous_transformation = log10,
                    random_variable = c("SS", "SSB", "SSBS"))
@@ -343,8 +346,8 @@ abundance_model <- predict_continuous(model = model_2c_1,
 
 
 ggplot(abundance_model) +
-  geom_line(aes(x = standard_anom, y = y_value, colour = Use_intensity), size = 1.5) +
-  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Use_intensity, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+  geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
+  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
   #scale_x_continuous(breaks = c(-1, 0, 1, 2, 2.39794, 2.69897, 3, 3.39794), labels = c(0.1, 1, 10, 100, 250, 500, 1000, 2500)) +
   theme_bw() +
   theme(panel.grid = element_blank())
