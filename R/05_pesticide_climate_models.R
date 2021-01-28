@@ -321,7 +321,7 @@ model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (
 AIC(model_2a, model_2b) # model_1c has the lowest AIC values
 
 # species richness, standard anom as a factor
-model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 0.16) * Predominant_land_use + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * Predominant_land_use + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_2 <- lmer(log(Total_abundance) ~ log1p(standard_anom) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_3 <- lmer(log(Total_abundance) ~ Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 model_2c_4 <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_pest_predicts) 
@@ -352,3 +352,4 @@ ggplot(abundance_model) +
   theme(panel.grid = element_blank())
 
 # save the insect pollinator anomaly plot
+ggsave("insect_pollinator_anomaly.png", scale = 1, dpi = 350)
