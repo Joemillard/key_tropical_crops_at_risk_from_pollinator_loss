@@ -343,8 +343,7 @@ abundance_model <- predict_continuous(model = model_2c_1,
                    continuous_transformation = log10,
                    random_variable = c("SS", "SSB", "SSBS"))
 
-
-
+# plot for standardised anomaly and land-use for abundance
 ggplot(abundance_model) +
   geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
   geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
