@@ -263,57 +263,12 @@ fert_dat <- data.frame(coords = sites.sub_xy@coords, fert = sites.sub_xy@data$fe
 
 climate_pest_predicts <- inner_join(climate_pest_predicts, fert_dat, by = c("Longitude" = "coords.Longitude", "Latitude" = "coords.Latitude"))
 
-
-## exploratory plots for relationship between climate, pesticide application, and taxa
-climate_pest_predicts %>%
-  ggplot() +
-  geom_smooth(aes(x = high_estimate, y = log1p(Total_abundance), colour = value_group), method = "lm")
-
-climate_pest_predicts %>%
-  ggplot() +
-  geom_smooth(aes(x = high_estimate, y = log1p(Total_abundance)), method = "lm")
-
-climate_pest_predicts %>%
-  ggplot() +
-  geom_smooth(aes(x = standard_anom, y = log1p(Total_abundance)), method = "lm")
-
-climate_pest_predicts %>%
-  ggplot() +
-  geom_smooth(aes(x = log10(fert), y = log1p(Total_abundance), colour = value_group), method = "lm")
-
-climate_pest_predicts %>%
-  filter(!is.na(value_group)) %>%
-  ggplot() +
-  geom_boxplot(aes(x = value_group, y = log10(Total_abundance)))
-
 # add 1 for abundance and simpson diversity
 climate_pest_predicts$Total_abundance <- climate_pest_predicts$Total_abundance + 1
 climate_pest_predicts$Simpson_diversity <- climate_pest_predicts$Simpson_diversity + 1
 
-# glmer plot for relationship between climate change and use intensity
-# species richness, 2 continuous
-model_1a <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS), data = climate_pest_predicts, family = poisson) 
-model_1b <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts, family = poisson) 
-model_1c <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
-
-# check the AIC values
-AIC(model_1a, model_1b, model_1c) # model_1c has the lowest AIC values
-
-# species richness, standard anom as a factor
-model_1c_1 <- glmer(Species_richness ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
-model_1c_2 <- glmer(Species_richness ~ log1p(standard_anom) + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
-model_1c_3 <- glmer(Species_richness ~ Use_intensity + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
-model_1c_4 <- glmer(Species_richness ~ 1 + (1|SS) + (1|SSB) + (1|SSBS), data = climate_pest_predicts, family = poisson) 
-
-
-# check the AIC values
-AIC(model_1c_1, model_1c_2, model_1c_3, model_1c_4) # model_1c_1 is the lowest again, but check unequal number of observations
-
-# plot predicted values 
-summary(model_1c_1)
-anova(model_1c_1)
-
-## total abundance, 2 continuous
+## glmer plot for relationship between climate change and use intensity
+# total abundance, 2 continuous
 model_2a <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS), data = climate_pest_predicts) 
 model_2b <- lmer(log(Total_abundance) ~ log1p(standard_anom) * Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 
@@ -322,9 +277,9 @@ AIC(model_2a, model_2b) # model_1c has the lowest AIC values
 
 # species richness, standard anom as a factor
 model_2c_1 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * Predominant_land_use + (1|SS) + (1|SSB), data = climate_pest_predicts) 
-model_2c_2 <- lmer(log(Total_abundance) ~ log1p(standard_anom) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
-model_2c_3 <- lmer(log(Total_abundance) ~ Use_intensity + (1|SS) + (1|SSB), data = climate_pest_predicts) 
-model_2c_4 <- lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_2 <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_3 <- lmerTest::lmer(log(Total_abundance) ~ Predominant_land_use + (1|SS) + (1|SSB), data = climate_pest_predicts) 
+model_2c_4 <- lmerTest::lmer(log(Total_abundance) ~ 1 + (1|SS) + (1|SSB), data = climate_pest_predicts) 
 
 # check AIC values and summary
 AIC(model_2c_1, model_2c_2, model_2c_3, model_2c_4)
