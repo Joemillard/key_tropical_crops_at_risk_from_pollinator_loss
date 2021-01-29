@@ -271,9 +271,6 @@ for(i in 1:length(land_use_type)){
   
 }
 
-# select colours
-R_colours <- RColorBrewer::brewer.pal(name = "Paired", n= 8)
-
 # build plots for varying forest cover
 cropland_plot <- abundance_plot[[1]] +
   scale_fill_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High", "Low")) +
