@@ -218,9 +218,51 @@ pollinator_metrics_cover <- predicts_climate %>%
   rename(forest_cover = prim_cover)
 
 # create factors for high and low forest cover
-predicts_climate$forest_fact[predicts_climate$forest_cover >= 70] <- "high_cover"
-predicts_climate$forest_fact[predicts_climate$forest_cover > 30 & pollinator_metrics_cover$forest_cover < 70] <- "intermediate_cover"
-predicts_climate$forest_fact[predicts_climate$forest_cover <= 30] <- "low_cover"
+predicts_climate$forest_fact[predicts_climate$forest_cover >= 60] <- "high_cover"
+predicts_climate$forest_fact[predicts_climate$forest_cover > 40 & pollinator_metrics_cover$forest_cover < 60] <- "intermediate_cover"
+predicts_climate$forest_fact[predicts_climate$forest_cover <= 40] <- "low_cover"
+
+# create vector for baseline forest cover
+land_use_type <- c("Cropland", "Primary vegetation")
+
+# set up plot objects for each metric
+abundance_object <- list()
+abundance_plot <- list()
+
+# set up loop, with each iteration removing one forest cover baseline
+for(i in 1:length(land_use_type)){
+  
+  # filter for primary vegetation high or low cover and drop the leftover levels
+  pollinator_metrics_cover_filt <- pollinator_metrics_cover %>%
+    filter(Predominant_land_use == !!land_use_type[i]) %>%
+    droplevels()
+  
+  # print the number of factor combinations
+  print(table(pollinator_metrics_cover_filt$land_use_type, pollinator_metrics_cover_filt$forest_fact))
+  
+  model_2a <- lmer(log(Total_abundance) ~ log10(standard_anom + 1) * forest_fact + (1|SS) + (1|SSB), data = pollinator_metrics_cover_filt) # best model
+  
+  # run predictions for the model of standard anomaly
+  abundance_model[[i]] <- predict_continuous(model = model_2a,
+                                        model_data = pollinator_metrics_cover_filt,
+                                        response_variable = "Total_abundance",
+                                        categorical_variable = c("forest_fact"),
+                                        continuous_variable = c("standard_anom"),
+                                        continuous_transformation = log10,
+                                        random_variable = c("SS", "SSB", "SSBS"))
+  
+  # plot for standardised anomaly and land-use for abundance
+  abundance_plot[[i]] <- ggplot(abundance_model[[i]]) +
+    geom_line(aes(x = standard_anom, y = y_value, colour = forest_fact), size = 1.5) +
+    geom_ribbon(aes(x = standard_anom, y = y_value, fill = forest_fact, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+    #scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    #scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    xlab("Standardised climate anomaly") +
+    ylab("Total abundance") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
+  
+}
 
 # add 1 for abundance and simpson diversity
 predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
