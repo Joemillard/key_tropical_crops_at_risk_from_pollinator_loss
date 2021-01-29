@@ -19,7 +19,7 @@ source("R/00_functions.R")
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # read in the forest data
-hansen_tree_cover <- raster(here::here("Data/forest_data/Hansen_full.tif"))
+hansen_tree_cover <- raster(here::here("G:/Extra_data_files/forest_data/Hansen_full.tif"))
 
 # read in the predicts pollinators
 PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds")
@@ -162,8 +162,7 @@ adjusted_climate %>%
   scale_colour_viridis()
 
 # bind the adjusted climate data back onto the predicts sites
-predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col") #%>%
-#mutate(standard_anom  = standard_anom + 0.5)
+predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col")
 
 # group the categories of climate anomaly into factors
 predicts_climate$value_group[predicts_climate$standard_anom > 2] <- "> 2"
@@ -217,6 +216,11 @@ prim_cover <- extract(hansen_tree_cover, prim_spat, na.rm = TRUE)
 pollinator_metrics_cover <- predicts_climate %>%
   cbind(prim_cover) %>%
   rename(forest_cover = prim_cover)
+
+# create factors for high and low forest cover
+predicts_climate$forest_fact[predicts_climate$forest_cover >= 70] <- "high_cover"
+predicts_climate$forest_fact[predicts_climate$forest_cover > 30 & pollinator_metrics_cover$forest_cover < 70] <- "intermediate_cover"
+predicts_climate$forest_fact[predicts_climate$forest_cover <= 30] <- "low_cover"
 
 # add 1 for abundance and simpson diversity
 predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
