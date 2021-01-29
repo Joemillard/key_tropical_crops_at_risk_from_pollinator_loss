@@ -219,7 +219,6 @@ predicts_climate <- predicts_climate %>%
 
 # create factors for high and low forest cover
 predicts_climate$forest_fact[predicts_climate$forest_cover >= 60] <- "high_cover"
-#predicts_climate$forest_fact[predicts_climate$forest_cover > 40 & pollinator_metrics_cover$forest_cover < 60] <- "intermediate_cover"
 predicts_climate$forest_fact[predicts_climate$forest_cover <= 40] <- "low_cover"
 
 # add 1 for abundance and simpson diversity
