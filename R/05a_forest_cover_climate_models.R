@@ -273,13 +273,13 @@ for(i in 1:length(land_use_type)){
 
 # build plots for varying forest cover
 cropland_plot <- abundance_plot[[1]] +
-  scale_fill_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High", "Low")) +
-  scale_colour_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High", "Low")) +
+  scale_fill_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
+  scale_colour_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
   ylab("")
   
 primary_plot <- abundance_plot[[2]] + 
-  scale_fill_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High", "Low")) +
-  scale_colour_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High", "Low"))
+  scale_fill_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
+  scale_colour_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High (>= 60%)", "Low (<= 40%)"))
 
 # combine the dropland and primary forest plots
 combined_forest_plots <- plot_grid(primary_plot, cropland_plot, ncol = 2)
