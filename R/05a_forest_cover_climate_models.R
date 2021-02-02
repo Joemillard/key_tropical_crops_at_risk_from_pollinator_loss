@@ -221,6 +221,30 @@ predicts_climate <- predicts_climate %>%
 predicts_climate$forest_fact[predicts_climate$forest_cover >= 60] <- "high_cover"
 predicts_climate$forest_fact[predicts_climate$forest_cover <= 40] <- "low_cover"
 
+# read in habitat files
+habitat_files <- paste("G:/Extra_data_files/habitat_data", list.files("G:/Extra_data_files/habitat_data"), sep = "/")
+
+# select only the .bil file names
+habitat_files_bil <- habitat_files[grep(".bil", habitat_files)]
+
+# read in each .bil raster
+habitat_files_list <- list()
+for(i in 1:length(habitat_files_bil)){
+  habitat_files_list[[i]] <-  raster(habitat_files_bil[[i]])
+}
+
+# subset for the natural habitat rasters and sum
+habitat_natural <- habitat_files_list[[3]] + habitat_files_list[[4]]
+
+# extract the natural forest cover at each location
+# extract the value of forest cover for each primary vegetation site
+habitat_cover <- extract(habitat_natural, prim_spat, na.rm = TRUE)
+
+# bind the coordinates back onto the extracted coordinates
+predicts_climate <- predicts_climate %>%
+  #cbind(habitat_cover) %>%
+  rename(forest_cover = prim_cover)
+
 # add 1 for abundance and simpson diversity
 predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
 predicts_climate$Simpson_diversity <- predicts_climate$Simpson_diversity + 1
