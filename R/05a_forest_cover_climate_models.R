@@ -219,6 +219,7 @@ predicts_climate <- predicts_climate %>%
 
 # create factors for high and low forest cover
 predicts_climate$forest_fact[predicts_climate$forest_cover >= 60] <- "high_cover"
+#predicts_climate$forest_fact[predicts_climate$forest_cover > 40 & predicts_climate$forest_cover < 60] <- "int_cover"
 predicts_climate$forest_fact[predicts_climate$forest_cover <= 40] <- "low_cover"
 
 # read in habitat files
@@ -242,8 +243,12 @@ habitat_cover <- extract(habitat_natural, prim_spat, na.rm = TRUE)
 
 # bind the coordinates back onto the extracted coordinates
 predicts_climate <- predicts_climate %>%
-  #cbind(habitat_cover) %>%
-  rename(forest_cover = prim_cover)
+  cbind(habitat_cover)
+
+# create factors for natural habitat
+predicts_climate$nat_fact[predicts_climate$habitat_cover >= 0.6] <- "high_nat"
+#predicts_climate$nat_fact[predicts_climate$habitat_cover > 0.4 & predicts_climate$habitat_cover < 0.6] <- "int_nat"
+predicts_climate$nat_fact[predicts_climate$habitat_cover <= 0.4] <- "low_nat"
 
 # add 1 for abundance and simpson diversity
 predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
@@ -255,7 +260,7 @@ table(predicts_climate$Predominant_land_use, predicts_climate$forest_fact)
 # create vector for baseline forest cover
 land_use_type <- c("Cropland", "Primary vegetation")
 
-# set up plot objects for each metric
+## set up plot objects for each metric for forest cover
 abundance_object <- list()
 abundance_plot <- list()
 model_2a <- list()
@@ -309,6 +314,61 @@ combined_forest_plots <- plot_grid(primary_plot, cropland_plot, ncol = 2)
 
 # save the combined forest and climate anomaly plot
 ggsave("forest_anomaly_plot.png", scale = 1, dpi = 350)
+
+## set up plot objects for each metric for natural habitat
+abundance_object_hab <- list()
+abundance_plot_hab <- list()
+model_2a_hab <- list()
+
+# set up loop, with each iteration removing one forest cover baseline
+for(i in 1:length(land_use_type)){
+  
+  # filter for primary vegetation high or low cover and drop the leftover levels
+  pollinator_metrics_cover_filt <- predicts_climate %>%
+    filter(Predominant_land_use == !!land_use_type[i]) %>%
+    droplevels()
+  
+  # print the number of factor combinations
+  print(table(pollinator_metrics_cover_filt$Predominant_land_use, pollinator_metrics_cover_filt$nat_fact))
+  
+  # run the model for abundance
+  model_2a_hab[[i]] <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * nat_fact + (1|SS) + (1|SSB), data = pollinator_metrics_cover_filt) # best model
+  
+  # run predictions for the model of standard anomaly
+  abundance_object_hab[[i]] <- predict_continuous(model = model_2a_hab[[i]],
+                                              model_data = pollinator_metrics_cover_filt,
+                                              response_variable = "Total_abundance",
+                                              categorical_variable = c("nat_fact"),
+                                              continuous_variable = c("standard_anom"),
+                                              continuous_transformation = log10,
+                                              random_variable = c("SS", "SSB", "SSBS"))
+  
+  # plot for standardised anomaly and land-use for abundance
+  abundance_plot_hab[[i]] <- ggplot(abundance_object_hab[[i]]) +
+    geom_ribbon(aes(x = standard_anom, y = y_value, fill = nat_fact, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.3) +
+    geom_line(aes(x = standard_anom, y = y_value, colour = nat_fact), size = 1.5, alpha = 0.7) +
+    xlab("Standardised climate anomaly") +
+    ylab("Total abundance") +
+    theme_bw() +
+    theme(panel.grid = element_blank(), legend.position = "bottom")
+  
+}
+
+# build plots for varying forest cover
+cropland_plot <- abundance_plot_hab[[1]] +
+  #scale_fill_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
+  #scale_colour_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
+  ylab("")
+
+primary_plot <- abundance_plot_hab[[2]]# + 
+scale_fill_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
+  scale_colour_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High (>= 60%)", "Low (<= 40%)"))
+
+# combine the dropland and primary forest plots
+combined_nat_plots <- plot_grid(primary_plot, cropland_plot, ncol = 2)
+
+# save the combined forest and climate anomaly plot
+ggsave("habitat_anomaly_plot.png", scale = 1, dpi = 350)
 
 ## total abundance, 2 continuous
 model_2a <- lmer(log(Total_abundance) ~ log10(standard_anom + 1) * Predominant_land_use + (1|SS), data = predicts_climate) 
