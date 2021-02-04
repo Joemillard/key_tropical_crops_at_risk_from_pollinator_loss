@@ -277,23 +277,25 @@ for(i in 1:length(land_use_type)){
   print(table(pollinator_metrics_cover_filt$Predominant_land_use, pollinator_metrics_cover_filt$forest_fact))
   
   # run the model for abundance
-  model_2a[[i]] <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * forest_fact + (1|SS) + (1|SSB), data = pollinator_metrics_cover_filt) # best model
+  model_2a[[i]] <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * habitat_cover + (1|SS) + (1|SSB), data = pollinator_metrics_cover_filt) # best model
+  
+  prediction_data <- pollinator_metrics_cover_filt
   
   # run predictions for the model of standard anomaly
   abundance_object[[i]] <- predict_continuous(model = model_2a[[i]],
                                         model_data = pollinator_metrics_cover_filt,
                                         response_variable = "Total_abundance",
-                                        categorical_variable = c("forest_fact"),
+                                        categorical_variable = c("habitat_cover"),
                                         continuous_variable = c("standard_anom"),
                                         continuous_transformation = log10,
                                         random_variable = c("SS", "SSB", "SSBS"))
 
   # plot for standardised anomaly and land-use for abundance
   abundance_plot[[i]] <- ggplot(abundance_object[[i]]) +
-    geom_ribbon(aes(x = standard_anom, y = y_value, fill = forest_fact, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.3) +
-    geom_line(aes(x = standard_anom, y = y_value, colour = forest_fact), size = 1.5, alpha = 0.7) +
+    geom_point(aes(x = standard_anom, y = habitat_cover, colour = y_value)) +
+   # geom_line(aes(x = standard_anom, y = y_value, colour = forest_fact), size = 1.5, alpha = 0.7) +
     xlab("Standardised climate anomaly") +
-    ylab("Total abundance") +
+    ylab("Forest cover") +
     theme_bw() +
     theme(panel.grid = element_blank(), legend.position = "bottom")
   
