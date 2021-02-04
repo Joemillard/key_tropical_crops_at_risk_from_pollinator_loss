@@ -51,7 +51,7 @@ PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end
 
 # calculate the means and standard deviation for the beginning of the series
 # take names of values for 1901 to 1905
-tmp1901_1905 <- tmp[[names(tmp)[1:60]]]
+tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
 
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
@@ -74,7 +74,7 @@ calc_baseline <- function(data_file, func, pred_points, pred_points_sp){
 }
 
 # calculate the mean baseline, and convert to character for merging
-climate_start_mean <- calc_baseline(tmp1901_1905, 
+climate_start_mean <- calc_baseline(tmp1901_1931, 
                                     func = mean, 
                                     pred_points = PRED_sites, 
                                     pred_points_sp = PRED_sites_sp) %>%
@@ -82,7 +82,7 @@ climate_start_mean <- calc_baseline(tmp1901_1905,
   mutate(Longitude = as.character(Longitude))
 
 # calculate the sd baseline, and convert to character for merging
-climate_start_sd <- calc_baseline(tmp1901_1905, 
+climate_start_sd <- calc_baseline(tmp1901_1931, 
                                   func = stats::sd, 
                                   pred_points = PRED_sites, 
                                   pred_points_sp = PRED_sites_sp) %>%
@@ -355,17 +355,17 @@ for(i in 1:length(land_use_type)){
 }
 
 # build plots for varying forest cover
-cropland_plot <- abundance_plot_hab[[1]] +
+cropland_hab_plot <- abundance_plot_hab[[1]] +
   #scale_fill_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
   #scale_colour_manual("Cropland forest cover", values = c("#D55E00", "#E69F00"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
   ylab("")
 
-primary_plot <- abundance_plot_hab[[2]]# + 
+primary_hab_plot <- abundance_plot_hab[[2]]# + 
 scale_fill_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High (>= 60%)", "Low (<= 40%)")) +
   scale_colour_manual("Primary forest cover", values = c("#006400", "#44AA99"), labels = c("High (>= 60%)", "Low (<= 40%)"))
 
 # combine the dropland and primary forest plots
-combined_nat_plots <- plot_grid(primary_plot, cropland_plot, ncol = 2)
+combined_nat_plots <- plot_grid(cropland_hab_plot, primary_hab_plot, ncol = 2)
 
 # save the combined forest and climate anomaly plot
 ggsave("habitat_anomaly_plot.png", scale = 1, dpi = 350)
