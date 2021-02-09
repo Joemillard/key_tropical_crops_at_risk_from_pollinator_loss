@@ -140,7 +140,7 @@ crop_df %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
   geom_tile(aes(x = x, y = y, fill = layer_group)) +
-  scale_fill_viridis_d("Pollination dependent crop production \n (kg)", 
+  scale_fill_viridis_d("Pollination dependent crop production \n(metric tonnes)", 
                        na.value = "transparent", 
                        option = "plasma",
                        labels = c("10,000-100,000", "1,000-10,000", "100-1,000", "10-100", "1-10", "<1", "0")) +
@@ -152,4 +152,4 @@ crop_df %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank())
 
-ggsave("pollination_dep_crop_production.png", scale = 1.2, dpi = 350)
+ggsave("pollination_dep_crop_production_2.png", scale = 1.2, dpi = 350)
