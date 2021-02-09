@@ -62,7 +62,7 @@ for(j in 1:length(taxa_phyla)){
     filter(!is.na(Latitude))
   
   # calculate the means and standard deviation for the beginning of the series
-  # take names of values for 1901 to 1905
+  # take names of values for 1901 to 1931
   tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
   
   # extract the points for each the predicts coordinates
@@ -207,7 +207,7 @@ for(j in 1:length(taxa_phyla)){
   predicts_climate$Simpson_diversity <- predicts_climate$Simpson_diversity + 1
   
   # species richness, standard anom as a factor
-  model_2c_1[[j]] <- lmerTest::lmer(log(Total_abundance) ~ log10(standard_anom + 1) * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
+  model_2c_1[[j]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
   
   # run predictions for the model of standard anomaly
   abundance_model[[j]] <- predict_continuous(model = model_2c_1[[j]],
@@ -215,7 +215,7 @@ for(j in 1:length(taxa_phyla)){
                                         response_variable = "Total_abundance",
                                         categorical_variable = c("Predominant_land_use"),
                                         continuous_variable = c("standard_anom"),
-                                        continuous_transformation = log10,
+                                        continuous_transformation = "",
                                         random_variable = c("SS", "SSB", "SSBS"))
   
   # plot for standardised anomaly and land-use for abundance

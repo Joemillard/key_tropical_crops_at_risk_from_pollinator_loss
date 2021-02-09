@@ -43,7 +43,7 @@ predict_continuous <- function(model,
                                    y_value_plus, 
                                    y_value_minus, 
                                    metric = response_variable,
-                                   continuous_transformation(prediction_data[, continuous_variable[1]])))
+                                   prediction_data[, continuous_variable[1]]))
   
   # rename last column after transformation
   colnames(bound_values)[ncol(bound_values)] <- paste(continuous_variable[1], "transform", sep = "_")
