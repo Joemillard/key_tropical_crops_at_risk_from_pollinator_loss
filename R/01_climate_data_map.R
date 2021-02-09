@@ -6,12 +6,17 @@
 library(raster)
 library(ggplot2)
 library(dplyr)
+library(rworldmap) 
+library(rworldxtra)
+
+# source in additional functions
+source("R/00_functions.R")
 
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # take names of values for 1901 to 1905
-tmp1901_1905 <- tmp[[names(tmp)[1:60]]]
+tmp1901_1905 <- tmp[[names(tmp)[1:361]]]
 
 # calculate the mean and sd of the baseline values
 tmp1901_1905mean <- calc(tmp1901_1905, mean)
@@ -50,9 +55,19 @@ anom_df$value_group[anom_df$value < 0] <- "< 0"
 # order the levels of those factors
 anom_df$value_group <- factor(anom_df$value_group, levels = c("> 2", "1 - 2", "0.5 - 1", "0.25 - 0.5", "0 - 0.25", "< 0"))
 
+# bring in basemap for climate site plot 
+base_map <- get_basemap()
+
+base_map <- spTransform(base_map, CRS = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+
+# fortify the main map
+map_fort <- fortify(base_map)
+
 # plot the ggplot map for climate anomaly
 anom_df %>%
   ggplot() +
+  geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
+  
   geom_tile(aes(x = x, y = y, fill = value_group)) +
   scale_fill_manual("Standardised climate anomaly", values = c("#000000", "darkred", "#D55E00", "#E69F00", "#F0E442", "#56B4E9")) +
   coord_equal() +
