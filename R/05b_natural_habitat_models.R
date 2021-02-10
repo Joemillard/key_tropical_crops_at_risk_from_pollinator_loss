@@ -231,6 +231,9 @@ for(j in 1:length(taxa_phyla)){
   
 }
 
+# percentage change in abundance for insects
+(max(abundance_model[[1]]$y_value) - min(abundance_model[[1]]$y_value)) / max(abundance_model[[1]]$y_value)
+
 plot_grid(main_plot[[1]] +
             ggtitle("Insects") +
           theme(legend.position = "bottom"), main_plot[[2]] + 
