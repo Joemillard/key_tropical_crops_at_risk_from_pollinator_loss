@@ -49,13 +49,12 @@ PREDICTS_non_pollinating <- PREDICTS %>%
   filter(Class == "Insecta") %>%
   filter(!COL_ID %in% as.character(PREDICTS_pollinators_orig$COL_ID)) %>%
   filter(Order != "Lepidoptera") %>%
+  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels() %>%
   mutate(Pollinating = "N")
 
 # bind together the two dataframes
-pollinat_bound <- rbind(PREDICTS_non_pollinating, PREDICTS_pollinators_orig) %>%
-  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
-  droplevels()
+pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
 
 # set up vector for filtering for vertebrates and invertebrates
 pollinating_vec <- c("Y", "N")
@@ -66,9 +65,7 @@ for(j in 1:length(pollinating_vec)){
   
   # PREDICTS data compilation
   # filter for main pollinating taxa
-  PREDICTS_pollinators <- pollinat_bound %>%
-    dplyr::filter(Pollinating == pollinating_vec[j]) %>%
-    droplevels()
+  PREDICTS_pollinators <- pollinat_bound[[j]]
   
   # correct for sampling effort
   PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
@@ -219,6 +216,7 @@ for(m in 1:length(pollinating_vec)){
   
 }
 
+# plot for the pollinating insects and non-pollinating insects
 plot_grid(main_plot_abundance[[1]] +
             ggtitle("Pollinating insects") +
             theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
