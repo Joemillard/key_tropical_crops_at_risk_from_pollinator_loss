@@ -28,11 +28,6 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 # set up vector for filtering for vertebrates and invertebrates
 taxa_phyla <- c("Arthropoda", "Chordata")
 
-# set up empty lists
-model_2c_1 <- list()
-abundance_model <- list()
-main_plot <- list()
-
 # loop through each phylum
 for(j in 1:length(taxa_phyla)){
   
@@ -206,20 +201,36 @@ for(j in 1:length(taxa_phyla)){
   predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
   predicts_climate$Simpson_diversity <- predicts_climate$Simpson_diversity + 1
   
-  # species richness, standard anom as a factor
-  model_2c_1[[j]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
+  # assign to list of predicts_climate and insects and vertebrates
+  predict_climate_list[[j]] <- predicts_climate
   
+}
+
+# set up new lists for output
+model_2c_abundance <- list()
+abundance_model <- list()
+main_plot_abundance <- list()
+model_2c_richness <- list()
+richness_model <- list()
+main_plot_richness <- list()
+
+# run models for both species richness and total abundance
+for(i in 1:length(taxa_phyla)){
+
+  # species richness, standard anom as a factor
+  model_2c_abundance[[i]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[i]]) 
+    
   # run predictions for the model of standard anomaly
-  abundance_model[[j]] <- predict_continuous(model = model_2c_1[[j]],
-                                        model_data = predicts_climate,
-                                        response_variable = "Total_abundance",
-                                        categorical_variable = c("Predominant_land_use"),
-                                        continuous_variable = c("standard_anom"),
-                                        continuous_transformation = "",
-                                        random_variable = c("SS", "SSB", "SSBS"))
+  abundance_model[[i]] <- predict_continuous(model = model_2c_abundance[[i]],
+                                              model_data = predict_climate_list[[i]],
+                                              response_variable = "Total_abundance",
+                                              categorical_variable = c("Predominant_land_use"),
+                                              continuous_variable = c("standard_anom"),
+                                              continuous_transformation = "",
+                                              random_variable = c("SS", "SSB", "SSBS"))
   
   # plot for standardised anomaly and land-use for abundance
-  main_plot[[j]] <- ggplot(abundance_model[[j]]) +
+  main_plot_abundance[[i]] <- ggplot(abundance_model[[i]]) +
     geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
     geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
     scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
@@ -229,14 +240,43 @@ for(j in 1:length(taxa_phyla)){
     theme_bw() +
     theme(panel.grid = element_blank())
   
+  # species richness, standard anom as a factor
+  model_2c_richness[[i]] <- glmer(Species_richness ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[i]]) 
+  
+  # run predictions for the model of standard anomaly
+  richness_model[[i]] <- predict_continuous(model = model_2c_richness[[i]],
+                                             model_data = predict_climate_list[[i]],
+                                             response_variable = "Species_richness",
+                                             categorical_variable = c("Predominant_land_use"),
+                                             continuous_variable = c("standard_anom"),
+                                             continuous_transformation = "",
+                                             random_variable = c("SS", "SSB", "SSBS"))
+    
+  # plot for standardised anomaly and land-use for richness
+  main_plot_richness[[i]] <- ggplot(richness_model[[i]]) +
+    geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
+    geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    xlab("Standardised climate anomaly") +
+    ylab("Species richness") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
+  
 }
 
 # percentage change in abundance for insects
 (max(abundance_model[[1]]$y_value) - min(abundance_model[[1]]$y_value)) / max(abundance_model[[1]]$y_value)
 
-plot_grid(main_plot[[1]] +
+plot_grid(main_plot_abundance[[1]] +
             ggtitle("Insects") +
-          theme(legend.position = "bottom"), main_plot[[2]] + 
+            theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
+            ggtitle("Vertebrates") +
+            theme(legend.position = "bottom"), ncol = 2)
+
+plot_grid(main_plot_richness[[1]] +
+            ggtitle("Insects") +
+            theme(legend.position = "bottom"), main_plot_richness[[2]] + 
             ggtitle("Vertebrates") +
             theme(legend.position = "bottom"), ncol = 2)
 
