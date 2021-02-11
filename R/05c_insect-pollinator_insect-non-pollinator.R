@@ -58,7 +58,7 @@ pollinat_bound <- rbind(PREDICTS_non_pollinating, PREDICTS_pollinators_orig) %>%
   droplevels()
 
 # set up vector for filtering for vertebrates and invertebrates
-pollinating_vec <- c("Y")
+pollinating_vec <- c("Y", "N")
 predict_climate_list <- list()
 
 # loop through each phylum
@@ -66,7 +66,7 @@ for(j in 1:length(pollinating_vec)){
   
   # PREDICTS data compilation
   # filter for main pollinating taxa
-  PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
+  PREDICTS_pollinators <- pollinat_bound %>%
     dplyr::filter(Pollinating == pollinating_vec[j]) %>%
     droplevels()
   
