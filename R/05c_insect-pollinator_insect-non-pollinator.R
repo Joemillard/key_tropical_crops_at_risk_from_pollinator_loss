@@ -13,7 +13,8 @@ library(cowplot)
 library(viridis)
 
 # read in the original predicts database 
-PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/Data/PREDICTS/database.rds")
+PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/Data/PREDICTS/database.rds") %>%
+  mutate(COL_ID = as.character(COL_ID))
 
 # source in additional functions
 source("R/00_functions.R")
@@ -39,13 +40,14 @@ tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds") %>%
   dplyr::select(-clade_rank, -confidence)  %>%
   filter(Class == "Insecta") %>%
+  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels() %>%
   mutate(Pollinating = "Y")
 
 # filter the pollinators from the overall predicts database
 PREDICTS_non_pollinating <- PREDICTS %>%
   filter(Class == "Insecta") %>%
-  filter(!COL_ID %in% PREDICTS_pollinators_orig$COL_ID) %>%
+  filter(!COL_ID %in% as.character(PREDICTS_pollinators_orig$COL_ID)) %>%
   filter(Order != "Lepidoptera") %>%
   droplevels() %>%
   mutate(Pollinating = "N")
@@ -56,7 +58,7 @@ pollinat_bound <- rbind(PREDICTS_non_pollinating, PREDICTS_pollinators_orig) %>%
   droplevels()
 
 # set up vector for filtering for vertebrates and invertebrates
-pollinating_vec <- c("Y", "N")
+pollinating_vec <- c("Y")
 predict_climate_list <- list()
 
 # loop through each phylum
@@ -64,7 +66,7 @@ for(j in 1:length(pollinating_vec)){
   
   # PREDICTS data compilation
   # filter for main pollinating taxa
-  PREDICTS_pollinators <- pollinat_bound %>%
+  PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
     dplyr::filter(Pollinating == pollinating_vec[j]) %>%
     droplevels()
   
