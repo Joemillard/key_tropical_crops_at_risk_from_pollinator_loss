@@ -219,8 +219,10 @@ for(m in 1:length(pollinating_vec)){
 # plot for the pollinating insects and non-pollinating insects
 plot_grid(main_plot_abundance[[1]] +
             ggtitle("Pollinating insects") + 
-            scale_y_continuous(limits = c(1, 6.5)) +
+           # scale_y_continuous(limits = c(1, 6.5)) +
             theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
             ggtitle("Non-pollinating insects") +
-            scale_y_continuous(limits = c(1, 6.5)) +
+           # scale_y_continuous(limits = c(1, 6.5)) +
             theme(legend.position = "bottom"), ncol = 2)
+
+ggsave("pollinating_non-pollinating.png", scale = 1, dpi = 350)
