@@ -41,8 +41,7 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
   dplyr::select(-clade_rank, -confidence)  %>%
   filter(Class == "Insecta") %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
-  droplevels() %>%
-  mutate(Pollinating = "Y")
+  droplevels()
 
 # filter the pollinators from the overall predicts database
 PREDICTS_non_pollinating <- PREDICTS %>%
@@ -50,14 +49,12 @@ PREDICTS_non_pollinating <- PREDICTS %>%
   filter(!COL_ID %in% as.character(PREDICTS_pollinators_orig$COL_ID)) %>%
   filter(Order != "Lepidoptera") %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
-  droplevels() %>%
-  mutate(Pollinating = "N")
+  droplevels()
 
 # bind together the two dataframes
 pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
 
 # set up vector for filtering for vertebrates and invertebrates
-pollinating_vec <- c("Y", "N")
 predict_climate_list <- list()
 
 # loop through each phylum
