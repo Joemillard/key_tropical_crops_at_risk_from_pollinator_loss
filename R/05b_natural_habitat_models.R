@@ -27,6 +27,7 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 
 # set up vector for filtering for vertebrates and invertebrates
 taxa_phyla <- c("Arthropoda", "Chordata")
+predict_climate_list <- list()
 
 # loop through each phylum
 for(j in 1:length(taxa_phyla)){
