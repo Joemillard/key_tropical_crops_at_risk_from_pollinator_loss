@@ -58,7 +58,7 @@ pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
 predict_climate_list <- list()
 
 # loop through each phylum
-for(j in 1:length(pollinating_vec)){
+for(j in 1:length(pollinat_bound)){
   
   # PREDICTS data compilation
   # filter for main pollinating taxa
@@ -186,7 +186,7 @@ abundance_model <- list()
 main_plot_abundance <- list()
 
 # run models for both species richness and total abundance
-for(m in 1:length(pollinating_vec)){
+for(m in 1:length(pollinat_bound)){
   
   # species richness, standard anom as a factor
   model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[m]]) 
@@ -216,10 +216,10 @@ for(m in 1:length(pollinating_vec)){
 # plot for the pollinating insects and non-pollinating insects
 plot_grid(main_plot_abundance[[1]] +
             ggtitle("Pollinating insects") + 
-           # scale_y_continuous(limits = c(1, 6.5)) +
+            scale_y_continuous(limits = c(1, 6.5)) +
             theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
             ggtitle("Non-pollinating insects") +
-           # scale_y_continuous(limits = c(1, 6.5)) +
+            scale_y_continuous(limits = c(1, 6.5)) +
             theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_2.png", scale = 1, dpi = 350)
