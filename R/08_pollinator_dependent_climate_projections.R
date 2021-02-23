@@ -74,8 +74,10 @@ for(i in 1:length(years_list)){
   # using RCP 8.5
   mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]],FUN = function(yr){
     
+    # print the set of years for that iteration
     print(yr)
     
+    # subset for all files for rcp85 and the set of years for that iteration
     all.model.files <- all.files[grepl("rcp85",all.files) & grepl(yr,all.files)]
     
     # Check that there are the same files for each scenario-year combination
@@ -83,9 +85,6 @@ for(i in 1:length(years_list)){
       X = gsub("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies/","",all.model.files),function(f) return(strsplit(x = f,split = "[-_]",fixed = FALSE)[[1]][1]))==
         c("GFDL","HadGEM2","IPSL","MIROC5")))
     
-    # what are each of these files?
-    
-    # 
     meant.anom <- mean(stack(lapply(X = all.model.files,function(f){
       
       ras <- stack(f)$"X0.1"
