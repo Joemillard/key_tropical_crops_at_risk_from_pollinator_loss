@@ -52,83 +52,57 @@ for(i in 1:length(SSP_folders)){
 future_projection <- list()
 future_projection_anomaly <- list()
 
-# for each file path, read in the climate model
-for(i in 1:length(SSP_file_path)){
-  future_projection[[i]] <- raster(SSP_file_path[i]) / 10
+# selection of years
+years <- 2048:2050
+
+years_list <- list()
+
+# set up list of years
+for(i in 1:11){
+  years <- years - 3
+  years_list[[i]] <- years
 }
 
-# set up list for rolling average
-rolling_average <- list()
+# set up list for climate anomalies
+tmp2069_71std_climate_anomaly <- list()
 
-# calculate an average for each 3 years
-step <- 1
-for(i in 1:12){
-  rolling_average[[i]] <- stack(future_projection[step:(step+2)])
-  rolling_average[[i]] <- calc(rolling_average[[i]], mean) + hist.mean.temp.1979.2013
-  print(i)
-  step <- step + 3
-}
+for(i in 1:length(years_list)){
 
-# set up climate anomaly lists
-climate_anomaly <- list()
-std_climate_anomaly <- list()
-
-# calculate the climate anomaly
-for(i in 1:length(rolling_average)){
-  climate_anomaly[[i]] <- (rolling_average[[i]] - tmp1901_1931mean)
-  std_climate_anomaly[[i]] <- climate_anomaly[[i]] / tmp1901_1931sd
-}
-
-map_anom <- function(std_climate_anom){
+  # file path for ISIMIP data
+  all.files <- dir(path = SSP_directory,recursive = TRUE,full.names = TRUE)
   
-  # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
-  tmp2004_6std_climate_anomaly <- projectRaster(std_climate_anom, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-  
-  # convert the raster to a format amenable to ggplot
-  # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
-  anom_spdf <- as(tmp2004_6std_climate_anomaly, "SpatialPixelsDataFrame")
-  anom_df <- as.data.frame(anom_spdf)
-  colnames(anom_df) <- c("value", "x", "y")
-  
-  # group the categories of climate anomaly into factors
-  anom_df$value_group[anom_df$value >= 2] <- ">= 4"
-  anom_df$value_group[anom_df$value > 1 & anom_df$value <= 2] <- "1 - 2"
-  anom_df$value_group[anom_df$value > 0.5 & anom_df$value <= 1] <- "0.5 - 1"
-  anom_df$value_group[anom_df$value > 0.25 & anom_df$value <= 0.5] <- "0.25 - 0.5"
-  anom_df$value_group[anom_df$value >= 0 & anom_df$value <= 0.25] <- "0 - 0.25"
-  anom_df$value_group[anom_df$value < 0] <- "< 0"
-  
-  # order the levels of those factors
-  anom_df$value_group <- factor(anom_df$value_group, levels = c(">= 4", "1 - 2", "0.5 - 1", "0.25 - 0.5", "0 - 0.25", "< 0"))
-  
-  # bring in basemap for climate site plot 
-  base_map <- get_basemap()
-  
-  base_map <- spTransform(base_map, CRS = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-  
-  # fortify the main map
-  map_fort <- fortify(base_map)
-  
-  # plot the ggplot map for climate anomaly
-  anom <- anom_df %>%
-    ggplot() +
-    geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
+  # using RCP 8.5
+  mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]],FUN = function(yr){
     
-    geom_tile(aes(x = x, y = y, fill = value_group)) +
-    scale_fill_manual("Standardised climate anomaly", values = c("#000000", "grey", "grey", "grey", "grey", "grey")) +
-    coord_equal() +
-    theme(panel.background = element_blank(),
-          panel.bord = element_rect(fill = NA),
-          panel.grid = element_blank(), 
-          axis.text = element_blank(),
-          axis.ticks = element_blank(), 
-          axis.title = element_blank())
+    print(yr)
+    
+    all.model.files <- all.files[grepl("rcp85",all.files) & grepl(yr,all.files)]
+    
+    # Check that there are the same files for each scenario-year combination
+    stopifnot(all(sapply(
+      X = gsub("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies/","",all.model.files),function(f) return(strsplit(x = f,split = "[-_]",fixed = FALSE)[[1]][1]))==
+        c("GFDL","HadGEM2","IPSL","MIROC5")))
+    
+    # what are each of these files?
+    
+    # 
+    meant.anom <- mean(stack(lapply(X = all.model.files,function(f){
+      
+      ras <- stack(f)$"X0.1"
+      
+    })),na.rm=TRUE)
+    
+    meant <- hist.mean.temp.1979.2013 + (meant.anom/10)
+    
+    return(meant)
+    
+  }))
   
-  return(anom)
+  mean.temp.2069.2071 <- stackApply(x = mean.temp.2069.2071,indices = rep(1,3),fun = mean)
   
+  # calc the anomalies for the future years
+  tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean)
+  tmp2069_71std_climate_anomaly[[i]] <- (mean.temp.2069.2071-tmp1901_1931mean)  / tmp1901_1931sd
+
 }
-
-anom_maps <- lapply(std_climate_anomaly, map_anom)
-
-plot_grid(anom_maps[[1]], anom_maps[[12]])
 
