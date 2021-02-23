@@ -25,7 +25,7 @@ tmp1901_1931sd <- calc(tmp1901_1931, stats::sd)
 # set up the starting directory
 SSP_directory <- ("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
-# set up historical anomaly to be added on
+# set up historical change to be added on
 months.1979.2013 <- 937:1356
 
 # calculate the average temperature for 1979-2013 onto which anomaly is added
