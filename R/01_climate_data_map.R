@@ -15,7 +15,7 @@ source("R/00_functions.R")
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
-# take names of values for 1901 to 1905
+# take names of values for 1901 to 1905 - 361 is 30 year baseline
 tmp1901_1905 <- tmp[[names(tmp)[1:361]]]
 
 # calculate the mean and sd of the baseline values
