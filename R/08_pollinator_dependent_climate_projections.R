@@ -241,14 +241,15 @@ for(i in 1:length(std_anom_high)){
 
 # create dataframe for exposed production and build datafrmae
 data.frame("production" = vulnerable_production, "year" = c(seq(2048, 2016, -1))) %>%
-  mutate("percentage" = (vulnerable_production / total_production) * 100) %>%
+  #mutate("percentage" = (vulnerable_production / total_production) * 100) %>%
    ggplot() +
-    geom_line(aes(x = year, y = percentage)) +
-    geom_point(aes(x = year, y = percentage)) +
-   # scale_y_continuous(limits = c(0, 265000), expand = c(0, 0)) +
+    geom_line(aes(x = year, y = production)) +
+    geom_point(aes(x = year, y = production)) +
+    scale_y_continuous(limits = c(0, 265000), expand = c(0, 0), breaks = c(50000, 100000, 150000, 200000, 250000), labels = c("50,000", "100,000", "150,000", "200,000", "250,000")) +
     scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
     ylab("Un-viable pollination dependent prod. (mt tonnes)") +
     xlab("Year") +
     theme_bw() +
     theme(panel.grid = element_blank())
 
+ggsave("rcp_85_pollination_exposure.png", scale = 0.9, dpi = 350)
