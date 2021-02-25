@@ -102,6 +102,9 @@ for(i in 1:length(rate_rasters)){
 stacked_rasters <- stack(rate_rasters_adj)
 crop.total <- sum(stacked_rasters, na.rm = T)
 
+# calculate total pollination dependent production
+total_production <- sum(crop.total[])
+
 # read in the raster for the historical data to get the baseline
 ## standardised climate anomaly script
 # load in the mean temperature data from CRU
@@ -233,14 +236,19 @@ for(i in 1:length(std_anom_high)){
   # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
   vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
   vulnerable_production[i] <- unlist(vulnerable_production_list[[i]]) %>% sum()
+  
 }
 
 # create dataframe for exposed production and build datafrmae
 data.frame("production" = vulnerable_production, "year" = c(seq(2048, 2016, -1))) %>%
-  ggplot() +
-    geom_line(aes(x = year, y = production)) +
-    geom_point(aes(x = year, y = production)) +
-    scale_y_continuous(limits = c(0, 210000), expand = c(0, 0)) +
+  mutate("percentage" = (vulnerable_production / total_production) * 100) %>%
+   ggplot() +
+    geom_line(aes(x = year, y = percentage)) +
+    geom_point(aes(x = year, y = percentage)) +
+   # scale_y_continuous(limits = c(0, 265000), expand = c(0, 0)) +
+    scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+    ylab("Un-viable pollination dependent prod. (mt tonnes)") +
+    xlab("Year") +
     theme_bw() +
     theme(panel.grid = element_blank())
 
