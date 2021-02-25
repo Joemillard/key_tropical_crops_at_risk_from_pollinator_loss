@@ -151,8 +151,8 @@ years <- 2048:2050
 years_list <- list()
 
 # set up list of years
-for(i in 1:11){
-  years <- years - 3
+for(i in 1:33){
+  years <- years - 1
   years_list[[i]] <- years
 }
 
@@ -218,6 +218,7 @@ for(i in 1:length(tmp2069_71std_climate_anomaly)){
     unique() %>%
     SpatialPoints()
   
+  # print the number of coordinates
   print(length(std_anom_high[[i]]))
   
 }
@@ -235,7 +236,7 @@ for(i in 1:length(std_anom_high)){
 }
 
 # create dataframe for exposed production and build datafrmae
-data.frame("production" = vulnerable_production, "year" = c(seq(2046, 2016, -3))) %>%
+data.frame("production" = vulnerable_production, "year" = c(seq(2048, 2016, -1))) %>%
   ggplot() +
     geom_line(aes(x = year, y = production)) +
     geom_point(aes(x = year, y = production)) +
