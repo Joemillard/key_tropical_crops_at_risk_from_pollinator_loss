@@ -17,11 +17,17 @@ source("R/00_functions.R")
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
-# read in the forest data
-hansen_tree_cover <- raster("G:/Extra_data_files/forest_data/Hansen_full.tif")
+# list the crop specific folders in the directory for external hard drive
+cropdirs <- list.dirs("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
+
+# read in the Klein pollinator dependent crops
+klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops/data_cleaned.csv"))
 
 # read in the predicts pollinators
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds")
+
+# set up the starting directory for future climate data
+SSP_directory <- ("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
@@ -191,92 +197,31 @@ predicts_climate %>%
 
 # add 1 for abundance and simpson diversity
 predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
-predicts_climate$Simpson_diversity <- predicts_climate$Simpson_diversity + 1
 
+# run model for total abundance for insect pollinators
+model_2c_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
 
+# run predictions for the model of standard anomaly
+abundance_model <- predict_continuous(model = model_2c_abundance,
+                                           model_data = predicts_climate,
+                                           response_variable = "Total_abundance",
+                                           categorical_variable = c("Predominant_land_use"),
+                                           continuous_variable = c("standard_anom"),
+                                           continuous_transformation = "",
+                                           random_variable = c("SS", "SSB", "SSBS"))
 
+# plot for standardised anomaly and land-use for abundance
+main_plot_abundance <- ggplot(abundance_model) +
+  geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
+  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+  xlab("Standardised climate anomaly") +
+  ylab("Total abundance") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
 
-
-# set up new lists for output
-model_2c_abundance <- list()
-abundance_model <- list()
-main_plot_abundance <- list()
-model_2c_richness <- list()
-richness_model <- list()
-main_plot_richness <- list()
-
-# run models for both species richness and total abundance
-for(i in 1:length(taxa_phyla)){
-  
-  # species richness, standard anom as a factor
-  model_2c_abundance[[i]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[i]]) 
-  
-  # run predictions for the model of standard anomaly
-  abundance_model[[i]] <- predict_continuous(model = model_2c_abundance[[i]],
-                                             model_data = predict_climate_list[[i]],
-                                             response_variable = "Total_abundance",
-                                             categorical_variable = c("Predominant_land_use"),
-                                             continuous_variable = c("standard_anom"),
-                                             continuous_transformation = "",
-                                             random_variable = c("SS", "SSB", "SSBS"))
-  
-  # plot for standardised anomaly and land-use for abundance
-  main_plot_abundance[[i]] <- ggplot(abundance_model[[i]]) +
-    geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-    geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    xlab("Standardised climate anomaly") +
-    ylab("Total abundance") +
-    theme_bw() +
-    theme(panel.grid = element_blank())
-  
-  # species richness, standard anom as a factor
-  model_2c_richness[[i]] <- glmer(Species_richness ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[i]]) 
-  
-  # run predictions for the model of standard anomaly
-  richness_model[[i]] <- predict_continuous(model = model_2c_richness[[i]],
-                                            model_data = predict_climate_list[[i]],
-                                            response_variable = "Species_richness",
-                                            categorical_variable = c("Predominant_land_use"),
-                                            continuous_variable = c("standard_anom"),
-                                            continuous_transformation = "",
-                                            random_variable = c("SS", "SSB", "SSBS"))
-  
-  # plot for standardised anomaly and land-use for richness
-  main_plot_richness[[i]] <- ggplot(richness_model[[i]]) +
-    geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-    geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    xlab("Standardised climate anomaly") +
-    ylab("Species richness") +
-    theme_bw() +
-    theme(panel.grid = element_blank())
-  
-}
-
-# percentage change in abundance for insects
-(max(abundance_model[[1]]$y_value) - min(abundance_model[[1]]$y_value)) / max(abundance_model[[1]]$y_value)
-
-plot_grid(main_plot_abundance[[1]] +
-            ggtitle("Insects") +
-            theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
-            ggtitle("Vertebrates") +
-            theme(legend.position = "bottom"), ncol = 2)
-
-plot_grid(main_plot_richness[[1]] +
-            ggtitle("Insects") +
-            theme(legend.position = "bottom"), main_plot_richness[[2]] + 
-            ggtitle("Vertebrates") +
-            theme(legend.position = "bottom"), ncol = 2)
-
-# list the crop specific folders in the directory for external hard drive
-cropdirs <- list.dirs("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
-
-# read in the Klein pollinator dependent crops
-klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops/data_cleaned.csv"))
-
+## calculate pollination dependence production
 # select those with semi colon into a multiple rows
 semi_colon_crop <- klein_cleaned$MonfredaCrop[grepl(";", klein_cleaned$MonfredaCrop)]
 
@@ -365,11 +310,7 @@ crop.total <- sum(stacked_rasters, na.rm = T)
 # calculate total pollination dependent production
 total_production <- sum(crop.total[])
 
-# read in the raster for the historical data to get the baseline
 ## standardised climate anomaly script
-# load in the mean temperature data from CRU
-tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
-
 # take names of values for 1901 to 1931 - 30 year baseline
 tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
 
@@ -378,9 +319,6 @@ tmp1901_1931mean <- calc(tmp1901_1931, mean)
 tmp1901_1931sd <- calc(tmp1901_1931, stats::sd)
 
 ## read in the rasters for the future data, start with SSP585
-# set up the starting directory
-SSP_directory <- ("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
-
 # set up historical change to be added on
 months.1979.2013 <- 937:1356
 
@@ -390,27 +328,12 @@ hist.mean.temp.1979.2013 <- stack(stackApply(x = tmp[[months.1979.2013]],
 hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = rep(1,35),
                                        fun = mean)
 
-# list the files in that directory
-SSP_folders <- list.files(SSP_directory)
-
-# select rcp26 for MIROC5
-SSP_folders <- SSP_folders[grepl("MIROC5_rcp26", SSP_folders)]
-
-# setp up empty vector for file paths
-SSP_file_path <- c()
-
-# iterate through each of the folders
-for(i in 1:length(SSP_folders)){
-  SSP_file_path[i] <- paste(SSP_directory, SSP_folders[i], sep = "/")
-}
-
 # future projection list
 future_projection <- list()
 future_projection_anomaly <- list()
 
-# selection of years
+# selection of years and empty year list
 years <- 2048:2050
-
 years_list <- list()
 
 # set up list of years
@@ -422,36 +345,40 @@ for(i in 1:33){
 # set up list for climate anomalies
 tmp2069_71std_climate_anomaly <- list()
 
+# average the set of climate models and calculate climate anomaly for the average
+average_clim_models <- function(yr){
+  
+  # print the set of years for that iteration
+  print(yr)
+  
+  # subset for all files for rcp85 and the set of years for that iteration
+  all.model.files <- all.files[grepl("rcp85",all.files) & grepl(yr,all.files)]
+  
+  # Check that there are the same files for each scenario-year combination
+  stopifnot(all(sapply(
+    X = gsub("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies/","",all.model.files),function(f) return(strsplit(x = f,split = "[-_]",fixed = FALSE)[[1]][1]))==
+      c("GFDL","HadGEM2","IPSL","MIROC5")))
+  
+  meant.anom <- mean(stack(lapply(X = all.model.files,function(f){
+    
+    ras <- stack(f)$"X0.1"
+    
+  })),na.rm=TRUE)
+  
+  meant <- hist.mean.temp.1979.2013 + (meant.anom/10)
+  
+  return(meant)
+  
+}
+
+# iterate through each set of years as a rolling average
 for(i in 1:length(years_list)){
 
   # file path for ISIMIP data
   all.files <- dir(path = SSP_directory,recursive = TRUE,full.names = TRUE)
   
-  # using RCP 8.5
-  mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]],FUN = function(yr){
-    
-    # print the set of years for that iteration
-    print(yr)
-    
-    # subset for all files for rcp85 and the set of years for that iteration
-    all.model.files <- all.files[grepl("rcp85",all.files) & grepl(yr,all.files)]
-    
-    # Check that there are the same files for each scenario-year combination
-    stopifnot(all(sapply(
-      X = gsub("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies/","",all.model.files),function(f) return(strsplit(x = f,split = "[-_]",fixed = FALSE)[[1]][1]))==
-        c("GFDL","HadGEM2","IPSL","MIROC5")))
-    
-    meant.anom <- mean(stack(lapply(X = all.model.files,function(f){
-      
-      ras <- stack(f)$"X0.1"
-      
-    })),na.rm=TRUE)
-    
-    meant <- hist.mean.temp.1979.2013 + (meant.anom/10)
-    
-    return(meant)
-    
-  }))
+  # using RCP 8.5 calculate average of separate models
+  mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]],FUN = average_clim_models))
   
   mean.temp.2069.2071 <- stackApply(x = mean.temp.2069.2071,indices = rep(1,3),fun = mean)
   
@@ -461,18 +388,35 @@ for(i in 1:length(years_list)){
 
 }
 
+# set up empty list for standardised climate anomaly
 std_anom_high <- list()
 
-# for each set of climate anomaly data, subset for greater than equal to 4
-# select all pollination dependence production at greater than 4 anomaly and sum
-for(i in 1:length(tmp2069_71std_climate_anomaly)){
+# predict abundance at 0 warming on cropland
+zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
+zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form=NA)
+
+# for each set of climate anomaly data, predict abundance reduction for all climate anomaly values in each cell
+# and then sum abundance adjusted pollination dependence
+for(i in 1:length(tmp2069_71std_climate_anomaly[1])){
   
   # convert the raster to a dataframe to plot with ggplot
   std_anom_high[[i]] <- as(tmp2069_71std_climate_anomaly[[i]], "SpatialPixelsDataFrame")
   std_anom_high[[i]] <- as.data.frame(std_anom_high[[i]])
   
+  # set up prediction data on basis of that set of years
+  new_data_pred <- data.frame("standard_anom" = std_anom_high[[i]]$layer, Predominant_land_use = "Cropland")
+  
+  # predict abundance for climate anomaly and and to data frame
+  predicted_abundance <- predict(model_2c_abundance, new_data_pred, re.form = NA)
+  std_anom_high[[i]]$abundance <- predicted_abundance
+  
+  # calculate percentage change from place with 0 warming, and convert to vulnerability
+  std_anom_high[[i]]$abundance_change <- 100 - ((std_anom_high[[i]]$abundance / zero_warming_abundance) * 100)
+  
+  print(std_anom_high[[i]])
+  
   # assign 0 in layer as NA
-  std_anom_high[[i]]$layer[std_anom_high[[i]]$layer == 0] <- NA
+  #std_anom_high[[i]]$layer[std_anom_high[[i]]$layer == 0] <- NA
   
   # convert spatial dataframe to coordinates
   std_anom_high[[i]] <- std_anom_high[[i]] %>%
