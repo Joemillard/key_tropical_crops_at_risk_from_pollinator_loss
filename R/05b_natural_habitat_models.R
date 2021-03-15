@@ -19,9 +19,6 @@ source("R/00_functions.R")
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
-# read in the forest data
-hansen_tree_cover <- raster("G:/Extra_data_files/forest_data/Hansen_full.tif")
-
 # read in the predicts pollinators
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds")
 
