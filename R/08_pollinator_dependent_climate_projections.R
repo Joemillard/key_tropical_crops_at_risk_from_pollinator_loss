@@ -346,18 +346,18 @@ for(i in 1:33){
 tmp2069_71std_climate_anomaly <- list()
 
 # average the set of climate models and calculate climate anomaly for the average
-average_clim_models <- function(yr){
+average_clim_models <- function(yr, RCP, clim_models){
   
   # print the set of years for that iteration
   print(yr)
   
   # subset for all files for rcp85 and the set of years for that iteration
-  all.model.files <- all.files[grepl("rcp85",all.files) & grepl(yr,all.files)]
+  all.model.files <- all.files[grepl(RCP,all.files) & grepl(yr,all.files)]
   
   # Check that there are the same files for each scenario-year combination
   stopifnot(all(sapply(
     X = gsub("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies/","",all.model.files),function(f) return(strsplit(x = f,split = "[-_]",fixed = FALSE)[[1]][1]))==
-      c("GFDL","HadGEM2","IPSL","MIROC5")))
+      clim_models))
   
   meant.anom <- mean(stack(lapply(X = all.model.files,function(f){
     
@@ -378,7 +378,7 @@ for(i in 1:length(years_list)){
   all.files <- dir(path = SSP_directory,recursive = TRUE,full.names = TRUE)
   
   # using RCP 8.5 calculate average of separate models
-  mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]],FUN = average_clim_models))
+  mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]], FUN = average_clim_models, RCP = "rcp85", clim_models = c("GFDL","HadGEM2","IPSL","MIROC5")))
   
   mean.temp.2069.2071 <- stackApply(x = mean.temp.2069.2071,indices = rep(1,3),fun = mean)
   
@@ -450,7 +450,7 @@ data.frame("production" = vulnerable_production, "year" = c(seq(2048, 2016, -1))
     geom_point(aes(x = year, y = production)) +
     #scale_y_continuous(limits = c(0, 265000), expand = c(0, 0), breaks = c(50000, 100000, 150000, 200000, 250000), labels = c("50,000", "100,000", "150,000", "200,000", "250,000")) +
     #scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
-    ylab("Un-viable pollination dependent prod. (mt tonnes)") +
+    ylab("Vulnerability weighted pollination dependent prod. (mt tonnes)") +
     xlab("Year") +
     theme_bw() +
     theme(panel.grid = element_blank())
