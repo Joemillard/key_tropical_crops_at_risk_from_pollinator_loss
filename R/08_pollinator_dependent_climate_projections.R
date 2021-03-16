@@ -454,19 +454,24 @@ for(j in 1:length(climate_model_combs_adj)){
     # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
     vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
     vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
-    vulnerable_production_jack[[j]] <- vulnerable_production
+    vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, "model" = climate_model_combs_adj[j])
     
   }
 }
 
 # create dataframe for exposed production and build datafrmae
-data.frame("production" = vulnerable_production_jack[[6]], "year" = c(seq(2048, 2016, -1))) %>%
+rbindlist(vulnerable_production_jack) %>%
+  mutate(year = rep(c(seq(2048, 2016, -1)), 6)) %>%
+  mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5", "HadGEM2|IPSL|MIROC5", "GFDL|IPSL|MIROC5", "GFDL|HadGEM2|MIROC5", "GFDL|HadGEM2|IPSL"),
+                               labels = c("All 4 models", "Excluding GFDL", "Excluding HadGEM2", "Excluding IPSL", "Excluding MIROC5"))) %>%
   #mutate("percentage" = (vulnerable_production / total_production) * 100) %>%
    ggplot() +
-    geom_line(aes(x = year, y = production)) +
-    geom_point(aes(x = year, y = production)) +
+    geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
+    geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     scale_y_continuous(limits = c(0, 2500000), expand = c(0, 0), breaks = c(1000000, 1500000, 2000000, 2500000), labels = c("100,000", "150,000", "200,000", "250,000")) +
     scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+    scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+    scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
     ylab("Vulnerability weighted pollination dependent prod. (mt tonnes)") +
     xlab("Year") +
     theme_bw() +
