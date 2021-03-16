@@ -489,4 +489,4 @@ for(k in 1:length(RCP_scenarios)){
 
 plot_grid(RCP_plot[[1]] + theme(legend.position = "none"), RCP_plot[[2]] + theme(legend.position = "none"), RCP_plot[[3]] + theme(legend.position = "none"),  NULL, ncol = 2)
   
-ggsave("rcp_85_pollination_exposure.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_2.png", scale = 1.7, dpi = 350)
