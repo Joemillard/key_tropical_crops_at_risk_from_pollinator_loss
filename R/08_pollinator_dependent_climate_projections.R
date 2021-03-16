@@ -464,7 +464,6 @@ rbindlist(vulnerable_production_jack) %>%
   mutate(year = rep(c(seq(2048, 2016, -1)), 6)) %>%
   mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5", "HadGEM2|IPSL|MIROC5", "GFDL|IPSL|MIROC5", "GFDL|HadGEM2|MIROC5", "GFDL|HadGEM2|IPSL"),
                                labels = c("All 4 models", "Excluding GFDL", "Excluding HadGEM2", "Excluding IPSL", "Excluding MIROC5"))) %>%
-  #mutate("percentage" = (vulnerable_production / total_production) * 100) %>%
    ggplot() +
     geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
@@ -477,4 +476,4 @@ rbindlist(vulnerable_production_jack) %>%
     theme_bw() +
     theme(panel.grid = element_blank())
 
-ggsave("rcp_85_pollination_exposure.png", scale = 0.9, dpi = 350)
+ggsave("rcp_85_pollination_exposure.png", scale = 1, dpi = 350)
