@@ -478,6 +478,7 @@ for(k in 1:length(RCP_scenarios)){
     mutate(scenario = RCP_scenarios[k])
 }
 
+# bind together the
 rbindlist(RCP_plot) %>%
   mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5", "HadGEM2|IPSL|MIROC5", "GFDL|IPSL|MIROC5", "GFDL|HadGEM2|MIROC5", "GFDL|HadGEM2|IPSL"),
                         labels = c("All 4 models", "Excluding GFDL", "Excluding HadGEM2", "Excluding IPSL", "Excluding MIROC5"))) %>%
@@ -496,4 +497,5 @@ rbindlist(RCP_plot) %>%
     theme_bw() +
     theme(panel.grid = element_blank())
   
+# save facetted plot
 ggsave("rcp_85_pollination_exposure_2.png", scale = 1, dpi = 350)
