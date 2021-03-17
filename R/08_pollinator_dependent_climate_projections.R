@@ -36,49 +36,49 @@ PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   dplyr::filter(Phylum %in% "Arthropoda") %>%
   droplevels()
-  
+
 # correct for sampling effort
 PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
-  
+
 # calculate site metrics including all species (confirmed and not confirmed pollinator)
 order.sites.div <- SiteMetrics(diversity = PREDICTS_pollinators,
-                                extra.cols = c("SSB", "SSBS", "Predominant_land_use", "UN_region"),
-                                sites.are.unique = TRUE,
-                                srEstimators = TRUE)
-  
+                               extra.cols = c("SSB", "SSBS", "Predominant_land_use", "UN_region"),
+                               sites.are.unique = TRUE,
+                               srEstimators = TRUE)
+
 # set id column for merging back into correct place
 order.sites.div$id_col <- 1:nrow(order.sites.div)
-  
+
 # PREDICTS sites with the month of the recording
 PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
   mutate(Sample_end_latest = paste("X", substr(Sample_end_latest, start = 1, stop = 7), sep = "")) %>%
   mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest)) %>%
   filter(!is.na(Latitude))
-  
+
 # calculate the means and standard deviation for the beginning of the series
 # take names of values for 1901 to 1931
 tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
-  
+
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
   select(Longitude, Latitude) %>%
   filter(!is.na(Latitude)) %>%
   SpatialPoints()
-  
+
 # calc baseline (mean and sd)
 calc_baseline <- function(data_file, func, pred_points, pred_points_sp){
-    
+  
   # calcualte either the mean or standard error for baseline, then extract points for predicts sites
   data_fin <- calc(data_file, func) %>%
     extract(pred_points_sp)
-    
+  
   # bind the extracted values back onto the predicts coordinates
   data_fin <- data.frame(pred_points[,1:3 ], data_fin)
-    
-  return(data_fin)
-    
-}
   
+  return(data_fin)
+  
+}
+
 # calculate the mean baseline, and convert to character for merging
 climate_start_mean <- calc_baseline(tmp1901_1931, 
                                     func = mean, 
@@ -86,7 +86,7 @@ climate_start_mean <- calc_baseline(tmp1901_1931,
                                     pred_points_sp = PRED_sites_sp) %>%
   mutate(Latitude = as.character(Latitude)) %>%
   mutate(Longitude = as.character(Longitude))
-  
+
 # calculate the sd baseline, and convert to character for merging
 climate_start_sd <- calc_baseline(tmp1901_1931, 
                                   func = stats::sd, 
@@ -94,7 +94,7 @@ climate_start_sd <- calc_baseline(tmp1901_1931,
                                   pred_points_sp = PRED_sites_sp) %>%
   mutate(Latitude = as.character(Latitude)) %>%
   mutate(Longitude = as.character(Longitude))
-  
+
 # calculate the mean temperatures for each predicts site, 11 months previously
 # set up empty list for each dataframe
 raster_means <- list()
@@ -204,12 +204,12 @@ model_2c_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Pred
 
 # run predictions for the model of standard anomaly
 abundance_model <- predict_continuous(model = model_2c_abundance,
-                                           model_data = predicts_climate,
-                                           response_variable = "Total_abundance",
-                                           categorical_variable = c("Predominant_land_use"),
-                                           continuous_variable = c("standard_anom"),
-                                           continuous_transformation = "",
-                                           random_variable = c("SS", "SSB", "SSBS"))
+                                      model_data = predicts_climate,
+                                      response_variable = "Total_abundance",
+                                      categorical_variable = c("Predominant_land_use"),
+                                      continuous_variable = c("standard_anom"),
+                                      continuous_transformation = "",
+                                      random_variable = c("SS", "SSB", "SSBS"))
 
 # plot for standardised anomaly and land-use for abundance
 main_plot_abundance <- ggplot(abundance_model) +
@@ -283,18 +283,29 @@ klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollinati
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest/great"] <- 0.45
 
 # calculate average and standard deviation of pollination dependence for each Monfreda crop
-klein_cleaned_av <- klein_cleaned %>%
-  group_by(MonfredaCrop) %>%
-  mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
-  mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
-  ungroup() %>%
-  select(MonfredaCrop, av, standard_dev) %>%
-  unique()
+av_dependence <- function(klein_cleaned){
+  klein_cleaned_av <- klein_cleaned %>%
+    group_by(MonfredaCrop) %>%
+    mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
+    mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
+    ungroup() %>%
+    select(MonfredaCrop, av, standard_dev) %>%
+    unique()
+
+  return(klein_cleaned_av)
+}
 
 # subset klein_cleaned for those with crop data
-klein_cleaned_filt <- klein_cleaned_av %>%
-  filter(MonfredaCrop %in% pollinat_crops_simp) %>%
-  arrange(MonfredaCrop)
+subset_klein <- function(klein_cleaned_av){
+  klein_cleaned_filt <- klein_cleaned_av %>%
+    filter(MonfredaCrop %in% pollinat_crops_simp) %>%
+    arrange(MonfredaCrop)
+  
+  return(klein_cleaned_filt)
+}
+
+# run function for average pollination dependence and subset klein for those with crop data
+klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned))
 
 # multiply each raster by its pollination dependence for that crop
 rate_rasters_adj <- list()
@@ -305,8 +316,7 @@ for(i in 1:length(rate_rasters)){
 
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
-stacked_rasters <- stack(rate_rasters_adj)
-crop.total <- sum(stacked_rasters, na.rm = T)
+crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
 
 # calculate total pollination dependent production
 total_production <- sum(crop.total[])
@@ -328,10 +338,6 @@ hist.mean.temp.1979.2013 <- stack(stackApply(x = tmp[[months.1979.2013]],
                                              indices = (rep(1:35,each=12)),fun = mean))
 hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = rep(1,35),
                                        fun = mean)
-
-# future projection list
-future_projection <- list()
-future_projection_anomaly <- list()
 
 # selection of years and empty year list
 years <- 2048:2050
@@ -388,7 +394,7 @@ RCP_plot <- list()
 
 # iterate through each RCP scenario
 for(k in 1:length(RCP_scenarios)){
-
+  
   print(RCP_scenarios[k])
   
   # set up empty list for climate model combinations
@@ -397,11 +403,13 @@ for(k in 1:length(RCP_scenarios)){
   # iterate through each set of climate models to jack-knife by climate model  
   for(j in 1:length(climate_model_combs_adj)){   
     
+    print(climate_model_combs_adj[j])
+    
     # iterate through each set of years as a rolling average
     for(i in 1:length(years_list)){
-    
+      
       # file path for ISIMIP data
-      all.files <- dir(path = SSP_directory,recursive = TRUE,full.names = TRUE)
+      all.files <- dir(path = SSP_directory,recursive = TRUE, full.names = TRUE)
       
       # using RCP 8.5 calculate average of separate models
       mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]], FUN = average_clim_models, RCP = RCP_scenarios[k], clim_models = climate_model_combs_adj[j]))
@@ -411,7 +419,7 @@ for(k in 1:length(RCP_scenarios)){
       # calc the anomalies for the future years
       tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean)
       tmp2069_71std_climate_anomaly[[i]] <- (mean.temp.2069.2071-tmp1901_1931mean) / tmp1901_1931sd
-    
+      
     }
     
     # set up empty list for standardised climate anomaly
@@ -440,17 +448,11 @@ for(k in 1:length(RCP_scenarios)){
       # calculate percentage change from place with 0 warming, and convert to vulnerability
       std_high_abun_adj[[i]]$abundance_change <- 1 - (std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
       
-      # print the abundance adjusted frame for that iteration
-      print(std_high_abun_adj[[i]])
-      
       # convert spatial dataframe to coordinates
       std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
         dplyr::select(x, y) %>%
         unique() %>%
         SpatialPoints()
-      
-      # print the number of coordinates
-      print(length(std_anom_high[[i]]))
       
     }
     
@@ -460,33 +462,38 @@ for(k in 1:length(RCP_scenarios)){
     
     # for each set of coordinates, extract the pollination dependent values and sum
     for(i in 1:length(std_anom_high)){
-    
+      
       # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
       vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
       vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
-      vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, "model" = climate_model_combs_adj[j])
+      vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
+                                                    "model" = climate_model_combs_adj[j]) 
       
     }
   }
   
   # create dataframe for exposed production and build datafrmae
   RCP_plot[[k]] <- rbindlist(vulnerable_production_jack) %>%
-    mutate(year = rep(c(seq(2048, 2016, -1)), 6)) %>%
-    mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5", "HadGEM2|IPSL|MIROC5", "GFDL|IPSL|MIROC5", "GFDL|HadGEM2|MIROC5", "GFDL|HadGEM2|IPSL"),
-                                 labels = c("All 4 models", "Excluding GFDL", "Excluding HadGEM2", "Excluding IPSL", "Excluding MIROC5"))) %>%
-     ggplot() +
-      geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
-      geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
-      scale_y_continuous(limits = c(0, 2500000), expand = c(0, 0), breaks = c(1000000, 1500000, 2000000, 2500000), labels = c("100,000", "150,000", "200,000", "250,000")) +
-      scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
-      scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
-      scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
-      ylab("Vulnerability weighted pollination dependent prod. (mt tonnes)") +
-      xlab("Year") +
-      theme_bw() +
-      theme(panel.grid = element_blank())
+    mutate(year = rep(c(seq(2048, 2016, -1)), 5)) %>%
+    mutate(scenario = RCP_scenarios[k])
 }
 
-plot_grid(RCP_plot[[1]] + theme(legend.position = "none"), RCP_plot[[2]] + theme(legend.position = "none"), RCP_plot[[3]] + theme(legend.position = "none"),  NULL, ncol = 2)
+rbindlist(RCP_plot) %>%
+  mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5", "HadGEM2|IPSL|MIROC5", "GFDL|IPSL|MIROC5", "GFDL|HadGEM2|MIROC5", "GFDL|HadGEM2|IPSL"),
+                        labels = c("All 4 models", "Excluding GFDL", "Excluding HadGEM2", "Excluding IPSL", "Excluding MIROC5"))) %>%
+  mutate(scenario = factor(scenario, levels = c("rcp85", "rcp60", "rcp26"),
+                           labels = c("RCP 8.5", "RCP 6.0", "RCP 2.6"))) %>%
+  ggplot() +
+    geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
+    geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
+    facet_wrap(~scenario, ncol = 2) +
+    #scale_y_continuous(limits = c(0, 2500000), expand = c(0, 0), breaks = c(1000000, 1500000, 2000000, 2500000), labels = c("100,000", "150,000", "200,000", "250,000")) +
+    scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+    scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+    scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
+    ylab("Vulnerability weighted pollination dependent prod. (mt tonnes)") +
+    xlab("") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
   
-ggsave("rcp_85_pollination_exposure_2.png", scale = 1.7, dpi = 350)
+ggsave("rcp_85_pollination_exposure_2.png", scale = 1, dpi = 350)
