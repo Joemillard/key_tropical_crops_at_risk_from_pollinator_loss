@@ -488,7 +488,7 @@ rbindlist(RCP_plot) %>%
     geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     facet_wrap(~scenario, ncol = 2) +
-    #scale_y_continuous(limits = c(0, 2500000), expand = c(0, 0), breaks = c(1000000, 1500000, 2000000, 2500000), labels = c("100,000", "150,000", "200,000", "250,000")) +
+    scale_y_continuous(limits = c(700000, 2500000), expand = c(0, 0), breaks = c(1000000, 1500000, 2000000, 2500000), labels = c("1,000,000", "1,500,000", "2,000,000", "2,500,000")) +
     scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
     scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
     scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
