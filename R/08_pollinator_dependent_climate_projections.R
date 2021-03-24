@@ -430,6 +430,8 @@ for(k in 1:length(RCP_scenarios)){
     zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
     zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
     
+    # cap abundance so it falls no lower than 0
+    
     # for each set of climate anomaly data, predict abundance reduction for all climate anomaly values in each cell
     # and then sum abundance adjusted pollination dependence
     for(i in 1:length(tmp2069_71std_climate_anomaly)){
