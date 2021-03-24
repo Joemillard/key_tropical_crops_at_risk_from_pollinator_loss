@@ -430,8 +430,6 @@ for(k in 1:length(RCP_scenarios)){
     zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
     zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
     
-    # cap abundance so it falls no lower than 0
-    
     # for each set of climate anomaly data, predict abundance reduction for all climate anomaly values in each cell
     # and then sum abundance adjusted pollination dependence
     for(i in 1:length(tmp2069_71std_climate_anomaly)){
@@ -443,9 +441,15 @@ for(k in 1:length(RCP_scenarios)){
       # set up prediction data on basis of that set of years
       new_data_pred <- data.frame("standard_anom" = std_high_abun_adj[[i]]$layer, Predominant_land_use = "Cropland")
       
-      # predict abundance for climate anomaly and and to data frame
+      # predict abundance for climate anomaly and join to data frame
       predicted_abundance <- predict(model_2c_abundance, new_data_pred, re.form = NA)
       std_high_abun_adj[[i]]$abundance <- predicted_abundance
+      
+      # for any location that's cooled abundance is that at no warming
+      std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$layer <= 0] <- zero_warming_abundance
+      
+      # for any location that has abundance of less than 0, reassign abundance as 0
+      std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$abundance < 0] <- 0
       
       # calculate percentage change from place with 0 warming, and convert to vulnerability
       std_high_abun_adj[[i]]$abundance_change <- 1 - (std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
@@ -500,4 +504,4 @@ rbindlist(RCP_plot) %>%
     theme(panel.grid = element_blank())
   
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_2.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_4.png", scale = 1, dpi = 350)
