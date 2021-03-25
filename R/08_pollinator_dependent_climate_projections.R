@@ -498,7 +498,7 @@ rbindlist(RCP_plot) %>%
     scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
     scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
     scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
-    ylab("Vulnerability-weighted pollination prod. (mt tonnes)") +
+    ylab("Vulnerability-weighted pollination prod. (metric tonnes)") +
     xlab("") +
     theme_bw() +
     theme(panel.grid = element_blank())
