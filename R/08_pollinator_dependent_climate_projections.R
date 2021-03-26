@@ -211,16 +211,25 @@ abundance_model <- predict_continuous(model = model_2c_abundance,
                                       continuous_transformation = "",
                                       random_variable = c("SS", "SSB", "SSBS"))
 
+# filter for 95% of values
+abundance_model_filt <- abundance_model %>%
+  group_by(Predominant_land_use) %>%
+  filter(standard_anom > quantile(standard_anom, probs = c(0.025))) %>% # for each order, filter for 95% of the data
+  filter(standard_anom < quantile(standard_anom, probs = c(0.975))) %>%
+  ungroup()
+
 # plot for standardised anomaly and land-use for abundance
-main_plot_abundance <- ggplot(abundance_model) +
-  geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  xlab("Standardised climate anomaly") +
-  ylab("Total abundance") +
-  theme_bw() +
-  theme(panel.grid = element_blank())
+main_plot_abundance <- abundance_model %>% 
+  ggplot() +
+    geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
+    geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+    scale_y_continuous("Total abundance", breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
+    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    xlab("Standardised climate anomaly") +
+    ylab("Total abundance") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
 
 ## calculate pollination dependence production
 # select those with semi colon into a multiple rows
@@ -429,6 +438,7 @@ for(k in 1:length(RCP_scenarios)){
     # predict abundance at 0 warming on cropland
     zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
     zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
+    zero_warming_abundance <- exp(zero_warming_abundance)
     
     # for each set of climate anomaly data, predict abundance reduction for all climate anomaly values in each cell
     # and then sum abundance adjusted pollination dependence
@@ -443,13 +453,10 @@ for(k in 1:length(RCP_scenarios)){
       
       # predict abundance for climate anomaly and join to data frame
       predicted_abundance <- predict(model_2c_abundance, new_data_pred, re.form = NA)
-      std_high_abun_adj[[i]]$abundance <- predicted_abundance
+      std_high_abun_adj[[i]]$abundance <- exp(predicted_abundance)
       
       # for any location that's cooled abundance is that at no warming
       std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$layer <= 0] <- zero_warming_abundance
-      
-      # for any location that has abundance of less than 0, reassign abundance as 0
-      std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$abundance < 0] <- 0
       
       # calculate percentage change from place with 0 warming, and convert to vulnerability
       std_high_abun_adj[[i]]$abundance_change <- 1 - (std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
@@ -494,7 +501,7 @@ rbindlist(RCP_plot) %>%
     geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     facet_wrap(~scenario, ncol = 2) +
-    scale_y_continuous(limits = c(700000, 2500000), expand = c(0, 0), breaks = c(1000000, 1500000, 2000000, 2500000), labels = c("1,000,000", "1,500,000", "2,000,000", "2,500,000")) +
+    scale_y_continuous(limits = c(1700000, 4100000), expand = c(0, 0), breaks = c(2000000, 2500000, 3000000, 3500000, 4000000), labels = c("2,000,000", "2,500,000", "3,000,000", "3,500,000", "4,000,000")) +
     scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
     scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
     scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
@@ -504,4 +511,4 @@ rbindlist(RCP_plot) %>%
     theme(panel.grid = element_blank())
   
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_4.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_5.png", scale = 1, dpi = 350)
