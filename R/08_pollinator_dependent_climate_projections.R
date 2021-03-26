@@ -211,13 +211,6 @@ abundance_model <- predict_continuous(model = model_2c_abundance,
                                       continuous_transformation = "",
                                       random_variable = c("SS", "SSB", "SSBS"))
 
-# filter for 95% of values
-abundance_model_filt <- abundance_model %>%
-  group_by(Predominant_land_use) %>%
-  filter(standard_anom > quantile(standard_anom, probs = c(0.025))) %>% # for each order, filter for 95% of the data
-  filter(standard_anom < quantile(standard_anom, probs = c(0.975))) %>%
-  ungroup()
-
 # plot for standardised anomaly and land-use for abundance
 main_plot_abundance <- abundance_model %>% 
   ggplot() +
