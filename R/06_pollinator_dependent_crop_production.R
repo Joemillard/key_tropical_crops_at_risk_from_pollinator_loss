@@ -31,7 +31,6 @@ klein_cleaned <- rbind(klein_cleaned, semi_colon_crop) %>%
   mutate(MonfredaCrop = gsub("; citrusnes", "", MonfredaCrop)) %>%
   mutate(MonfredaCrop = gsub("; berrynes", "", MonfredaCrop)) %>%
   mutate(MonfredaCrop = gsub("; cashewapple", "", MonfredaCrop))
-  
 
 # loop through each directory and create a list of all files
 all.ras <- NULL
