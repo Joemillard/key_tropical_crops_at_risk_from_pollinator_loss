@@ -224,6 +224,12 @@ main_plot_abundance <- abundance_model %>%
     theme_bw() +
     theme(panel.grid = element_blank())
 
+# extract the max value for standardised climate anomaly on cropland
+max_standard_anom <- abundance_model %>% 
+  select(Predominant_land_use, standard_anom) %>% 
+  filter(Predominant_land_use == "Cropland") %>% 
+  pull(standard_anom) %>% max()
+
 ## calculate pollination dependence production
 # select those with semi colon into a multiple rows
 semi_colon_crop <- klein_cleaned$MonfredaCrop[grepl(";", klein_cleaned$MonfredaCrop)]
@@ -394,6 +400,9 @@ climate_model_combs_adj <- append("GFDL|HadGEM2|IPSL|MIROC5", climate_model_comb
 # set up list for each RCP plot
 RCP_plot <- list()
 
+# vector for percent_unknown - i.e. beyond the max value of ~1.6
+percent_unknown <- c()
+
 # iterate through each RCP scenario
 for(k in 1:length(RCP_scenarios)){
   
@@ -441,6 +450,10 @@ for(k in 1:length(RCP_scenarios)){
       std_high_abun_adj[[i]] <- as(tmp2069_71std_climate_anomaly[[i]], "SpatialPixelsDataFrame")
       std_high_abun_adj[[i]] <- as.data.frame(std_high_abun_adj[[i]])
       
+      percent_unknown[i] <- length(std_high_abun_adj[[i]]$layer[std_high_abun_adj[[i]]$layer > max_standard_anom]) / length(std_high_abun_adj[[i]]$layer)
+      
+      print(percent_unknown)
+      
       # set up prediction data on basis of that set of years
       new_data_pred <- data.frame("standard_anom" = std_high_abun_adj[[i]]$layer, Predominant_land_use = "Cropland")
       
@@ -472,10 +485,12 @@ for(k in 1:length(RCP_scenarios)){
       # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
       vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
       vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
-      vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
-                                                    "model" = climate_model_combs_adj[j]) 
+
       
     }
+    vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
+                                                  "model" = climate_model_combs_adj[j],
+                                                  percent_unknown) 
   }
   
   # create dataframe for exposed production and build datafrmae
@@ -505,3 +520,22 @@ rbindlist(RCP_plot) %>%
   
 # save facetted plot
 ggsave("rcp_85_pollination_exposure_5.png", scale = 1, dpi = 350)
+
+# plot of number above unknown
+rbindlist(RCP_plot) %>%
+  filter(model == "GFDL|HadGEM2|IPSL|MIROC5") %>%
+  mutate(scenario = factor(scenario, levels = c("rcp85", "rcp60", "rcp26"),
+                           labels = c("RCP 8.5", "RCP 6.0", "RCP 2.6"))) %>%
+  ggplot() +
+  geom_line(aes(x = year, y = vulnerability)) +
+  geom_point(aes(x = year, y = vulnerability, colour = percent_unknown * 100)) +
+  facet_wrap(~scenario, ncol = 2) +
+  scale_y_continuous(limits = c(1700000, 4100000), expand = c(0, 0), breaks = c(2000000, 2500000, 3000000, 3500000, 4000000), labels = c("2,000,000", "2,500,000", "3,000,000", "3,500,000", "4,000,000")) +
+  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+  scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
+  ylab("Vulnerability-weighted pollination prod. (metric tonnes)") +
+  xlab("") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+ggsave("rcp_85_all-models_cells_greater_max.png", scale = 1, dpi = 350)
