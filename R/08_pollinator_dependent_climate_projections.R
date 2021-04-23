@@ -520,22 +520,3 @@ rbindlist(RCP_plot) %>%
   
 # save facetted plot
 ggsave("rcp_85_pollination_exposure_5.png", scale = 1, dpi = 350)
-
-# plot of number above unknown
-rbindlist(RCP_plot) %>%
-  filter(model == "GFDL|HadGEM2|IPSL|MIROC5") %>%
-  mutate(scenario = factor(scenario, levels = c("rcp85", "rcp60", "rcp26"),
-                           labels = c("RCP 8.5", "RCP 6.0", "RCP 2.6"))) %>%
-  ggplot() +
-  geom_line(aes(x = year, y = vulnerability)) +
-  geom_point(aes(x = year, y = vulnerability, colour = percent_unknown * 100)) +
-  facet_wrap(~scenario, ncol = 2) +
-  scale_y_continuous(limits = c(1700000, 4100000), expand = c(0, 0), breaks = c(2000000, 2500000, 3000000, 3500000, 4000000), labels = c("2,000,000", "2,500,000", "3,000,000", "3,500,000", "4,000,000")) +
-  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
-  scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
-  ylab("Vulnerability-weighted pollination prod. (metric tonnes)") +
-  xlab("") +
-  theme_bw() +
-  theme(panel.grid = element_blank())
-
-ggsave("rcp_85_all-models_cells_greater_max.png", scale = 1, dpi = 350)
