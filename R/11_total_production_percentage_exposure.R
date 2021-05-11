@@ -460,7 +460,7 @@ for(j in 1:length(rate_rasters_adj_sub)){
 
 # create dataframe for exposed production and build datafrmae
 for(i in 1:length(all_crop_list)){
-  all_crop_list[[i]] <- data.frame("crop" = pollination_production_sum$adj_it_vec [i], "production_prop" = all_crop_list[[i]], "year" = c(seq(2048, 2016, -1)))
+  all_crop_list[[i]] <- data.frame("crop" = pollination_production_sum$adj_it_vec[i], "production_prop" = all_crop_list[[i]], "year" = c(seq(2048, 2016, -1)))
 }
   
 rbindlist(all_crop_list) %>%
