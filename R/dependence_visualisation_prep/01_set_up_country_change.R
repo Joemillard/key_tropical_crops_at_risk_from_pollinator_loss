@@ -5,7 +5,6 @@ library(dplyr)
 library(viridis)
 library(rworldmap) 
 library(rworldxtra)
-library(cowplot)
 library(data.table)
 library(lme4)
 library(yarg)
@@ -18,7 +17,7 @@ source("R/00_functions.R")
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # list the crop specific folders in the directory for external hard drive
-cropdirs <- list.dirs("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
+cropdirs <- list.dirs("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
 
 # read in the Klein pollinator dependent crops
 klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops/data_cleaned.csv"))
@@ -27,7 +26,7 @@ klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/Kl
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds")
 
 # set up the starting directory for future climate data
-SSP_directory <- ("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
+SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
@@ -229,7 +228,7 @@ rate_rasters <- list()
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
 pollinated_crops <- grep(paste(unique(paste("/", klein_cleaned$MonfredaCrop, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
-pollinat_crops_simp <- gsub("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
+pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
@@ -441,12 +440,6 @@ for(i in 1:length(std_high_abun_adj)){
   std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "LON", "LAT")])
 }
 
-# check coordinates and countries are vaguely correct
-std_high_abun_adj[[1]] %>% 
-  filter(!is.na(SOVEREIGNT)) %>% 
-  ggplot() +
-  geom_point(aes(x = x, y = y, colour = SOVEREIGNT)) + theme(legend.position = "none")
-
 country_sums <- list()
 
 # for each yearly set, calculate the pollinator vulnerability for each country
@@ -468,63 +461,5 @@ change_obj <- rbindlist(country_sums) %>%
   mutate(change = max(total) - min(total)) %>%
   ungroup()
 
-# top 10 countries for total exposure
-top_vul <- change_obj %>% 
-  select(SOVEREIGNT, av_total) %>% 
-  unique() %>% 
-  arrange(desc(av_total)) %>% 
-  slice(0:10) %>%
-  mutate(SOVEREIGNT = fct_reorder(SOVEREIGNT, -av_total)) %>%
-  droplevels()
-
-# top 10 countries for change over time
-top_change <- change_obj %>% 
-  select(SOVEREIGNT, change) %>% 
-  unique() %>% 
-  arrange(desc(change)) %>%
-  slice(0:10) %>%
-  mutate(SOVEREIGNT = fct_reorder(SOVEREIGNT, -change)) %>%
-  droplevels()
-
-# plot of total production vulnerability for each country
-top_av_countries <- change_obj %>%
-  filter(SOVEREIGNT %in% top_vul$SOVEREIGNT) %>% 
-  mutate(SOVEREIGNT = factor(SOVEREIGNT, levels = top_vul$SOVEREIGNT)) %>%
-  ggplot() +
-  geom_ribbon(aes(x = year, ymin = lower_conf, ymax = upp_conf), fill = "white", colour = "grey", alpha = 0.2, linetype = "dashed") +
-  geom_line(aes(x = year, y = total, colour = total), size = 0.8) +
-  facet_wrap(~SOVEREIGNT, nrow = 2) +
-  scale_colour_viridis("", na.value = "transparent", option = "plasma", direction = -1,
-                       limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_y_continuous(limits = c(0, 1), labels = c("0", "0.25", "0.5", "0.75", "1"), expand = c(0, 0)) +
-  scale_x_continuous(breaks = c(2020, 2040), labels = c("", "")) +
-  xlab(NULL) + 
-  ylab("Top 10 overall vulnerability") +
-  theme_bw() +
-  guides(guide_colourbar(ticks = FALSE)) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none", axis.ticks.x = element_blank(), strip.text = element_text(size = 10.5))
-
-# plot of total production vulnerability for each country
-top_change_countries <- change_obj %>%
-  filter(SOVEREIGNT %in% top_change$SOVEREIGNT) %>% 
-  mutate(SOVEREIGNT = factor(SOVEREIGNT, levels = top_change$SOVEREIGNT)) %>%
-  ggplot() +
-  geom_ribbon(aes(x = year, ymin = lower_conf, ymax = upp_conf), fill = "white", colour = "grey", alpha = 0.2, linetype = "dashed") +
-  geom_line(aes(x = year, y = total, colour = total), size = 0.8) +
-  facet_wrap(~SOVEREIGNT, nrow = 2) +
-  scale_colour_viridis("", na.value = "transparent", option = "plasma", direction = -1,
-                       limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_y_continuous(limits = c(0, 1), labels = c("0", "0.25", "0.5", "0.75", "1"), expand = c(0, 0)) +
-  scale_x_continuous(breaks = c(2020, 2030, 2040)) +
-  xlab(NULL) + 
-  ylab("Top 10 change in vulnerability") +
-  theme_bw() +
-  guides(guide_colourbar(ticks = FALSE)) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none", strip.text = element_text(size = 10.5))
-
-# combine the plots for top change and total change
-plot_grid(top_av_countries, top_change_countries, nrow = 2)
-
-ggsave("top_change_country.png", scale = 1.1, dpi = 350)
+# save the country change as an rds object
+saveRDS(change_obj, "country_change_pollination_dependence.rds")
