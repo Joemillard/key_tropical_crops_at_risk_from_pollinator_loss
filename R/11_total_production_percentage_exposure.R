@@ -449,8 +449,8 @@ for(j in 1:length(rate_rasters_adj_sub)){
     
     # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
     vulnerable_production_list[[i]] <- extract(rate_rasters_adj_sub[[j]], std_anom_high[[i]], na.rm = FALSE)
-    #vulnerable_production[i] <- (unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()) / pollination_production_sum$adj_sum_vec[j] 
-    vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
+    vulnerable_production[i] <- (unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()) / pollination_production_sum$adj_sum_vec[j] 
+    #vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
     
     
     }
