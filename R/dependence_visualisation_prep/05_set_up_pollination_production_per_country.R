@@ -117,25 +117,82 @@ for(i in 1:length(rate_rasters)){
   print(i)
 }
 
+# iteration vector for raster
+adj_it_vec <- c()
+adj_sum_vec <- c()
+iteration <- c()
+
+# select the top 5 crops for total pollination dependent production
+for(i in 1:length(rate_rasters_adj)){
+  adj_sum_vec[i] <- sum(rate_rasters_adj[[i]][])
+  adj_it_vec[i] <- klein_cleaned_filt$MonfredaCrop[i]
+  iteration[i] <- i
+}
+
+# sum of pollination dependent production production for each crop
+pollination_production_sum <- data.frame(adj_it_vec, adj_sum_vec, iteration) %>%
+  arrange(desc(adj_sum_vec)) %>%
+  slice(1:22)
+
+# subset original rate rasters for those in the top 20 pollination dependent production
+rate_rasters_adj <- rate_rasters_adj[pollination_production_sum$iteration]
+
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 for(i in 1:length(rate_rasters_adj)){
   rate_rasters_adj[[i]] <- projectRaster(rate_rasters_adj[[i]], crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
   print(i)
-  }
+}
 
-# assign empty list for production values
 production_values <- list()
 
 # convert raster of production to dataframe
 for(i in 1:length(rate_rasters_adj)){
   production_values[[i]] <- as(rate_rasters_adj[[i]], "SpatialPixelsDataFrame")
   production_values[[i]] <- as.data.frame(production_values[[i]])
+  print(i)
 }
+
+# set up list for spatial coordinates
+spatial_production <- list()
+
+# convert spatial dataframe to coordinates
+spatial_production <- production_values[[1]] %>%
+  dplyr::select(x, y) %>%
+  unique() %>%
+  SpatialPoints(proj4string = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
 
 # assign each set of coordinates to a country
-country_coords <- over(production_values[[1]], base_map, by = "ISO2", returnList = FALSE)
+country_coords <- over(spatial_production, base_map, by = "ISO2", returnList = FALSE)
+
+production_values_coords <- list()
 
 # assign the column for country, latitude and longitude back onto pollinator vulnerability data
-for(i in 1:length(std_high_abun_adj)){
-  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "LON", "LAT")])
+for(i in 1:length(production_values)){
+  production_values_coords[[i]] <- cbind(production_values[[i]], country_coords[c("SOVEREIGNT", "LON", "LAT")])
 }
+
+# bind the crop name onto each element of list
+for(i in 1:length(production_values_coords)){
+  production_values_coords[[i]]$crop <- pollination_production_sum$adj_it_vec[i]
+  colnames(production_values_coords[[i]]) <- c("production", "x", "y", "SOVEREIGNT", "Lon", "Lat", "crop")
+}
+
+crop_sums <- list()
+
+# too big to bind all together, so sum for each crop first
+for(i in 1:length(production_values_coords)){
+  crop_sums[[i]] <- production_values_coords[[i]] %>%
+    group_by(crop, SOVEREIGNT) %>%
+    summarise(total_production = sum(production))
+}
+
+saveRDS(crop_sums, "country_pollination_dependent_production.rds")
+
+# test for specific countries to check looks sensible
+rbindlist(crop_sums) %>%
+  filter(SOVEREIGNT == "Ivory Coast") %>%
+  filter(total_production != 0) %>%
+  mutate(crop = forcats::fct_reorder(crop, -total_production)) %>%
+  ggplot() +
+    geom_bar(aes(x = crop, y = total_production), stat = "identity")
+
