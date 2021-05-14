@@ -194,16 +194,19 @@ rbindlist(crop_sums) %>%
   ggplot() +
   geom_bar(aes(x = crop, y = total_production), stat = "identity")
 
-# bind together and convert crop to characters
+# bind together and convert crop to characters and add in pollination dependence
 bound_crop <- crop_sums %>%
   rbindlist() %>%
+  inner_join(klein_cleaned_filt, by = c("crop" = "MonfredaCrop")) %>%
+  dplyr::select(-standard_dev) %>%
+  rename("pollination_dependence" = "av") %>%
   mutate(crop = factor(crop, levels = sort(unique(crop))))
 
 # change the levels
 levels(bound_crop$crop) <- c("Apple", "Bean", "Cocoa", "Coconut", "Coffee", "Cucumber",
-           "Eggplant", "Fruits (NE)", "Mango", "Melon", "Oilpalm", "Oilseed", 
-           "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
-           "Soybean",  "Sunflower", "Tomato","Trop. fruits (NE)", "Watermelon")
+                             "Eggplant", "Fruits (NE)", "Mango", "Melon", "Oilpalm", "Oilseed", 
+                             "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
+                             "Soybean",  "Sunflower", "Tomato","Trop. fruits (NE)", "Watermelon")
 
 saveRDS(bound_crop, "country_pollination_dependent_production.rds")
 
