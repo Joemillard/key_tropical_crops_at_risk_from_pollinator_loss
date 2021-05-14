@@ -1,7 +1,6 @@
 # read in packages
 library(raster)
 library(ggplot2)
-library(rasterVis)
 library(dplyr)
 library(viridis)
 library(rworldmap) 
@@ -10,7 +9,6 @@ library(cowplot)
 library(data.table)
 library(lme4)
 library(yarg)
-library(cowplot)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -19,7 +17,7 @@ source("R/00_functions.R")
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # list the crop specific folders in the directory for external hard drive
-cropdirs <- list.dirs("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
+cropdirs <- list.dirs("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
 
 # read in the Klein pollinator dependent crops
 klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops/data_cleaned.csv"))
@@ -28,7 +26,7 @@ klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/Kl
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds")
 
 # set up the starting directory for future climate data
-SSP_directory <- ("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
+SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
@@ -262,7 +260,7 @@ rate_rasters <- list()
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
 pollinated_crops <- grep(paste(unique(paste("/", klein_cleaned$MonfredaCrop, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
-pollinat_crops_simp <- gsub("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
+pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
