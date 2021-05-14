@@ -186,13 +186,22 @@ for(i in 1:length(production_values_coords)){
     summarise(total_production = sum(production))
 }
 
-saveRDS(crop_sums, "country_pollination_dependent_production.rds")
-
 # test for specific countries to check looks sensible
 rbindlist(crop_sums) %>%
   filter(SOVEREIGNT == "Ivory Coast") %>%
   filter(total_production != 0) %>%
   mutate(crop = forcats::fct_reorder(crop, -total_production)) %>%
   ggplot() +
-    geom_bar(aes(x = crop, y = total_production), stat = "identity")
+  geom_bar(aes(x = crop, y = total_production), stat = "identity")
+
+# bind together and convert crop to characters
+bound_crop <- rbindlist(crop_sums) %>%
+  mutate(crop = factor(crop, levels = sort(unique(crop))), 
+         labels = c("Apple", "Bean", "Cocoa", "Coconut", "Coffee", "Cucumber",
+                    "Eggplant", "Fruits (NE)", "Mango", "Melon", "Oilpalm", "Oilseed", 
+                    "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
+                    "Soybean",  "Sunflower", "Tomato","Trop. fruits (NE)", "Watermelon"))
+
+saveRDS(bound_crop, "country_pollination_dependent_production.rds")
+
 
