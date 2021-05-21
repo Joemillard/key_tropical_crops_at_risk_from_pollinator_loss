@@ -1,16 +1,13 @@
 # read in packages
 library(raster)
 library(ggplot2)
-library(rasterVis)
 library(dplyr)
 library(viridis)
 library(rworldmap) 
 library(rworldxtra)
-library(cowplot)
 library(data.table)
 library(lme4)
 library(yarg)
-library(cowplot)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -19,7 +16,7 @@ source("R/00_functions.R")
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # list the crop specific folders in the directory for external hard drive
-cropdirs <- list.dirs("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
+cropdirs <- list.dirs("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
 
 # read in the Klein pollinator dependent crops
 klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops/data_cleaned.csv"))
@@ -28,7 +25,7 @@ klein_cleaned <- read.csv(here::here("data/KleinPollinationDependentCrops.tar/Kl
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds")
 
 # set up the starting directory for future climate data
-SSP_directory <- ("G:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
+SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
@@ -262,7 +259,7 @@ rate_rasters <- list()
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
 pollinated_crops <- grep(paste(unique(paste("/", klein_cleaned$MonfredaCrop, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
-pollinat_crops_simp <- gsub("G:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
+pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
@@ -325,6 +322,9 @@ for(i in 1:length(rate_rasters)){
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
 crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
+
+# resolution of the crop data is 6x the climate data, so need buffer by factor of 6x
+crop.total <-aggregate(crop.total, fact = 6, fun = sum)
 
 # calculate total pollination dependent production
 total_production <- sum(crop.total[])
@@ -470,7 +470,7 @@ for(k in 1:length(RCP_scenarios)){
       std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
         dplyr::select(x, y) %>%
         unique() %>%
-        SpatialPoints()
+        SpatialPoints(proj4string = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
     }
     
     # set up vector for total production
@@ -488,8 +488,6 @@ for(k in 1:length(RCP_scenarios)){
     vulnerable_production_jack <- data.frame("vulnerability" = vulnerable_production, 
                                                       "model" = "GFDL|HadGEM2|IPSL|MIROC5",
                                                       percent_unknown) 
-    
-
     
     # create dataframe for exposed production and build dataframe
     RCP_plot[[j]] <- vulnerable_production_jack %>%
@@ -512,8 +510,8 @@ rbindlist(all_scenario) %>%
   geom_line(aes(x = year, y = vulnerability, group = capping)) +
   geom_point(aes(x = year, y = vulnerability, colour = percent_unknown * 100, shape = capping)) +
   facet_wrap(~scenario, ncol = 2) +
-  scale_y_continuous(limits = c(1700000, 4100000), expand = c(0, 0), breaks = c(2000000, 2500000, 3000000, 3500000, 4000000), labels = c("2,000,000", "2,500,000", "3,000,000", "3,500,000", "4,000,000")) +
-  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+  #scale_y_continuous(limits = c(1700000, 4100000), expand = c(0, 0), breaks = c(2000000, 2500000, 3000000, 3500000, 4000000), labels = c("2,000,000", "2,500,000", "3,000,000", "3,500,000", "4,000,000")) +
+  #scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
   scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
   scale_shape_discrete("Abundance loss \ncapped at max SCA") +
   ylab("Vulnerability-weighted pollination prod. (metric tonnes)") +
