@@ -469,8 +469,7 @@ for(k in 1:length(RCP_scenarios)){
       # convert spatial dataframe to coordinates
       std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
         dplyr::select(x, y) %>%
-        unique() %>%
-        SpatialPoints(proj4string = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+        SpatialPoints(proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs "))
     }
     
     # set up vector for total production
@@ -510,11 +509,11 @@ rbindlist(all_scenario) %>%
   geom_line(aes(x = year, y = vulnerability, group = capping)) +
   geom_point(aes(x = year, y = vulnerability, colour = percent_unknown * 100, shape = capping)) +
   facet_wrap(~scenario, ncol = 2) +
-  #scale_y_continuous(limits = c(1700000, 4100000), expand = c(0, 0), breaks = c(2000000, 2500000, 3000000, 3500000, 4000000), labels = c("2,000,000", "2,500,000", "3,000,000", "3,500,000", "4,000,000")) +
-  #scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+  scale_y_continuous(limits = c(73000000, 141000000), expand = c(0, 0), breaks = c(80000000, 100000000, 120000000, 140000000), labels = c("80", "100", "120", "140")) +
+  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
   scale_shape_discrete("Abundance loss \ncapped at max SCA") +
-  ylab("Vulnerability-weighted pollination prod. (metric tonnes)") +
+  ylab("Vulnerability-weighted pollination prod. (millions tonnes)") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank())
