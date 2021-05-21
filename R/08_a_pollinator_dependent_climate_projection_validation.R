@@ -469,7 +469,7 @@ for(k in 1:length(RCP_scenarios)){
       # convert spatial dataframe to coordinates
       std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
         dplyr::select(x, y) %>%
-        SpatialPoints(proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs "))
+        SpatialPoints(proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs"))
     }
     
     # set up vector for total production
