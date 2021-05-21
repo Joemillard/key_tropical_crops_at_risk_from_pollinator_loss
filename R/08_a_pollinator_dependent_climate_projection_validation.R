@@ -513,7 +513,7 @@ rbindlist(all_scenario) %>%
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
   scale_shape_discrete("Abundance loss \ncapped at max SCA") +
-  ylab("Vulnerability-weighted pollination prod. (millions tonnes)") +
+  ylab("Vulnerability-weighted pollination prod. (million tonnes)") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank())
