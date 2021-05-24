@@ -324,6 +324,9 @@ for(i in 1:length(rate_rasters)){
 # organise all of the rasters into a stack and sum
 crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
 
+# resolution of the crop data is 6x the climate data, so need buffer by factor of 6x
+crop.total <-aggregate(crop.total, fact = 6, fun = sum)
+
 # calculate total pollination dependent production
 total_production <- sum(crop.total[])
 
@@ -507,14 +510,28 @@ rbindlist(RCP_plot) %>%
     geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     facet_wrap(~scenario, ncol = 2) +
-    scale_y_continuous(limits = c(1700000, 4100000), expand = c(0, 0), breaks = c(2000000, 2500000, 3000000, 3500000, 4000000), labels = c("2,000,000", "2,500,000", "3,000,000", "3,500,000", "4,000,000")) +
+    scale_y_continuous(limits = c(73000000, 141000000), expand = c(0, 0), breaks = c(80000000, 100000000, 120000000, 140000000), labels = c("80", "100", "120", "140")) +
     scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
     scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
     scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
-    ylab("Vulnerability-weighted pollination prod. (metric tonnes)") +
+    ylab("Pollination production risk (million tonnes)") +
     xlab("") +
     theme_bw() +
     theme(panel.grid = element_blank())
-  
+
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_5.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_6.png", scale = 1, dpi = 350)
+
+## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
+# assign 0 as NA for intersection
+crop.total[crop.total == 0] <- NA
+tmp2069_71std_climate_anomaly[[1]][tmp2069_71std_climate_anomaly[[1]] == 0] <- NA
+
+# select cells that don't intersect between the crop and climate data and plot
+r3 <- raster::mask(crop(crop.total, tmp2069_71std_climate_anomaly[[1]]), tmp2069_71std_climate_anomaly[[1]], inverse = TRUE)
+plot(r3)
+
+# check that discrepancy is due to some cells being missed
+sum(r3[], na.rm = TRUE) # sum of those cells that don't intersect = 134747.6
+total_production - (vulnerable_production_list[[i]] %>% sum()) # difference between total production and production post extract = 134747.6
+
