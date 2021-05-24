@@ -513,12 +513,13 @@ rbindlist(all_scenario) %>%
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
   scale_shape_discrete("Abundance loss \ncapped at max SCA") +
-  ylab("Vulnerability-weighted pollination prod. (million tonnes)") +
+  ylab("Pollination production risk (million tonnes)") +
   xlab("") +
   theme_bw() +
-  theme(panel.grid = element_blank())
+  theme(panel.grid = element_blank(),
+        strip.text.x = element_text(size = 12))
 
-ggsave("rcp_85_all-models_cells_greater_max.png", scale = 1, dpi = 350)
+ggsave("rcp_85_all-models_cells_greater_max_2.png", scale = 1, dpi = 350)
 
 ## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
 # assign 0 as NA for intersection
