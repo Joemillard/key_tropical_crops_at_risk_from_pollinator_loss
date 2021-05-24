@@ -520,14 +520,15 @@ rbindlist(all_scenario) %>%
 
 ggsave("rcp_85_all-models_cells_greater_max.png", scale = 1, dpi = 350)
 
-# check raster overlap for value disrepancy
+## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
+# assign 0 as NA for intersection
 crop.total[crop.total == 0] <- NA
 tmp2069_71std_climate_anomaly[[1]][tmp2069_71std_climate_anomaly[[1]] == 0] <- NA
 
+# select cells that don't intersect between the crop and climate data and plot
 r3 <- raster::mask(crop(crop.total, tmp2069_71std_climate_anomaly[[1]]), tmp2069_71std_climate_anomaly[[1]], inverse = TRUE)
 plot(r3)
 
-sum(r3[], na.rm = TRUE)
-
-
-total_production - (vulnerable_production_list[[i]] %>% sum())
+# check that discrepancy is due to some cells being missed
+sum(r3[], na.rm = TRUE) # sum of those cells that don't intersect = 134747.6
+total_production - (vulnerable_production_list[[i]] %>% sum()) # difference between total production and production post extract = 134747.6
