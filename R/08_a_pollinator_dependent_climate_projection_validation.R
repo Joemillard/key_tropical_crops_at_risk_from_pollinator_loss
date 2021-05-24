@@ -519,3 +519,15 @@ rbindlist(all_scenario) %>%
   theme(panel.grid = element_blank())
 
 ggsave("rcp_85_all-models_cells_greater_max.png", scale = 1, dpi = 350)
+
+# check raster overlap for value disrepancy
+crop.total[crop.total == 0] <- NA
+tmp2069_71std_climate_anomaly[[1]][tmp2069_71std_climate_anomaly[[1]] == 0] <- NA
+
+r3 <- raster::mask(crop(crop.total, tmp2069_71std_climate_anomaly[[1]]), tmp2069_71std_climate_anomaly[[1]], inverse = TRUE)
+plot(r3)
+
+sum(r3[], na.rm = TRUE)
+
+
+total_production - (vulnerable_production_list[[i]] %>% sum())
