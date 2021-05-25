@@ -2,7 +2,6 @@
 
 library(raster)
 library(ggplot2)
-library(rasterVis)
 library(dplyr)
 library(viridis)
 library(rworldmap) 
