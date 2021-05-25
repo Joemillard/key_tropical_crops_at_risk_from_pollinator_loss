@@ -287,6 +287,9 @@ klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned))
 rate_rasters_adj <- list()
 for(i in 1:length(rate_rasters)){
   rate_rasters_adj[[i]] <- rate_rasters[[i]] * klein_cleaned_filt$av[i]
+  
+  # resolution of the crop data is 6x the climate data, so need buffer by factor of 6x
+  rate_rasters_adj[[i]]  <-aggregate(rate_rasters_adj[[i]] , fact = 6, fun = sum)
   print(i)
 }
 
@@ -451,7 +454,6 @@ for(j in 1:length(rate_rasters_adj_sub)){
     vulnerable_production_list[[i]] <- extract(rate_rasters_adj_sub[[j]], std_anom_high[[i]], na.rm = FALSE)
     vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
     
-    
   }
   
   all_crop_list[[j]] <- vulnerable_production
@@ -463,7 +465,6 @@ for(i in 1:length(all_crop_list)){
 }
 
 production_object <- rbindlist(all_crop_list) %>%
-  mutate(production_prop = production_prop * 100) %>%
   filter(!crop %in% c("fruitnes", "tropicalnes")) %>%
   mutate(crop = factor(crop, 
                        labels = c("Apple", "Bean", "Cocoa", "Coconut", "Coffee", "Cucumber",
@@ -471,4 +472,4 @@ production_object <- rbindlist(all_crop_list) %>%
                                   "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
                                   "Soybean",  "Sunflower", "Tomato", "Watermelon")))
 
-saveRDS(production_object, "global_change_production_crops.rds")
+saveRDS(production_object, "global_change_production_crops_2.rds")
