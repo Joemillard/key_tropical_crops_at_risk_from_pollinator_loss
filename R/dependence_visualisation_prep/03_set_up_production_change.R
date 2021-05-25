@@ -324,6 +324,9 @@ for(i in 1:length(rate_rasters)){
 # organise all of the rasters into a stack and sum
 crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
 
+# resolution of the crop data is 6x the climate data, so need buffer by factor of 6x
+crop.total <-aggregate(crop.total, fact = 6, fun = sum)
+
 # calculate total pollination dependent production
 total_production <- sum(crop.total[])
 
@@ -505,4 +508,4 @@ fin_production <- rbindlist(RCP_plot) %>%
                            labels = c("RCP 8.5", "RCP 6.0", "RCP 2.6")))
 
 # save the change in production file
-saveRDS(fin_production, "global_change_production.rds")
+saveRDS(fin_production, "global_change_production_2.rds")
