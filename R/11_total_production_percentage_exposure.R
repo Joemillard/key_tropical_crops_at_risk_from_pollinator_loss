@@ -288,6 +288,9 @@ rate_rasters_adj <- list()
 for(i in 1:length(rate_rasters)){
   rate_rasters_adj[[i]] <- rate_rasters[[i]] * klein_cleaned_filt$av[i]
   print(i)
+  
+  # resolution of the crop data is 6x the climate data, so need buffer by factor of 6x
+  rate_rasters_adj[[i]] <-aggregate(rate_rasters_adj[[i]], fact = 6, fun = sum)
 }
 
 # iteration vector for raster
@@ -465,12 +468,12 @@ for(i in 1:length(all_crop_list)){
   
 rbindlist(all_crop_list) %>%
   mutate(production_prop = production_prop * 100) %>%
-  filter(!crop %in% c("fruitnes", "tropicalnes")) %>%
-  mutate(crop = factor(crop, 
-                             labels = c("Apple", "Bean", "Cocoa", "Coconut", "Coffee", "Cucumber",
-                                        "Eggplant", "Mango", "Melon", "Oilpalm", "Oilseed", 
-                                        "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
-                                        "Soybean",  "Sunflower", "Tomato", "Watermelon"))) %>%
+ # filter(!crop %in% c("fruitnes", "tropicalnes")) %>%
+  #mutate(crop = factor(crop, 
+   #                          labels = c("Apple", "Bean", "Cocoa", "Coconut", "Coffee", "Cucumber",
+   #                                     "Eggplant", "Mango", "Melon", "Oilpalm", "Oilseed", 
+   #                                     "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
+   #                                     "Soybean",  "Sunflower", "Tomato", "Watermelon"))) %>%
   ggplot() +
       geom_line(aes(x = year, y = production_prop)) +
       facet_wrap(~crop) +
