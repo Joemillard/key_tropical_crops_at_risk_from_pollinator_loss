@@ -294,22 +294,38 @@ for(i in 1:length(rate_rasters)){
   
 }
 
-# iteration vector for raster
+# iteration vector for adjusted raster
 adj_it_vec <- c()
 adj_sum_vec <- c()
 iteration <- c()
 
+# iteration vector for non-adjusted raster
+it_vec <- c()
+sum_vec <- c()
+
+# sum total production for all crops
+for(i in 1:length(rate_rasters)){
+  sum_vec[i] <- sum(rate_rasters[[i]][])
+  it_vec[i] <- klein_cleaned_filt$MonfredaCrop[i]
+  iteration[i] <- i
+}
+
 # select the top 20 crops for total pollination dependent production
 for(i in 1:length(rate_rasters_adj)){
-  adj_sum_vec[i] <- sum(rate_rasters[[i]][])
+  adj_sum_vec[i] <- sum(rate_rasters_adj[[i]][])
   adj_it_vec[i] <- klein_cleaned_filt$MonfredaCrop[i]
   iteration[i] <- i
 }
 
 # sum of pollination dependent production production for each crop
-pollination_production_sum <- data.frame(adj_it_vec, adj_sum_vec, iteration) %>%
+pollination_production_sum_adj <- data.frame(adj_it_vec, adj_sum_vec, iteration) %>%
   arrange(desc(adj_sum_vec)) %>%
   slice(1:22)
+
+# sum of pollination dependent production production for each crop
+pollination_production_sum <- data.frame(it_vec, sum_vec, iteration) %>%
+  arrange(desc(sum_vec)) %>%
+  filter(it_vec %in% pollination_production_sum_adj$adj_it_vec)
 
 # subset original rate rasters for those in the top 20 pollination dependent production
 rate_rasters_adj_sub <- rate_rasters_adj[pollination_production_sum$iteration]
@@ -454,7 +470,7 @@ for(j in 1:length(rate_rasters_adj_sub)){
     
     # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
     vulnerable_production_list[[i]] <- extract(rate_rasters_adj_sub[[j]], std_anom_high[[i]], na.rm = FALSE)
-    vulnerable_production[i] <- (unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()) / pollination_production_sum$adj_sum_vec[j]
+    vulnerable_production[i] <- (unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()) / pollination_production_sum$sum_vec[j]
     
     }
   
@@ -463,17 +479,17 @@ for(j in 1:length(rate_rasters_adj_sub)){
 
 # create dataframe for exposed production and build datafrmae
 for(i in 1:length(all_crop_list)){
-  all_crop_list[[i]] <- data.frame("crop" = pollination_production_sum$adj_it_vec[i], "production_prop" = all_crop_list[[i]], "year" = c(seq(2048, 2016, -1)))
+  all_crop_list[[i]] <- data.frame("crop" = pollination_production_sum$it_vec[i], "production_prop" = all_crop_list[[i]], "year" = c(seq(2048, 2016, -1)))
 }
   
 rbindlist(all_crop_list) %>%
   mutate(production_prop = production_prop * 100) %>%
   filter(!crop %in% c("fruitnes", "tropicalnes")) %>%
- # mutate(crop = factor(crop, 
-  #                           labels = c("Apple", "Bean", "Cocoa", "Coconut", "Coffee", "Cucumber",
-   #                                     "Eggplant", "Mango", "Melon", "Oilpalm", "Oilseed", 
-   #                                     "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
-    #                                   "Soybean",  "Sunflower", "Tomato", "Watermelon"))) %>%
+  mutate(crop = factor(crop, 
+                             labels = c("Apple", "Bean", "Cocoa", "Coconut", "Coffee", "Cucumber",
+                                       "Eggplant", "Mango", "Melon", "Oilpalm", "Oilseed", 
+                                        "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
+                                       "Soybean",  "Sunflower", "Tomato", "Watermelon"))) %>%
   ggplot() +
       geom_line(aes(x = year, y = production_prop)) +
       facet_wrap(~crop) +
