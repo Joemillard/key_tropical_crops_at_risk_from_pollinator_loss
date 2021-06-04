@@ -498,7 +498,7 @@ rbindlist(all_crop_list) %>%
       geom_line(aes(x = year, y = production_prop)) +
       facet_wrap(~crop) +
       xlab(NULL) +
-      scale_y_continuous("Total production exposure (%)", limits = c(0, 100), expand = c(0, 0)) +
+      scale_y_continuous("Total production risk (%)", limits = c(0, 100), expand = c(0, 0)) +
       theme_bw() +
       theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5))
 
