@@ -490,17 +490,18 @@ rbindlist(all_crop_list) %>%
                                        "Eggplant", "Mango", "Melon", "Oilpalm", "Oilseed", 
                                         "Peach", "Pear", "Plum", "Pumpkin","Rapeseed",  
                                        "Soybean",  "Sunflower", "Tomato", "Watermelon"))) %>%
+  group_by(crop) %>%
+  mutate(change_prod = max(production_prop) - min(production_prop)) %>%
+  ungroup() %>%
+  mutate(crop = fct_reorder(crop, -change_prod)) %>%
   ggplot() +
       geom_line(aes(x = year, y = production_prop)) +
       facet_wrap(~crop) +
-      xlab("Year") +
-      ylab("Total production exposure (%)") +
+      xlab(NULL) +
+      scale_y_continuous("Total production exposure (%)", limits = c(0, 100), expand = c(0, 0)) +
       theme_bw() +
-      theme(panel.grid = element_blank())
+      theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5))
 
-rbindlist(all_crop_list) %>%
-  mutate(production_prop = production_prop * 100) %>%
-  group_by(crop) %>%
-  summarise(difference = max(production_prop) - min(production_prop)) %>% View()
+ggsave("crop_percentage_prod_change.png", scale = 1, dpi = 350)
 
             
