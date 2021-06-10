@@ -47,7 +47,6 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 PREDICTS_non_pollinating <- PREDICTS %>%
   filter(Class == "Insecta") %>%
   filter(!COL_ID %in% as.character(PREDICTS_pollinators_orig$COL_ID)) %>%
-  filter(Order != "Lepidoptera") %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
 
@@ -222,4 +221,4 @@ plot_grid(main_plot_abundance[[1]] +
             scale_y_continuous(limits = c(1, 6.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
             theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_2.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_3.png", scale = 1, dpi = 350)
