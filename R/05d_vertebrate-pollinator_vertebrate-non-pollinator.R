@@ -221,4 +221,4 @@ plot_grid(main_plot_abundance[[1]] +
             scale_y_continuous("Total abundance", limits = c(1.5, 4.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
             theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_vertebrates.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_vertebrates_2.png", scale = 1, dpi = 350)
