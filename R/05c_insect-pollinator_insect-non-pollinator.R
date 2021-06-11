@@ -188,7 +188,11 @@ main_plot_abundance <- list()
 for(m in 1:length(pollinat_bound)){
   
   # species richness, standard anom as a factor
+  model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS), data = predict_climate_list[[m]]) 
+  print(AIC(model_2c_abundance[[m]]))
+  
   model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[m]]) 
+  print(AIC(model_2c_abundance[[m]]))
   
   # run predictions for the model of standard anomaly
   abundance_model[[m]] <- predict_continuous(model = model_2c_abundance[[m]],
