@@ -54,7 +54,7 @@ PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end
 
 # calculate the means and standard deviation for the beginning of the series
 # take names of values for 1901 to 1931
-tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
+tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
 
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
@@ -331,7 +331,7 @@ total_production <- sum(crop.total[])
 
 ## standardised climate anomaly script
 # take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
+tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
 
 # calculate the mean and sd of the baseline values
 tmp1901_1931mean <- calc(tmp1901_1931, mean)
@@ -509,7 +509,7 @@ rbindlist(all_scenario) %>%
   geom_line(aes(x = year, y = vulnerability, group = capping)) +
   geom_point(aes(x = year, y = vulnerability, colour = percent_unknown * 100, shape = capping)) +
   facet_wrap(~scenario, ncol = 2) +
-  scale_y_continuous(limits = c(73000000, 141000000), expand = c(0, 0), breaks = c(80000000, 100000000, 120000000, 140000000), labels = c("80", "100", "120", "140")) +
+  scale_y_continuous(limits = c(68000000, 150000000), expand = c(0, 0), breaks = c(80000000, 100000000, 120000000, 140000000), labels = c("80", "100", "120", "140")) +
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
   scale_shape_discrete("Abundance loss \ncapped at max SCA") +
@@ -519,7 +519,7 @@ rbindlist(all_scenario) %>%
   theme(panel.grid = element_blank(),
         strip.text.x = element_text(size = 12))
 
-ggsave("rcp_85_all-models_cells_greater_max_2.png", scale = 1, dpi = 350)
+ggsave("rcp_85_all-models_cells_greater_max_3.png", scale = 1, dpi = 350)
 
 ## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
 # assign 0 as NA for intersection
