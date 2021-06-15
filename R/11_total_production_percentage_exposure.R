@@ -57,7 +57,7 @@ PRED_sites <- order.sites.div %>% dplyr::select(id_col, Latitude, Longitude, Sam
 
 # calculate the means and standard deviation for the beginning of the series
 # take names of values for 1901 to 1931
-tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
+tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
 
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
@@ -339,7 +339,7 @@ for(i in 1:length(rate_rasters_adj_sub)){
 
 ## standardised climate anomaly script
 # take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1931 <- tmp[[names(tmp)[1:361]]]
+tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
 
 # calculate the mean and sd of the baseline values
 tmp1901_1931mean <- calc(tmp1901_1931, mean)
