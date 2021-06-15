@@ -83,7 +83,7 @@ for(j in 1:length(pollinat_bound)){
   
   # calculate the means and standard deviation for the beginning of the series
   # take names of values for 1901 to 1931
-  tmp1901_1931 <- tmp[[names(tmp)[1:360]]]
+  tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
   
   # extract the points for each the predicts coordinates
   PRED_sites_sp <- PRED_sites %>%
@@ -225,4 +225,4 @@ plot_grid(main_plot_abundance[[1]] +
             scale_y_continuous(limits = c(1, 6.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
             theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_5.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_6.png", scale = 1, dpi = 350)
