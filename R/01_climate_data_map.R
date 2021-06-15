@@ -145,7 +145,7 @@ crop_df$layer_group <- factor(crop_df$layer_group, levels = c("0-10", "10-1,000"
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1905 <- tmp[[names(tmp)[1:360]]]
+tmp1901_1905 <- tmp[[names(tmp)[1:349]]]
 
 # calculate the mean and sd of the baseline values
 tmp1901_1905mean <- calc(tmp1901_1905, mean)
@@ -206,4 +206,4 @@ climate_poll_data_map %>%
         axis.title = element_blank())
 
 # save the map for climate anomaly
-ggsave("pollination_dependent_climate_anomaly_3.png", scale = 1.2, dpi = 350)
+ggsave("pollination_dependent_climate_anomaly_4.png", scale = 1.2, dpi = 350)
