@@ -206,4 +206,4 @@ climate_poll_data_map %>%
         axis.title = element_blank())
 
 # save the map for climate anomaly
-ggsave("pollination_dependent_climate_anomaly_2.png", scale = 1.2, dpi = 350)
+ggsave("pollination_dependent_climate_anomaly_3.png", scale = 1.2, dpi = 350)
