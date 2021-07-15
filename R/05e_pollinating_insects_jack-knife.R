@@ -51,7 +51,7 @@ PREDICTS_pollinators_taxa <- list()
 # loop through the taxonomic orders and removed each for jack-knife with replacement
 for(i in 1:length(taxonomic_orders)){
   PREDICTS_pollinators_taxa[[i]] <- PREDICTS_pollinators_orig %>% 
-    filter(Order != taxonomic_orders[i]) %>%
+    filter(Order == taxonomic_orders[i]) %>%
     droplevels()
 }
 
@@ -233,19 +233,19 @@ for(m in 1:length(pollinat_bound)){
 plot_grid(main_plot_abundance[[1]] +
             ggtitle("Pollinating insects (Excluding Coleoptera)") + 
             xlim(-0.25, 3.5) +
-            scale_y_continuous(limits = c(0.3, 6.9), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[2]] + 
             xlim(-0.25, 3.5) +
             ggtitle("Pollinating insects (Excluding Diptera)") +
-            scale_y_continuous(limits = c(0.3, 6.9), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[3]] + 
             xlim(-0.25, 3.5) +
             ggtitle("Pollinating insects (Excluding Hymenoptera)") +
-            scale_y_continuous(limits = c(0.3, 6.9), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[4]] + 
             xlim(-0.25, 3.5) +
             ggtitle("Pollinating insects (Excluding Lepidoptera)") +
-            scale_y_continuous(limits = c(0.3, 6.9), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), ncol = 2)
 
 ggsave("pollinating_non-pollinating_6.png", scale = 1, dpi = 350)
