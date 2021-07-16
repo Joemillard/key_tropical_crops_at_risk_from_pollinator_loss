@@ -231,20 +231,20 @@ for(m in 1:length(pollinat_bound)){
 
 # plot for the pollinating insects and non-pollinating insects - climate anomaly of 4 corresponds to ~100% abundance loss
 plot_grid(main_plot_abundance[[1]] +
-            ggtitle("Pollinating insects (Excluding Coleoptera)") + 
+            ggtitle("Pollinating insects (Coleoptera)") + 
             xlim(-0.25, 3.5) +
             scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[2]] + 
             xlim(-0.25, 3.5) +
-            ggtitle("Pollinating insects (Excluding Diptera)") +
+            ggtitle("Pollinating insects (Diptera)") +
             scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[3]] + 
             xlim(-0.25, 3.5) +
-            ggtitle("Pollinating insects (Excluding Hymenoptera)") +
+            ggtitle("Pollinating insects (Hymenoptera)") +
             scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[4]] + 
             xlim(-0.25, 3.5) +
-            ggtitle("Pollinating insects (Excluding Lepidoptera)") +
+            ggtitle("Pollinating insects (Lepidoptera)") +
             scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), ncol = 2)
 
