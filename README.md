@@ -16,7 +16,7 @@ To run the code in this repo you will need to download a series of datasets:
 The required scripts are as below. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
 
 ```R/00_functions.R```<br>
-```R/01_map_climate_data.R```<br> -- Figure 2
+```R/01_map_climate_data.R```<br> # Figure 2
 ```R/02a_models_insect-pollinator_insect-non-pollinator.R```<br> -- Figure 1
 ```R/02b_models_vertebrate-pollinator_vertebrate-non-pollinator.R```<br> -- Figure 1
 ```R/02c_models_insect-pollinator_jack-knife.R```<br> -- Figure S5
