@@ -48,10 +48,10 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 taxonomic_orders <- c("Coleoptera", "Diptera", "Hymenoptera", "Lepidoptera")
 PREDICTS_pollinators_taxa <- list()
 
-# loop through the taxonomic orders and removed each for jack-knife with replacement
+# loop through the taxonomic orders and remove each for jack-knife with replacement/select one for single order models
 for(i in 1:length(taxonomic_orders)){
   PREDICTS_pollinators_taxa[[i]] <- PREDICTS_pollinators_orig %>% 
-    filter(Order == taxonomic_orders[i]) %>%
+    filter(Order == taxonomic_orders[i]) %>% # amend to either jack-knife or select one order
     droplevels()
 }
 
