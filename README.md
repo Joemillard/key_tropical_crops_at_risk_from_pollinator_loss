@@ -6,6 +6,13 @@ This repository contains all the scripts used for the analysis carried out in th
 
 Note that this repository is written relative to an R project file (.Rproj). Those wanting to reproduce this analysis should download the whole repo, and then open via the .Rproj file.
 
+To run the code in this repo you will need to download a series of datasets:
+1. The PREDICTS pollinator subset from either here (https://github.com/Joemillard/Global_effects_of_land-use_intensity_on_local_pollinator-biodiversity/tree/main/outputs) or here (https://figshare.com/articles/dataset/Global_effects_of_land-use_intensity_on_local_pollinator_biodiversity/12815669/2)
+2. Pollination dependence ratios from here
+3. Estimates of global crop production from here
+4. Historical estimates of climate change from here
+5. Projections of future climate change from here
+
 The required script are as follows:
 
 ```R/00_functions.R```<br>
