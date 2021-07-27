@@ -13,7 +13,7 @@ To run the code in this repo you will need to download a series of datasets:
 4. Historical estimates of climate change from here, same as in the previous paper but here just tmp (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.03/cruts.1905011326.v4.03/)
 5. ISIMIP anomaly projections of future climate change (folder is ISIMIPAnomalies.tar.gz) from onedrive shared by Tim here (https://liveuclac-my.sharepoint.com/:f:/r/personal/ucbttne_ucl_ac_uk/Documents/LandUseClimate/FutureClimate?csf=1&web=1&e=A1ihT0)
 
-The required scripts are as below. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
+The required scripts are as below, with figure numbers from JM's thesis chapter (as of 27/07/2021). Note that for some figures (i.e. Figure 1) I built the two parts of the figure separately, and then combined them manually in PowerPoint. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
 
 ```R/00_functions.R```<br>
 ```R/01_map_climate_data.R``` -- Figure 2<br> 
