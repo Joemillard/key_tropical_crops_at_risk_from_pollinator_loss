@@ -8,7 +8,7 @@ Note that this repository is written relative to an R project file (.Rproj). Tho
 
 To run the code in this repo you will need to download a series of datasets:
 1. The PREDICTS pollinator subset from either here (https://github.com/Joemillard/Global_effects_of_land-use_intensity_on_local_pollinator-biodiversity/tree/main/outputs) or here (https://figshare.com/articles/dataset/Global_effects_of_land-use_intensity_on_local_pollinator_biodiversity/12815669/2)
-2. Klein et al (2007) pollination dependence ratios from here
+2. Klein et al (2007) pollination dependence ratios from this GitHub repo in the folder (data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops/)
 3. Estimates of global crop production from here (http://www.earthstat.org/harvested-area-yield-175-crops/)
 4. Historical estimates of climate change from here, same as in the previous paper but here just tmp (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.03/cruts.1905011326.v4.03/)
 5. ISIMIP anomaly projections of future climate change (folder is ISIMIPAnomalies.tar.gz) from onedrive shared by Tim here (https://liveuclac-my.sharepoint.com/:f:/r/personal/ucbttne_ucl_ac_uk/Documents/LandUseClimate/FutureClimate?csf=1&web=1&e=A1ihT0)
