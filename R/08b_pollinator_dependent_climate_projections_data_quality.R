@@ -500,8 +500,6 @@ RCP_plot <- rbindlist(vulnerable_production_jack) %>%
   mutate(year = rep(c(seq(2048, 2016, -1)), 4)) %>%
   mutate(scenario = RCP_scenarios)
 
-calc_index <- function(x) sum(x != 0) / length(x) * 100
-
 # bind together the outputs and plot as facetted plot for each scenario
 RCP_plot %>%
   mutate(quality = factor(quality)) %>%
@@ -512,8 +510,8 @@ RCP_plot %>%
   mutate(pct_change = vulnerability/lag(vulnerability, default = vulnerability[1])) %>%
   mutate(index = cumprod(pct_change)) %>%
   ggplot() +
-  geom_line(aes(x = year, y = index, colour = quality)) +
-  geom_point(aes(x = year, y = index, colour = quality)) +
+  geom_line(aes(x = year, y = index, colour = quality), alpha = 0.5) +
+  geom_point(aes(x = year, y = index, colour = quality), alpha = 0.5) +
   scale_y_continuous(limits = c(0.9, 1.9), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6, 1.8)) +
   geom_hline(yintercept = 1, linetype="dashed") +
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045)) +
