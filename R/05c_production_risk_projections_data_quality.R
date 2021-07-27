@@ -1,3 +1,5 @@
+# script for checking production risk data quality sensitivity (for all model ensemble average at RCP 8.5) 
+
 # read in packages
 library(raster)
 library(ggplot2)

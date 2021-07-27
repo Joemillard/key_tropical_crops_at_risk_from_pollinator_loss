@@ -1,4 +1,4 @@
-# script for pollinator dependent production
+# script for standardised climate anomaly map
 
 library(raster)
 library(ggplot2)

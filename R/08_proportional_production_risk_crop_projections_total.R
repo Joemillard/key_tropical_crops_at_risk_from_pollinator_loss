@@ -1,3 +1,5 @@
+# script for crop level proportion production risk projections in total
+
 # read in packages
 #library(raster)
 library(ggplot2)
@@ -503,5 +505,3 @@ rbindlist(all_crop_list) %>%
       theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5))
 
 ggsave("crop_percentage_prod_change.png", scale = 1, dpi = 350)
-
-            

@@ -1,4 +1,4 @@
-# script for pollinating/non-pollinating, need to think about species assigned as non-pollinators
+# script for pollinating/non-pollinating insect abundance models
 
 # load required libraries
 library(raster)

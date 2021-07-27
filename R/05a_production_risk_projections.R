@@ -1,10 +1,13 @@
-# read in packages - loads in patchwork in place further down
+# script for production risk projection for all models (jack-knifed and combined) and for all climate scenarios (8.5, 6.0, and 2.6)
+
+# read in packages
 library(raster)
 library(ggplot2)
 library(dplyr)
 library(viridis)
 library(rworldmap) 
 library(rworldxtra)
+library(cowplot)
 library(data.table)
 library(lme4)
 library(yarg)
@@ -27,7 +30,7 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 # set up the starting directory for future climate data
 SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
-#### PREDICTS data compilation and build model of insect pollinator response to climate change ####
+# PREDICTS data compilation
 # filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
@@ -140,6 +143,12 @@ system.time(
   }
 )
 
+# checking the average temperate 11 months previous to each predicts site
+rbindlist(raster_means) %>%
+  ggplot() +
+  geom_point(aes(x = x, y = y, colour = mean_value)) + 
+  scale_colour_viridis()
+
 ## adjust the mean value for each site for the baseline at that site
 # first, merge the baseline sd and mean by coordinate for each site
 adjusted_climate <- rbindlist(raster_means) %>%
@@ -205,17 +214,23 @@ abundance_model <- predict_continuous(model = model_2c_abundance,
 # plot for standardised anomaly and land-use for abundance
 main_plot_abundance <- abundance_model %>% 
   ggplot() +
-  geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  scale_y_continuous("Total abundance", breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
-  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  xlab("Standardised climate anomaly") +
-  ylab("Total abundance") +
-  theme_bw() +
-  theme(panel.grid = element_blank())
+    geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
+    geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+    scale_y_continuous("Total abundance", breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
+    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    xlab("Standardised climate anomaly") +
+    ylab("Total abundance") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
 
-#### calculate pollinator dependent production ####
+# extract the max value for standardised climate anomaly on cropland
+max_standard_anom <- abundance_model %>% 
+  select(Predominant_land_use, standard_anom) %>% 
+  filter(Predominant_land_use == "Cropland") %>% 
+  pull(standard_anom) %>% max()
+
+## calculate pollination dependence production
 # select those with semi colon into a multiple rows
 semi_colon_crop <- klein_cleaned$MonfredaCrop[grepl(";", klein_cleaned$MonfredaCrop)]
 
@@ -276,18 +291,29 @@ klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollinati
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest/great"] <- 0.45
 
 # calculate average and standard deviation of pollination dependence for each Monfreda crop
-klein_cleaned_av <- klein_cleaned %>%
-  group_by(MonfredaCrop) %>%
-  mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
-  mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
-  ungroup() %>%
-  select(MonfredaCrop, av, standard_dev) %>%
-  unique()
+av_dependence <- function(klein_cleaned){
+  klein_cleaned_av <- klein_cleaned %>%
+    group_by(MonfredaCrop) %>%
+    mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
+    mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
+    ungroup() %>%
+    select(MonfredaCrop, av, standard_dev) %>%
+    unique()
+
+  return(klein_cleaned_av)
+}
 
 # subset klein_cleaned for those with crop data
-klein_cleaned_filt <- klein_cleaned_av %>%
-  filter(MonfredaCrop %in% pollinat_crops_simp) %>%
-  arrange(MonfredaCrop)
+subset_klein <- function(klein_cleaned_av){
+  klein_cleaned_filt <- klein_cleaned_av %>%
+    filter(MonfredaCrop %in% pollinat_crops_simp) %>%
+    arrange(MonfredaCrop)
+  
+  return(klein_cleaned_filt)
+}
+
+# run function for average pollination dependence and subset klein for those with crop data
+klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned))
 
 # multiply each raster by its pollination dependence for that crop
 rate_rasters_adj <- list()
@@ -299,108 +325,20 @@ for(i in 1:length(rate_rasters)){
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
 crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
-crop.total_all <- stack(rate_rasters) %>% sum(na.rm = T)
 
-# baseplot of proportion needing pollination
-plot((crop.total / crop.total_all) * 100)
+# resolution of the crop data is 6x the climate data, so need buffer by factor of 6x
+crop.total <-aggregate(crop.total, fact = 6, fun = sum)
 
-# reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
-crop.total_all <- projectRaster(crop.total_all, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+# calculate total pollination dependent production
+total_production <- sum(crop.total[])
 
-# reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
-crop.total <- projectRaster(crop.total, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
-# convert the raster to a dataframe to plot with ggplot
-crop_df <- as(crop.total, "SpatialPixelsDataFrame") %>% as.data.frame()
-crop_df_all <- as(crop.total_all, "SpatialPixelsDataFrame") %>% as.data.frame()
-
-# assign 0 in layer as NA
-crop_df$layer[crop_df$layer == 0] <- NA
-
-# assign 0 in layer as NA
-crop_df_all$layer[crop_df_all$layer == 0] <- NA
-
-# bring in basemap for climate site plot 
-base_map <- get_basemap()
-
-base_map <- spTransform(base_map, CRS = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-
-# fortify the main map
-map_fort <- fortify(base_map)
-
-# create spatial data for crop values
-# subset for unqiue sites
-crop_df_locs <- crop_df %>%
-  filter(!is.na(layer)) %>%
-  dplyr::select(x, y) %>%
-  unique() %>%
-  SpatialPoints()
-
-#### calculate standardised climate anomaly for present day
+## standardised climate anomaly script
 # take names of values for 1901 to 1931 - 30 year baseline
 tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
 
 # calculate the mean and sd of the baseline values
 tmp1901_1931mean <- calc(tmp1901_1931, mean)
 tmp1901_1931sd <- calc(tmp1901_1931, stats::sd)
-
-# extract data for the years 2004-2006
-tmp2004_6 <- tmp[[names(tmp)[1237:1272]]]
-
-### Calculate the standardised anomaly ###
-# calc the mean for present time period
-tmp2004_6mean <- calc(tmp[[names(tmp)[1237:1272]]], mean)
-
-# calc mean for baseline
-tmp2004_6_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1931mean)
-
-# standardise the baseline
-tmp2004_6std_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1931mean) / tmp1901_1931sd
-
-# reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
-tmp2004_6std_climate_anomaly <- projectRaster(tmp2004_6std_climate_anomaly, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
-## combine the climate anomaly and the pollination dependence
-# convert the raster to a format amenable to ggplot
-# convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
-climate_poll_values <- extract(tmp2004_6std_climate_anomaly, crop_df_locs, na.rm = FALSE)
-
-# merge the climate standardised values onto the pollinator dependence data
-climate_poll_data <- cbind((crop_df %>% filter(!is.na(layer))), climate_poll_values, (crop_df_all %>% filter(!is.na(layer)) %>% select(layer) %>% rename("total_production" = "layer")))
-
-# predict abundance reduction at a climate anomaly of 0 (i.e. no warming on cropland)
-zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
-zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
-zero_warming_abundance <- exp(zero_warming_abundance)
-
-# prediction data for actual climate data
-prediction_data <- data.frame("standard_anom" = climate_poll_data$climate_poll_values, Predominant_land_use = "Cropland")
-
-# calculate insect pollinato abundance loss and adjust pollination dependent production
-climate_poll_data$abundance <- exp(predict(model_2c_abundance, prediction_data, re.form = NA))
-climate_poll_data$abundance[climate_poll_data$climate_poll_values <= 0] <- zero_warming_abundance
-climate_poll_data$abundance_loss <- 1 - (climate_poll_data$abundance / zero_warming_abundance)
-climate_poll_data$poll_vulnerability <- (climate_poll_data$abundance_loss * climate_poll_data$layer) / climate_poll_data$total_production
-
-# # plot the ggplot map for climate anomaly
-present_vulnerability <- climate_poll_data %>%
-  ggplot() +
-  geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
-  geom_tile(aes(x = x, y = y, fill = poll_vulnerability)) +
-  ggtitle("2006") +
-  scale_fill_viridis("Proportional\nproduction risk",
-                       na.value = "transparent", option = "plasma", direction = -1, 
-                     limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  coord_equal() +
-  theme(panel.background = element_blank(),
-        panel.bord = element_blank(),
-        panel.grid = element_blank(), 
-        axis.text = element_blank(),
-        axis.ticks = element_blank(), 
-        axis.title = element_blank(), 
-        legend.position = "bottom")
-
-## map for 2050 of vulnerability weighted pollination production
 
 ## read in the rasters for the future data, start with SSP585
 # set up historical change to be added on
@@ -416,11 +354,23 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
 years <- 2048:2050
 years_list <- list()
 
-# set up list of one element (2048-2050)
-years_list[[1]] <- years
+# set up list of years
+for(i in 1:33){
+  years <- years - 1
+  years_list[[i]] <- years
+}
+
+# need to run for the average of climate models 
+# need to run for each RCP scenario
+
+# set up list for climate anomalies
+tmp2069_71std_climate_anomaly <- list()
 
 # average the set of climate models and calculate climate anomaly for the average
 average_clim_models <- function(yr, RCP, clim_models){
+  
+  # print the set of years for that iteration
+  print(yr)
   
   # subset for all files for rcp85, the set of years for that iteration, for the models of that iteration
   all.model.files <- all.files[grepl(RCP, all.files) & grepl(yr, all.files)]
@@ -439,61 +389,152 @@ average_clim_models <- function(yr, RCP, clim_models){
   
 }
 
-# set up vector of climate models - just rcp85 for map
-RCP_scenarios <- c("rcp85")
+# set up vector of climate models
+RCP_scenarios <- c("rcp85", "rcp60", "rcp26")
+climate_model_combs <- c("GFDL","HadGEM2","IPSL","MIROC5")
+climate_model_combs_adj <- c()
+for(i in 1:length(climate_model_combs)){
+  climate_model_combs_adj[i] <- paste(climate_model_combs[-i], collapse="|")
+}
 
-# add in the full model set for single vector of all climate models - all for rcp85
-climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
+# add in the full model set for single vector of all climate models
+climate_model_combs_adj <- append("GFDL|HadGEM2|IPSL|MIROC5", climate_model_combs_adj, after = 1)
 
-# file path for ISIMIP data
-all.files <- dir(path = SSP_directory,recursive = TRUE, full.names = TRUE)
+# set up list for each RCP plot
+RCP_plot <- list()
 
-# using RCP 8.5 calculate average of separate models
-mean.temp.2069.2071 <- stack(lapply(X = years_list[[1]], FUN = average_clim_models, RCP = RCP_scenarios[1], clim_models = climate_model_combs_adj[1]))
+# vector for percent_unknown - i.e. beyond the max value of ~1.6
+percent_unknown <- c()
 
-mean.temp.2069.2071 <- stackApply(x = mean.temp.2069.2071,indices = rep(1,3), fun = mean)
+# iterate through each RCP scenario
+for(k in 1:length(RCP_scenarios)){
+  
+  print(RCP_scenarios[k])
+  
+  # set up empty list for climate model combinations
+  vulnerable_production_jack <- list()
+  
+  # iterate through each set of climate models to jack-knife by climate model  
+  for(j in 1:length(climate_model_combs_adj)){   
+    
+    print(climate_model_combs_adj[j])
+    
+    # iterate through each set of years as a rolling average
+    for(i in 1:length(years_list)){
+      
+      # file path for ISIMIP data
+      all.files <- dir(path = SSP_directory,recursive = TRUE, full.names = TRUE)
+      
+      # using RCP 8.5 calculate average of separate models
+      mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]], FUN = average_clim_models, RCP = RCP_scenarios[k], clim_models = climate_model_combs_adj[j]))
+      
+      mean.temp.2069.2071 <- stackApply(x = mean.temp.2069.2071,indices = rep(1,3), fun = mean)
+      
+      # calc the anomalies for the future years
+      tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean)
+      tmp2069_71std_climate_anomaly[[i]] <- (mean.temp.2069.2071-tmp1901_1931mean) / tmp1901_1931sd
+      
+    }
+    
+    # set up empty list for standardised climate anomaly
+    std_high_abun_adj <- list()
+    std_anom_high <- list()
+    
+    # predict abundance at 0 warming on cropland
+    zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
+    zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
+    zero_warming_abundance <- exp(zero_warming_abundance)
+    
+    # for each set of climate anomaly data, predict abundance reduction for all climate anomaly values in each cell
+    # and then sum abundance adjusted pollination dependence
+    for(i in 1:length(tmp2069_71std_climate_anomaly)){
+      
+      # convert the raster to a dataframe to plot with ggplot
+      std_high_abun_adj[[i]] <- as(tmp2069_71std_climate_anomaly[[i]], "SpatialPixelsDataFrame")
+      std_high_abun_adj[[i]] <- as.data.frame(std_high_abun_adj[[i]])
+      
+      percent_unknown[i] <- length(std_high_abun_adj[[i]]$layer[std_high_abun_adj[[i]]$layer > max_standard_anom]) / length(std_high_abun_adj[[i]]$layer)
+      
+      print(percent_unknown)
+      
+      # set up prediction data on basis of that set of years
+      new_data_pred <- data.frame("standard_anom" = std_high_abun_adj[[i]]$layer, Predominant_land_use = "Cropland")
+      
+      # predict abundance for climate anomaly and join to data frame
+      predicted_abundance <- predict(model_2c_abundance, new_data_pred, re.form = NA)
+      std_high_abun_adj[[i]]$abundance <- exp(predicted_abundance)
+      
+      # for any location that's cooled abundance is that at no warming
+      std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$layer <= 0] <- zero_warming_abundance
+      
+      # calculate percentage change from place with 0 warming, and convert to vulnerability
+      std_high_abun_adj[[i]]$abundance_change <- 1 - (std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
+      
+      # convert spatial dataframe to coordinates
+      std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
+        dplyr::select(x, y) %>%
+        unique() %>%
+        SpatialPoints()
+      
+    }
+    
+    # set up vector for total production
+    vulnerable_production_list <- list()
+    vulnerable_production <- c()
+    
+    # for each set of coordinates, extract the pollination dependent values and sum
+    for(i in 1:length(std_anom_high)){
+      
+      # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
+      vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
+      vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
 
-# calc the anomalies for the future years
-tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean)
-tmp2069_71std_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean) / tmp1901_1931sd
+      
+    }
+    vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
+                                                  "model" = climate_model_combs_adj[j],
+                                                  percent_unknown) 
+  }
+  
+  # create dataframe for exposed production and build datafrmae
+  RCP_plot[[k]] <- rbindlist(vulnerable_production_jack) %>%
+    mutate(year = rep(c(seq(2048, 2016, -1)), 5)) %>%
+    mutate(scenario = RCP_scenarios[k])
+}
 
-# reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
-tmp2069_71std_climate_anomaly <- projectRaster(tmp2069_71std_climate_anomaly, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
-# extract climate data just for those places that have crop production data
-climate_poll_values_future <- extract(tmp2069_71std_climate_anomaly, crop_df_locs, na.rm = FALSE)
-
-# merge the climate standardised values onto the pollinator dependence data
-climate_poll_data_future <- cbind((crop_df %>% filter(!is.na(layer))), climate_poll_values_future, (crop_df_all %>% filter(!is.na(layer)) %>% select(layer) %>% rename("total_production" = "layer")))
-
-# set up prediction data on basis of that set of years
-new_data_pred <- data.frame("standard_anom" = climate_poll_data_future$climate_poll_values_future, Predominant_land_use = "Cropland")
-
-# predict abundance for climate anomaly and join to data frame
-climate_poll_data_future$abundance <- exp(predict(model_2c_abundance, new_data_pred, re.form = NA))
-climate_poll_data_future$abundance[climate_poll_data_future$climate_poll_values_future <= 0] <- zero_warming_abundance
-climate_poll_data_future$abundance_loss <- 1 - (climate_poll_data_future$abundance / zero_warming_abundance)
-climate_poll_data_future$poll_vulnerability <- (climate_poll_data_future$abundance_loss * climate_poll_data_future$layer) / climate_poll_data_future$total_production
-
-# # plot the ggplot map for climate anomaly
-vulnerability_2050 <- climate_poll_data_future %>%
+# bind together the outputs and plot as facetted plot for each scenario
+rbindlist(RCP_plot) %>%
+  mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5", "HadGEM2|IPSL|MIROC5", "GFDL|IPSL|MIROC5", "GFDL|HadGEM2|MIROC5", "GFDL|HadGEM2|IPSL"),
+                        labels = c("All 4 models", "Excluding GFDL", "Excluding HadGEM2", "Excluding IPSL", "Excluding MIROC5"))) %>%
+  mutate(scenario = factor(scenario, levels = c("rcp85", "rcp60", "rcp26"),
+                           labels = c("RCP 8.5", "RCP 6.0", "RCP 2.6"))) %>%
   ggplot() +
-  geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
-  geom_tile(aes(x = x, y = y, fill = poll_vulnerability)) +
-  ggtitle("2050") +
-  scale_fill_viridis("Proportional production risk",
-                       na.value = "transparent", option = "plasma", direction = -1,
-                       limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  coord_equal() +
-  guides(fill = guide_colourbar(ticks = FALSE)) +
-  theme(panel.background = element_blank(),
-        panel.bord = element_blank(),
-        panel.grid = element_blank(), 
-        axis.text = element_blank(),
-        axis.ticks = element_blank(), 
-        axis.title = element_blank(),
-        legend.position = "none")
+    geom_line(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
+    geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
+    facet_wrap(~scenario, ncol = 2) +
+    scale_y_continuous(limits = c(67000000, 150000000), expand = c(0, 0), breaks = c(80000000, 100000000, 120000000, 140000000), labels = c("80", "100", "120", "140")) +
+    scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
+    scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+    scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
+    ylab("Pollination production risk (million tonnes)") +
+    xlab("") +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          strip.text.x = element_text(size = 12))
 
-present_vulnerability + vulnerability_2050 + patchwork::plot_layout(ncol = 2)
+# save facetted plot
+ggsave("rcp_85_pollination_exposure_8.png", scale = 1, dpi = 350)
 
-ggsave("vulnerability_weighted_production_map_8.png", scale = 1.1, dpi = 350)
+## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
+# assign 0 as NA for intersection
+crop.total[crop.total == 0] <- NA
+tmp2069_71std_climate_anomaly[[1]][tmp2069_71std_climate_anomaly[[1]] == 0] <- NA
+
+# select cells that don't intersect between the crop and climate data and plot
+r3 <- raster::mask(crop(crop.total, tmp2069_71std_climate_anomaly[[1]]), tmp2069_71std_climate_anomaly[[1]], inverse = TRUE)
+plot(r3)
+
+# check that discrepancy is due to some cells being missed
+sum(r3[], na.rm = TRUE) # sum of those cells that don't intersect = 134747.6
+total_production - (vulnerable_production_list[[i]] %>% sum()) # difference between total production and production post extract = 134747.6
+

@@ -1,4 +1,4 @@
-# script for pollinating/non-pollinating, need to think about species assigned as non-pollinators
+# script for pollinating/non-pollinating vertebrate abundance models
 
 # load required libraries
 library(raster)
@@ -39,27 +39,19 @@ tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 # read in the predicts pollinators
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds") %>%
   dplyr::select(-clade_rank, -confidence)  %>%
-  filter(Class == "Insecta") %>%
-  filter(Order != "Thysanoptera") %>%
+  filter(Phylum == "Chordata") %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
 
-# set up vector for taxonomic orders
-taxonomic_orders <- c("Coleoptera", "Diptera", "Hymenoptera", "Lepidoptera")
-PREDICTS_pollinators_taxa <- list()
-
-# loop through the taxonomic orders and removed each for jack-knife with replacement
-for(i in 1:length(taxonomic_orders)){
-  PREDICTS_pollinators_taxa[[i]] <- PREDICTS_pollinators_orig %>% 
-    filter(Order == taxonomic_orders[i]) %>%
-    droplevels()
-}
+# filter the pollinators from the overall predicts database
+PREDICTS_non_pollinating <- PREDICTS %>%
+  filter(Phylum == "Chordata") %>%
+  filter(!COL_ID %in% as.character(PREDICTS_pollinators_orig$COL_ID)) %>%
+  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
+  droplevels()
 
 # bind together the two dataframes
-pollinat_bound <- list(PREDICTS_pollinators_taxa[[1]], 
-                       PREDICTS_pollinators_taxa[[2]], 
-                       PREDICTS_pollinators_taxa[[3]],
-                       PREDICTS_pollinators_taxa[[4]])
+pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
 
 # set up vector for filtering for vertebrates and invertebrates
 predict_climate_list <- list()
@@ -196,11 +188,7 @@ main_plot_abundance <- list()
 for(m in 1:length(pollinat_bound)){
   
   # species richness, standard anom as a factor
-  model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS), data = predict_climate_list[[m]]) 
-  print(AIC(model_2c_abundance[[m]]))
-  
   model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[m]]) 
-  print(AIC(model_2c_abundance[[m]]))
   
   # run predictions for the model of standard anomaly
   abundance_model[[m]] <- predict_continuous(model = model_2c_abundance[[m]],
@@ -224,28 +212,13 @@ for(m in 1:length(pollinat_bound)){
   
 }
 
-
-
-
-
-
-# plot for the pollinating insects and non-pollinating insects - climate anomaly of 4 corresponds to ~100% abundance loss
+# plot for the pollinating insects and non-pollinating insects
 plot_grid(main_plot_abundance[[1]] +
-            ggtitle("Pollinating insects (Coleoptera)") + 
-            xlim(-0.25, 3.5) +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
-            theme(legend.position = "none"), main_plot_abundance[[2]] + 
-            xlim(-0.25, 3.5) +
-            ggtitle("Pollinating insects (Diptera)") +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
-            theme(legend.position = "none"), main_plot_abundance[[3]] + 
-            xlim(-0.25, 3.5) +
-            ggtitle("Pollinating insects (Hymenoptera)") +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
-            theme(legend.position = "none"), main_plot_abundance[[4]] + 
-            xlim(-0.25, 3.5) +
-            ggtitle("Pollinating insects (Lepidoptera)") +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
-            theme(legend.position = "none"), ncol = 2)
+            ggtitle("Pollinating vertebrates") + 
+            scale_y_continuous("Total abundance", limits = c(1.5, 4.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
+            theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
+            ggtitle("Non-pollinating vertebrates") +
+            scale_y_continuous("Total abundance", limits = c(1.5, 4.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
+            theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_6.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_vertebrates_3.png", scale = 1, dpi = 350)
