@@ -502,7 +502,7 @@ top_av_countries <- change_obj %>%
     scale_y_continuous(limits = c(0, 1), labels = c("0", "0.25", "0.5", "0.75", "1"), expand = c(0, 0)) +
     scale_x_continuous(breaks = c(2020, 2040), labels = c("", "")) +
     xlab(NULL) + 
-    ylab("Top 10 overall vulnerability") +
+    ylab("Proportional production risk\n (Top 10 overall)") +
     theme_bw() +
     guides(guide_colourbar(ticks = FALSE)) +
     theme(panel.grid = element_blank(),
@@ -521,7 +521,7 @@ top_change_countries <- change_obj %>%
   scale_y_continuous(limits = c(0, 1), labels = c("0", "0.25", "0.5", "0.75", "1"), expand = c(0, 0)) +
   scale_x_continuous(breaks = c(2020, 2030, 2040)) +
   xlab(NULL) + 
-  ylab("Top 10 change in vulnerability") +
+  ylab("Proportional production risk\n (Top 10 change)") +
   theme_bw() +
   guides(guide_colourbar(ticks = FALSE)) +
   theme(panel.grid = element_blank(),
@@ -530,4 +530,4 @@ top_change_countries <- change_obj %>%
 # combine the plots for top change and total change
 plot_grid(top_av_countries, top_change_countries, nrow = 2)
 
-ggsave("top_change_country_3.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_4.png", scale = 1.1, dpi = 350)
