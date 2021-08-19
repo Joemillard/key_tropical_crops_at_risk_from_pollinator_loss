@@ -510,6 +510,4 @@ top_import_risk <- joined_flows %>%
   theme(panel.grid = element_blank(),
         legend.position = "none", strip.text = element_text(size = 10.5))
 
-
-
 ggsave("top_20_import_risk.png", scale = 1.1, dpi = 350)
