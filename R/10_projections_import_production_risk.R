@@ -474,7 +474,7 @@ change_obj <- rbindlist(country_sums) %>%
 # calculate import risk,a nd convert to index
 joined_flows <- inner_join(trade_flow, change_obj, by = c("reporter_countries" = "SOVEREIGNT")) %>%
   ungroup() %>%
-  mutate(import_risk = total_production * percent_flow) %>% View()
+  mutate(import_risk = total_production * percent_flow) %>%
   select(partner_countries, year, import_risk) %>%
   group_by(partner_countries, year) %>%
   summarise(total_import_risk = sum(import_risk)) %>%
@@ -504,7 +504,7 @@ top_import_risk <- joined_flows %>%
   facet_wrap(~partner_countries, nrow = 4) +
   scale_x_continuous(breaks = c(2020, 2030, 2040)) +
   xlab(NULL) + 
-  ylab("Proportional production risk\n (Top 10 overall)") +
+  ylab("Import production risk\n (Top 20 rate of change)") +
   theme_bw() +
   guides(guide_colourbar(ticks = FALSE)) +
   theme(panel.grid = element_blank(),
