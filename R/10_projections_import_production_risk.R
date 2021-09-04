@@ -511,3 +511,31 @@ top_import_risk <- joined_flows %>%
         legend.position = "none", strip.text = element_text(size = 10.5))
 
 ggsave("top_20_import_risk.png", scale = 1.1, dpi = 350)
+
+## supply diversity plotted against rate of change
+# calculate top change for import risk
+all_change <- joined_flows %>%
+  group_by(partner_countries) %>%
+  mutate(index_diff = max(index) - 1) %>%
+  ungroup() %>%
+  select(partner_countries, index_diff) %>%
+  unique() %>%
+  arrange(desc(index_diff)) %>%
+  droplevels() %>%
+  mutate(partner_countries = fct_reorder(partner_countries, -index_diff))
+
+# count number of suppliers for each country and merge onto rates of change
+suppliers <- trade_flow %>%
+  group_by(partner_countries) %>%
+  tally() %>%
+  inner_join(all_change, by = "partner_countries")
+
+# plot the rates of change against supplier
+ggplot(suppliers) + 
+  geom_point(aes(x = n, y = index_diff)) +
+  theme_bw() +
+  xlab("Total suppliers") +
+  ylab("Import risk change") +
+  scale_x_continuous(expand = c(0, 0), breaks = c(0, 50, 100, 150, 200), limits = c(0, 150)) +
+  scale_y_continuous(expand = c(0, 0), breaks = c(0, 0.5, 1, 1.5, 2), labels = c(0, 0.5, 1, 1.5, 2), limits = c(0, 1.6)) +
+  theme(panel.grid = element_blank())
