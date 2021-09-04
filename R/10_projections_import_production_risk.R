@@ -530,6 +530,13 @@ suppliers <- trade_flow %>%
   tally() %>%
   inner_join(all_change, by = "partner_countries")
 
+# calculate the main supplier for each country
+majority_supplier <- trade_flow %>%
+  group_by(reporter_countries) %>%
+  mutate(maximum = max(percent_flow)) %>%
+  ungroup() %>%
+  filter(percent_flow == maximum)
+
 # plot the rates of change against supplier
 ggplot(suppliers) + 
   geom_point(aes(x = n, y = index_diff)) +
