@@ -546,3 +546,5 @@ ggplot(suppliers) +
   scale_x_continuous(expand = c(0, 0), breaks = c(0, 50, 100, 150, 200), limits = c(0, 150)) +
   scale_y_continuous(expand = c(0, 0), breaks = c(0, 0.5, 1, 1.5, 2), labels = c(0, 0.5, 1, 1.5, 2), limits = c(0, 1.6)) +
   theme(panel.grid = element_blank())
+
+ggsave("supply_diversity_importer.png", scale = 0.9, dpi = 350)
