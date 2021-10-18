@@ -491,11 +491,11 @@ RCP_plot <- rbindlist(vulnerable_production_jack) %>%
 
 
 # bind together the outputs and plot as facetted plot for each scenario
-RCP_plot %>%
+RCP_plot %>% View()
   mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5"),
                         labels = c("All 4 models"))) %>%
   mutate(scenario = factor(scenario, levels = c("rcp85"),
-                           labels = c("RCP 8.5"))) %>%
+                           labels = c("RCP 8.5 (Ensemble GFDL, HadGEM2, IPSL, and MIROC5)"))) %>%
   mutate(abundance_service = factor(abundance_service, 
                                     levels = c(0.95, 0.9, 0.8, 0.7),
                                     labels = c("Threshold (95%)", "Threshold (90%)", "Threshold (80%)", "Threshold (70%)"))) %>%
