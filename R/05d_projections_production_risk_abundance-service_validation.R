@@ -389,8 +389,7 @@ average_clim_models <- function(yr, RCP, clim_models){
   
 }
 
-# vector for percent_unknown - i.e. beyond the max value of ~1.6
-percent_unknown <- c()
+
 
 # iterate through each set of years as a rolling average
 for(i in 1:length(years_list)){
@@ -409,20 +408,21 @@ for(i in 1:length(years_list)){
   
 }
     
-
-
 # predict abundance at 0 warming on cropland
 zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
 zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
 zero_warming_abundance <- exp(zero_warming_abundance)
 
 # set up list for each abundance/service curve
-abundance_vec <- c(0.7, 0.8, 0.9, 0.95)
+abundance_vec <- c(0.7, 0.8, 0.9, 0.95, "Linear")
 abundance_curve <- list()
 
 vulnerable_production_jack <- list()
 
 for(j in 1:length(abundance_vec)){
+  
+  # vector for percent_unknown - i.e. beyond the max value of ~1.6
+  percent_threshold <- c(rep(NA, 33))
   
   # set up empty list for standardised climate anomaly
   std_high_abun_adj <- list()
@@ -436,7 +436,6 @@ for(j in 1:length(abundance_vec)){
     std_high_abun_adj[[i]] <- as(tmp2069_71std_climate_anomaly[[i]], "SpatialPixelsDataFrame")
     std_high_abun_adj[[i]] <- as.data.frame(std_high_abun_adj[[i]])
     
-    percent_unknown[i] <- length(std_high_abun_adj[[i]]$layer[std_high_abun_adj[[i]]$layer > max_standard_anom]) / length(std_high_abun_adj[[i]]$layer)
     
 
     # set up prediction data on basis of that set of years
@@ -452,7 +451,14 @@ for(j in 1:length(abundance_vec)){
     # calculate percentage change from place with 0 warming, and convert to vulnerability
     std_high_abun_adj[[i]]$abundance_change <- 1 - (std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
     
-    std_high_abun_adj[[i]]$abundance_change <- ifelse(std_high_abun_adj[[i]]$abundance_change >= abundance_vec[j], 1, 0)
+    if(abundance_vec[j] != "Linear"){
+    
+      std_high_abun_adj[[i]]$abundance_change <- ifelse(std_high_abun_adj[[i]]$abundance_change >= abundance_vec[j], 1, 0)
+    
+      percent_threshold[i] <- (sum(std_high_abun_adj[[i]]$abundance_change) / length(std_high_abun_adj[[i]]$abundance_change)) * 100
+      
+      
+    }
     
     # convert spatial dataframe to coordinates
     std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
@@ -473,45 +479,63 @@ for(j in 1:length(abundance_vec)){
     vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
     vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
     
-    
   }
   
   vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
                                                     "model" = "GFDL|HadGEM2|IPSL|MIROC5",
                                                     "scenario" = "rcp85", 
                                                     "abundance_service" = abundance_vec[j],
-                                                    percent_unknown) 
-  
+                                                percent_threshold)
 }
     
 # create dataframe for exposed production and build datafrmae
 RCP_plot <- rbindlist(vulnerable_production_jack) %>%
-  mutate(year = rep(c(seq(2048, 2016, -1)), 4))
+  mutate(year = rep(c(seq(2048, 2016, -1)), 5))
   
-
-
 # bind together the outputs and plot as facetted plot for each scenario
-RCP_plot %>% View()
-  mutate(model = factor(model, levels = c("GFDL|HadGEM2|IPSL|MIROC5"),
-                        labels = c("All 4 models"))) %>%
-  mutate(scenario = factor(scenario, levels = c("rcp85"),
-                           labels = c("RCP 8.5 (Ensemble GFDL, HadGEM2, IPSL, and MIROC5)"))) %>%
+RCP_plot %>% 
+  filter(abundance_service != "Linear") %>%
+  droplevels() %>%
   mutate(abundance_service = factor(abundance_service, 
                                     levels = c(0.95, 0.9, 0.8, 0.7),
-                                    labels = c("Threshold (95%)", "Threshold (90%)", "Threshold (80%)", "Threshold (70%)"))) %>%
+                                    labels = c("Threshold (95% loss)", "Threshold (90% loss)", "Threshold (80% loss)", "Threshold (70% loss)"))) %>%
   group_by(abundance_service) %>%
   arrange(year) %>%
   mutate(pct_change = vulnerability/lag(vulnerability, default = vulnerability[1])) %>%
   mutate(index = cumprod(pct_change)) %>% 
   ungroup() %>%
   ggplot() +
-  geom_line(aes(x = year, y = index, colour = abundance_service, alpha = abundance_service)) +
-  geom_point(aes(x = year, y = index, colour = abundance_service, alpha = abundance_service)) +
-  facet_wrap(~scenario, ncol = 2) +
+    geom_line(aes(x = year, y = index, colour = percent_threshold)) +
+    geom_point(aes(x = year, y = index, colour = percent_threshold)) +
+    facet_wrap(~abundance_service) +
+    scale_y_continuous(limits = c(0.6, 15), expand = c(0, 0), breaks = c(1, 5, 10, 15)) +
+    geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
+    scale_colour_viridis("Pollination prod. land \nbeyond threshold (%)") +
+    ylab("Pollination production risk") +
+    xlab("") +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          strip.text.x = element_text(size = 12))
+
+# save facetted plot
+ggsave("rcp_85_pollination_exposure_abundance_percent_unviable.png", scale = 1, dpi = 350)
+
+# bind together the outputs and plot as facetted plot for each scenario
+RCP_plot %>% 
+  mutate(abundance_service = factor(abundance_service, 
+                                    levels = c("Linear", 0.95, 0.9, 0.8, 0.7),
+                                    labels = c("Linear", "Threshold (95%)", "Threshold (90%)", "Threshold (80%)", "Threshold (70%)"))) %>%
+  group_by(abundance_service) %>%
+  arrange(year) %>%
+  mutate(pct_change = vulnerability/lag(vulnerability, default = vulnerability[1])) %>%
+  mutate(index = cumprod(pct_change)) %>% 
+  ungroup() %>%
+  ggplot() +
+  geom_line(aes(x = year, y = index, colour = abundance_service)) +
+  geom_point(aes(x = year, y = index, colour = abundance_service)) +
   scale_y_continuous(limits = c(0.6, 15), expand = c(0, 0), breaks = c(1, 5, 10, 15)) +
   geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_manual("Abundance/production \nrelationship", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
-  scale_alpha_manual("Abundance/production \nrelationship", values = c(0.4, 0.4, 0.4, 0.4, 0.4)) +
   ylab("Pollination production risk") +
   xlab("") +
   theme_bw() +
@@ -519,18 +543,5 @@ RCP_plot %>% View()
         strip.text.x = element_text(size = 12))
 
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_8.png", scale = 1, dpi = 350)
-
-## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
-# assign 0 as NA for intersection
-crop.total[crop.total == 0] <- NA
-tmp2069_71std_climate_anomaly[[1]][tmp2069_71std_climate_anomaly[[1]] == 0] <- NA
-
-# select cells that don't intersect between the crop and climate data and plot
-r3 <- raster::mask(crop(crop.total, tmp2069_71std_climate_anomaly[[1]]), tmp2069_71std_climate_anomaly[[1]], inverse = TRUE)
-plot(r3)
-
-# check that discrepancy is due to some cells being missed
-sum(r3[], na.rm = TRUE) # sum of those cells that don't intersect = 134747.6
-total_production - (vulnerable_production_list[[i]] %>% sum()) # difference between total production and production post extract = 134747.6
+ggsave("rcp_85_pollination_exposure_abundance_mod.png", scale = 1, dpi = 350)
 
