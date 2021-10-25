@@ -545,3 +545,40 @@ RCP_plot %>%
 # save facetted plot
 ggsave("rcp_85_pollination_exposure_abundance_mod.png", scale = 1, dpi = 350)
 
+
+
+
+## multiple abundance/production relationships
+
+library(dplyr)
+library(data.table)
+library(ggplot2)
+
+#y <- 0:10
+#x <- (0:100/100)
+x <- seq(from = 0, to = 1, by = 0.01)
+
+
+#y <- ((-1/x^1) + 100) / 100
+
+y <- ((-1/x^2) + 200) / 200
+
+
+data.frame(x, y) %>% plot
+
+
+data_curve <- list()
+lrc_vec <- c(1, 2, 3, 4)
+
+for(i in 1:length(lrc_vec)){
+  data_curve[[i]] <- data.frame(x = (0:100)/100, y = stats::SSasymp((0:100)/100, Asym = 1, R0 = 0, lrc = lrc_vec[i])) %>%
+    mutate(lrc = lrc_vec[i])
+}
+
+data_line <- data.frame("x" = (0:100)/100, "y"= (0:100)/100, "lrc" = "linear")
+
+  rbindlist(data_curve) %>%
+  rbind(data_line) %>%
+  mutate(lrc = factor(lrc)) %>% 
+  ggplot() +
+  geom_line(aes(x = x, y = y, colour = lrc, group = lrc))
