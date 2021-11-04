@@ -558,7 +558,6 @@ library(ggplot2)
 #x <- (0:100/100)
 x <- seq(from = 0, to = 1, by = 0.01)
 
-
 #y <- ((-1/x^1) + 100) / 100
 
 y <- ((-1/x^2) + 200) / 200
@@ -582,3 +581,50 @@ data_line <- data.frame("x" = (0:100)/100, "y"= (0:100)/100, "lrc" = "linear")
   mutate(lrc = factor(lrc)) %>% 
   ggplot() +
   geom_line(aes(x = x, y = y, colour = lrc, group = lrc))
+
+# needs flipping  
+curve(-x^3/sqrt(x^3) + 1)
+curve(-x^4/sqrt(x^4) + 1)
+
+curve(-sqrt(x^3) + 1)
+curve(sqrt(x^5) - 1)
+
+curve(-sqrt(x))
+curve(sqrt(x))
+
+
+
+curve(-(x^0.5/-sqrt(x^0.5)))
+
+
+curve(-x/sqrt(x^3))
+curve(-3/sqrt(x) + 1, xlim=c(0,1), ylim = c(0, 1))
+
+### working function
+# working curve
+curve(-sqrt((x-1)^14) + 1)
+
+x <- (0:100)/100
+abundance_prod <- c(2, 4, 6, 8, 10, 14, 18, 22, 26, 30)
+y <- list()
+frames <- list()
+
+
+for(i in 1:length(abundance_prod)){
+  y[[i]] = (-sqrt((x-1)^abundance_prod[i]) + 1)
+  frames[[i]] <- data.frame(x, y[[i]], abundance_prod[i])
+}
+
+
+data.table::rbindlist(frames) %>%
+  ggplot() +
+    geom_line(aes(x = x, y = y..i.., colour = abundance_prod.i., group = abundance_prod.i.)) +
+    theme_bw() +
+    scale_x_continuous("Abundance", expand = c(0, 0)) + 
+    scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.05)) +
+
+    theme(panel.grid = element_blank())
+
+
+
+  
