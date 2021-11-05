@@ -508,7 +508,6 @@ RCP_plot <- rbindlist(vulnerable_production_jack) %>%
   
 # bind together the outputs and plot as facetted plot for each scenario
 RCP_plot %>% 
-  filter(abundance_service != "Linear") %>%
   droplevels() %>%
   mutate(abundance_service = factor(abundance_service, 
                                     c(2, 4, 8, 16, 32),
@@ -537,8 +536,8 @@ ggsave("rcp_85_pollination_exposure_abundance_percent_unviable.png", scale = 1, 
 # bind together the outputs and plot as facetted plot for each scenario
 RCP_plot %>% 
   mutate(abundance_service = factor(abundance_service, 
-                                    levels = c("Linear", 0.95, 0.9, 0.8, 0.7),
-                                    labels = c("Linear", "Threshold (95%)", "Threshold (90%)", "Threshold (80%)", "Threshold (70%)"))) %>%
+                                    c(2, 4, 8, 16, 32),
+                                    labels = c(2, 4, 8, 16, 32))) %>%
   group_by(abundance_service) %>%
   arrange(year) %>%
   mutate(pct_change = vulnerability/lag(vulnerability, default = vulnerability[1])) %>%
@@ -547,7 +546,7 @@ RCP_plot %>%
   ggplot() +
   geom_line(aes(x = year, y = index, colour = abundance_service)) +
   geom_point(aes(x = year, y = index, colour = abundance_service)) +
-  scale_y_continuous(limits = c(0.6, 15), expand = c(0, 0), breaks = c(1, 5, 10, 15)) +
+  scale_y_continuous(limits = c(0.95, 1.8), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6), labels = c("1", "1.2", "1.4", "1.6")) +
   geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_manual("Abundance/production \nrelationship", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
   ylab("Pollination production risk") +
