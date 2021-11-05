@@ -415,7 +415,7 @@ zero_warming_abundance <- exp(zero_warming_abundance)
 
 ### working function for abundance/production relationship
 # working curve for linear function
-curve(-sqrt((x-1)^14) + 1)
+curve(-sqrt((x-1)^32) + 1)
 
 # figure for supp info
 x <- (0:100)/100
@@ -471,9 +471,9 @@ for(j in 1:length(abundance_prod)){
     std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$layer <= 0] <- zero_warming_abundance
     
     # calculate percentage change from place with 0 warming, and convert to vulnerability
-    std_high_abun_adj[[i]]$abundance_change <- 1 - (std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
+    std_high_abun_adj[[i]]$abundance_change <- std_high_abun_adj[[i]]$abundance / zero_warming_abundance
     
-    std_high_abun_adj[[i]]$production_change <- -sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1
+    std_high_abun_adj[[i]]$production_change <- 1-(-sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1)
     
     # convert spatial dataframe to coordinates
     std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
@@ -508,33 +508,6 @@ RCP_plot <- rbindlist(vulnerable_production_jack) %>%
   
 # bind together the outputs and plot as facetted plot for each scenario
 RCP_plot %>% 
-  droplevels() %>%
-  mutate(abundance_service = factor(abundance_service, 
-                                    c(2, 4, 8, 16, 32),
-                                    labels = c(2, 4, 8, 16, 32))) %>%
-  group_by(abundance_service) %>%
-  arrange(year) %>%
-  mutate(pct_change = vulnerability/lag(vulnerability, default = vulnerability[1])) %>%
-  mutate(index = cumprod(pct_change)) %>% 
-  ungroup() %>%
-  ggplot() +
-    geom_line(aes(x = year, y = index)) +
-    geom_point(aes(x = year, y = index)) +
-    facet_wrap(~abundance_service) +
-    scale_y_continuous(limits = c(0.95, 1.8), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6), labels = c("1", "1.2", "1.4", "1.6")) +
-    geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
-    scale_colour_viridis("Pollination prod. land \nbeyond threshold (%)") +
-    ylab("Pollination production risk") +
-    xlab("") +
-    theme_bw() +
-    theme(panel.grid = element_blank(),
-          strip.text.x = element_text(size = 12))
-
-# save facetted plot
-ggsave("rcp_85_pollination_exposure_abundance_percent_unviable.png", scale = 1, dpi = 350)
-
-# bind together the outputs and plot as facetted plot for each scenario
-RCP_plot %>% 
   mutate(abundance_service = factor(abundance_service, 
                                     c(2, 4, 8, 16, 32),
                                     labels = c(2, 4, 8, 16, 32))) %>%
@@ -546,7 +519,7 @@ RCP_plot %>%
   ggplot() +
   geom_line(aes(x = year, y = index, colour = abundance_service)) +
   geom_point(aes(x = year, y = index, colour = abundance_service)) +
-  scale_y_continuous(limits = c(0.95, 1.8), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6), labels = c("1", "1.2", "1.4", "1.6")) +
+  scale_y_continuous(limits = c(0.7, 7.5), expand = c(0, 0), breaks = c(1, 3, 5, 7), labels = c("1", "3", "5", "7")) +
   geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_manual("Abundance/production \nrelationship", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
   ylab("Pollination production risk") +
