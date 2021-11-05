@@ -413,16 +413,40 @@ zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
 zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
 zero_warming_abundance <- exp(zero_warming_abundance)
 
+### working function for abundance/production relationship
+# working curve for linear function
+curve(-sqrt((x-1)^14) + 1)
+
+# figure for supp info
+x <- (0:100)/100
+abundance_prod <- c(2, 4, 8, 16, 32)
+y <- list()
+frames <- list()
+
+# run function across sample
+for(i in 1:length(abundance_prod)){
+  y[[i]] = -sqrt((x-1)^abundance_prod[i]) + 1
+  frames[[i]] <- data.frame(x, y[[i]], "Slope" = abundance_prod[i])
+}
+
+# output figure for supp info and save
+data.table::rbindlist(frames) %>%
+  ggplot() +
+  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope)) +
+  theme_bw() +
+  scale_x_continuous("Abundance", expand = c(0, 0)) + 
+  scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03)) +
+  scale_colour_viridis("Slope parameter") +
+  theme(panel.grid = element_blank())
+
+ggsave("abundance_production.png", scale = 0.9, dpi = 350)
+
 # set up list for each abundance/service curve
-abundance_vec <- c(0.7, 0.8, 0.9, 0.95, "Linear")
 abundance_curve <- list()
 
 vulnerable_production_jack <- list()
 
-for(j in 1:length(abundance_vec)){
-  
-  # vector for percent_unknown - i.e. beyond the max value of ~1.6
-  percent_threshold <- c(rep(NA, 33))
+for(j in 1:length(abundance_prod)){
   
   # set up empty list for standardised climate anomaly
   std_high_abun_adj <- list()
@@ -436,8 +460,6 @@ for(j in 1:length(abundance_vec)){
     std_high_abun_adj[[i]] <- as(tmp2069_71std_climate_anomaly[[i]], "SpatialPixelsDataFrame")
     std_high_abun_adj[[i]] <- as.data.frame(std_high_abun_adj[[i]])
     
-    
-
     # set up prediction data on basis of that set of years
     new_data_pred <- data.frame("standard_anom" = std_high_abun_adj[[i]]$layer, Predominant_land_use = "Cropland")
     
@@ -451,14 +473,7 @@ for(j in 1:length(abundance_vec)){
     # calculate percentage change from place with 0 warming, and convert to vulnerability
     std_high_abun_adj[[i]]$abundance_change <- 1 - (std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
     
-    if(abundance_vec[j] != "Linear"){
-    
-      std_high_abun_adj[[i]]$abundance_change <- ifelse(std_high_abun_adj[[i]]$abundance_change >= abundance_vec[j], 1, 0)
-    
-      percent_threshold[i] <- (sum(std_high_abun_adj[[i]]$abundance_change) / length(std_high_abun_adj[[i]]$abundance_change)) * 100
-      
-      
-    }
+    std_high_abun_adj[[i]]$production_change <- -sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1
     
     # convert spatial dataframe to coordinates
     std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
@@ -477,15 +492,14 @@ for(j in 1:length(abundance_vec)){
     
     # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
     vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
-    vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
+    vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$production_change) %>% sum()
     
   }
   
   vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
                                                     "model" = "GFDL|HadGEM2|IPSL|MIROC5",
                                                     "scenario" = "rcp85", 
-                                                    "abundance_service" = abundance_vec[j],
-                                                percent_threshold)
+                                                    "abundance_service" = abundance_prod[j])
 }
     
 # create dataframe for exposed production and build datafrmae
@@ -497,18 +511,18 @@ RCP_plot %>%
   filter(abundance_service != "Linear") %>%
   droplevels() %>%
   mutate(abundance_service = factor(abundance_service, 
-                                    levels = c(0.95, 0.9, 0.8, 0.7),
-                                    labels = c("Threshold (95% loss)", "Threshold (90% loss)", "Threshold (80% loss)", "Threshold (70% loss)"))) %>%
+                                    c(2, 4, 8, 16, 32),
+                                    labels = c(2, 4, 8, 16, 32))) %>%
   group_by(abundance_service) %>%
   arrange(year) %>%
   mutate(pct_change = vulnerability/lag(vulnerability, default = vulnerability[1])) %>%
   mutate(index = cumprod(pct_change)) %>% 
   ungroup() %>%
   ggplot() +
-    geom_line(aes(x = year, y = index, colour = percent_threshold)) +
-    geom_point(aes(x = year, y = index, colour = percent_threshold)) +
+    geom_line(aes(x = year, y = index)) +
+    geom_point(aes(x = year, y = index)) +
     facet_wrap(~abundance_service) +
-    scale_y_continuous(limits = c(0.6, 15), expand = c(0, 0), breaks = c(1, 5, 10, 15)) +
+    scale_y_continuous(limits = c(0.95, 1.8), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6), labels = c("1", "1.2", "1.4", "1.6")) +
     geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
     scale_colour_viridis("Pollination prod. land \nbeyond threshold (%)") +
     ylab("Pollination production risk") +
@@ -600,32 +614,7 @@ curve(-(x^0.5/-sqrt(x^0.5)))
 curve(-x/sqrt(x^3))
 curve(-3/sqrt(x) + 1, xlim=c(0,1), ylim = c(0, 1))
 
-### working function
-# working curve
-curve(-sqrt((x-1)^14) + 1)
 
-x <- (0:100)/100
-abundance_prod <- c(2, 4, 8, 16, 32)
-y <- list()
-frames <- list()
-
-
-for(i in 1:length(abundance_prod)){
-  y[[i]] = (-sqrt((x-1)^abundance_prod[i]) + 1)
-  frames[[i]] <- data.frame(x, y[[i]], "Slope" = abundance_prod[i])
-}
-
-
-data.table::rbindlist(frames) %>%
-  ggplot() +
-    geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope)) +
-    theme_bw() +
-    scale_x_continuous("Abundance", expand = c(0, 0)) + 
-    scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03)) +
-    scale_colour_viridis("Slope parameter") +
-    theme(panel.grid = element_blank())
-
-ggsave("abundance_production.png", scale = 0.9, dpi = 350)
 
 
   
