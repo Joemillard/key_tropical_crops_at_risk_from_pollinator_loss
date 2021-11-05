@@ -34,7 +34,7 @@ SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/I
 # filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
-  dplyr::filter(Phylum %in% "Arthropoda") %>%
+  dplyr::filter(Order %in% c("Diptera", "Hymenoptera")) %>%
   droplevels()
 
 # correct for sampling effort
@@ -519,7 +519,7 @@ RCP_plot %>%
   ggplot() +
   geom_line(aes(x = year, y = index, colour = abundance_service)) +
   geom_point(aes(x = year, y = index, colour = abundance_service)) +
-  scale_y_continuous(limits = c(0.7, 7.5), expand = c(0, 0), breaks = c(1, 3, 5, 7), labels = c("1", "3", "5", "7")) +
+ # scale_y_continuous(limits = c(0.7, 7.5), expand = c(0, 0), breaks = c(1, 3, 5, 7), labels = c("1", "3", "5", "7")) +
   geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_manual("Abundance/production \nrelationship", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
   ylab("Pollination production risk") +
