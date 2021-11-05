@@ -605,26 +605,27 @@ curve(-3/sqrt(x) + 1, xlim=c(0,1), ylim = c(0, 1))
 curve(-sqrt((x-1)^14) + 1)
 
 x <- (0:100)/100
-abundance_prod <- c(2, 4, 6, 8, 10, 14, 18, 22, 26, 30)
+abundance_prod <- c(2, 4, 8, 16, 32)
 y <- list()
 frames <- list()
 
 
 for(i in 1:length(abundance_prod)){
   y[[i]] = (-sqrt((x-1)^abundance_prod[i]) + 1)
-  frames[[i]] <- data.frame(x, y[[i]], abundance_prod[i])
+  frames[[i]] <- data.frame(x, y[[i]], "Slope" = abundance_prod[i])
 }
 
 
 data.table::rbindlist(frames) %>%
   ggplot() +
-    geom_line(aes(x = x, y = y..i.., colour = abundance_prod.i., group = abundance_prod.i.)) +
+    geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope)) +
     theme_bw() +
     scale_x_continuous("Abundance", expand = c(0, 0)) + 
-    scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.05)) +
-
+    scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03)) +
+    scale_colour_viridis("Slope parameter") +
     theme(panel.grid = element_blank())
 
+ggsave("abundance_production.png", scale = 0.9, dpi = 350)
 
 
   
