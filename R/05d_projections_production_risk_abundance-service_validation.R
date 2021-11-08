@@ -7,7 +7,7 @@ library(dplyr)
 library(viridis)
 library(rworldmap) 
 library(rworldxtra)
-library(cowplot)
+library(patchwork)
 library(data.table)
 library(lme4)
 library(yarg)
@@ -430,16 +430,15 @@ for(i in 1:length(abundance_prod)){
 }
 
 # output figure for supp info and save
-data.table::rbindlist(frames) %>%
+abundance_prod_plot <- data.table::rbindlist(frames) %>%
+  mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
   ggplot() +
-  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope)) +
+  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope), size = 1.5) +
   theme_bw() +
-  scale_x_continuous("Abundance", expand = c(0, 0)) + 
+  scale_x_continuous("Pollinator abundance", expand = c(0, 0)) + 
   scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03)) +
-  scale_colour_viridis("Slope parameter") +
-  theme(panel.grid = element_blank())
-
-ggsave("abundance_production.png", scale = 0.9, dpi = 350)
+  scale_colour_viridis("Slope parameter", discrete = TRUE) +
+  theme(panel.grid = element_blank(), legend.position = "bottom")
 
 # set up list for each abundance/service curve
 abundance_curve <- list()
@@ -507,26 +506,28 @@ RCP_plot <- rbindlist(vulnerable_production_jack) %>%
   mutate(year = rep(c(seq(2048, 2016, -1)), 5))
   
 # bind together the outputs and plot as facetted plot for each scenario
-RCP_plot %>% 
+abundance_prod_change <- RCP_plot %>% 
   mutate(abundance_service = factor(abundance_service, 
-                                    c(2, 4, 8, 16, 32),
-                                    labels = c(2, 4, 8, 16, 32))) %>%
+                                    levels = c(2, 4, 8, 16, 32),
+                                    labels = c("2", "4","8", "16", "32"))) %>%
   group_by(abundance_service) %>%
   arrange(year) %>%
   mutate(pct_change = vulnerability/lag(vulnerability, default = vulnerability[1])) %>%
   mutate(index = cumprod(pct_change)) %>% 
   ungroup() %>%
   ggplot() +
-  geom_line(aes(x = year, y = index, colour = abundance_service)) +
-  geom_point(aes(x = year, y = index, colour = abundance_service)) +
- # scale_y_continuous(limits = c(0.7, 7.5), expand = c(0, 0), breaks = c(1, 3, 5, 7), labels = c("1", "3", "5", "7")) +
+  geom_line(aes(x = year, y = vulnerability, colour = abundance_service)) +
+  geom_point(aes(x = year, y = vulnerability, colour = abundance_service)) +
+  #scale_y_continuous(limits = c(0.95, 2.5), expand = c(0, 0), breaks = c(1, 1.5, 2, 2.5), labels = c("1", "1.5", "2", "2.5")) +
   geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
-  scale_colour_manual("Abundance/production \nrelationship", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+  scale_colour_viridis("Slope parameter", discrete = TRUE) +
   ylab("Pollination production risk") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank(),
-        strip.text.x = element_text(size = 12))
+        strip.text.x = element_text(size = 12), legend.position = "none")
+
+abundance_prod_change + abundance_prod_plot
 
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_abundance_mod_2.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute.png", scale = 1, dpi = 350)
