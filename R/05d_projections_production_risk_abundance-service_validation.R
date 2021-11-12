@@ -518,10 +518,12 @@ abundance_prod_change <- RCP_plot %>%
   ggplot() +
   geom_line(aes(x = year, y = vulnerability, colour = abundance_service)) +
   geom_point(aes(x = year, y = vulnerability, colour = abundance_service)) +
+  scale_y_continuous(limits = c(0, 270000000), expand = c(0, 0), breaks = c(0, 40000000, 80000000, 120000000, 160000000, 200000000, 240000000), labels = c("0", "40",  "80",  "120",  "160",  "200", "240")) +
   #scale_y_continuous(limits = c(0.95, 2.5), expand = c(0, 0), breaks = c(1, 1.5, 2, 2.5), labels = c("1", "1.5", "2", "2.5")) +
-  geom_hline(yintercept = 1, linetype="dashed") +  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
+  #geom_hline(yintercept = 0, linetype="dashed") +  
+  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE) +
-  ylab("Pollination production risk") +
+  ylab("Pollination production risk (million tonnes)") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank(),
@@ -530,4 +532,4 @@ abundance_prod_change <- RCP_plot %>%
 abundance_prod_change + abundance_prod_plot
 
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute_2.png", scale = 1, dpi = 350)
