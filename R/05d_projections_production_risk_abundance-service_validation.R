@@ -570,7 +570,3 @@ combined_row <- plot_grid(top_row, bottom_row,  ncol = 1, rel_heights = c(0.4, 1
 # save facetted plot
 ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute_5.png", scale = 1.15, dpi = 350)
 
-
-
-
-
