@@ -390,30 +390,54 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 ### working function for abundance/production relationship
-# working curve for linear function
+# working curve for linear function - top is concave, bottom is convex
 curve(-sqrt((x-1)^32) + 1)
+curve(sqrt(x^2))
+
 
 # figure for supp info
 x <- (0:100)/100
-abundance_prod <- c(2, 4, 8, 16, 32)
+abundance_prod_convex <- c(2, 4, 8, 16, 32)
+abundance_prod_concave <- c(4, 8, 16, 32)
+
+# set up empty list objects for each value
 y <- list()
-frames <- list()
+frames_convex <- list()
 
 # run function across sample
-for(i in 1:length(abundance_prod)){
-  y[[i]] = -sqrt((x-1)^abundance_prod[i]) + 1
-  frames[[i]] <- data.frame(x, y[[i]], "Slope" = abundance_prod[i])
+for(i in 1:length(abundance_prod_convex)){
+  y[[i]] = -sqrt((x-1)^abundance_prod_convex[i]) + 1
+  frames_convex[[i]] <- data.frame(x, y[[i]], 
+                            "Slope_group" = paste(abundance_prod_convex[i], "a", sep = ""),
+                            "Slope" = abundance_prod_convex[i],
+                            "Slope_type" = "Convex")
+}
+
+# set up empty list objects for each value
+frames_concave <- list()
+
+# run function across sample
+for(i in 1:length(abundance_prod_concave)){
+  y[[i]] = sqrt(x^abundance_prod_concave[i])
+  frames_concave[[i]] <- data.frame(x, y[[i]], 
+                            "Slope_group" = paste(abundance_prod_concave[i], "b", sep = ""),
+                            "Slope" = abundance_prod_concave[i],
+                            "Slope_type" = "Concave")
 }
 
 # output figure for supp info and save
-abundance_prod_plot <- data.table::rbindlist(frames) %>%
+abundance_prod_plot <- data.table::rbindlist(frames_convex) %>% 
+  rbind(data.table::rbindlist(frames_concave)) %>%
   mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
+  mutate(Slope_type = factor(Slope_type, levels = c("Convex", "Concave"))) %>%
   ggplot() +
-  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope), size = 1.5) +
+  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope_group, linetype = Slope_type), size = 1.2) +
   theme_bw() +
   scale_x_continuous("Pollinator abundance", expand = c(0, 0), labels = c("0", "0.25", "0.5", "0.75", "1")) + 
   scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_colour_viridis("Slope parameter", discrete = TRUE) +
+  scale_colour_viridis("Gradient", discrete = TRUE) +
+  scale_linetype_discrete("Line shape") +
+  guides(linetype = guide_legend(order = 1), col = guide_legend(order = 2)) +
   theme(panel.grid = element_blank(), legend.position = "right")
 
 # predict abundance at 0 warming on cropland
