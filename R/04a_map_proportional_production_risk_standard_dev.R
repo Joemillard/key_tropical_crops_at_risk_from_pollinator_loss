@@ -219,11 +219,13 @@ main_plot_abundance <- abundance_model %>%
 
 ### working function for abundance/production relationship
 # working curve for linear function
-curve(-sqrt((x-1)^32) + 1)
+curve(-sqrt((x-1)^2) + 1)
+
+curve(sqrt(-(x+1)^-0.6) - 1)
 
 # figure for supp info
 x <- (0:100)/100
-abundance_prod <- c(2, 4, 8, 16, 32)
+abundance_prod <- c(0.4, 0.8, 1.2, 1.6, 2, 4, 8, 16, 32)
 y <- list()
 frames <- list()
 
@@ -235,7 +237,7 @@ for(i in 1:length(abundance_prod)){
 
 # output figure for supp info and save
 abundance_prod_plot <- data.table::rbindlist(frames) %>%
-  mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
+ # mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
   ggplot() +
   geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope), size = 1.5) +
   theme_bw() +
