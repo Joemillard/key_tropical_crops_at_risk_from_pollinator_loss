@@ -397,7 +397,7 @@ curve(sqrt(x^2))
 
 # figure for supp info
 x <- (0:100)/100
-abundance_prod_convex <- c(2, 4, 8, 16, 32)
+abundance_prod_convex <- c(4, 8, 16, 32)
 abundance_prod_concave <- c(4, 8, 16, 32)
 
 # set up empty list objects for each value
@@ -425,20 +425,28 @@ for(i in 1:length(abundance_prod_concave)){
                             "Slope_type" = "Concave")
 }
 
+# run function across sample
+y = sqrt(x^2)
+frames_linear <- data.frame(x, "y..i.." = y, 
+                            "Slope_group" = paste(2, "b", sep = ""),
+                             "Slope" = 2,
+                             "Slope_type" = "Linear")
+
 # output figure for supp info and save
 abundance_prod_plot <- data.table::rbindlist(frames_convex) %>% 
-  rbind(data.table::rbindlist(frames_concave)) %>%
+  rbind(data.table::rbindlist(frames_concave), frames_linear) %>%
   mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
-  mutate(Slope_type = factor(Slope_type, levels = c("Convex", "Concave"))) %>%
+  mutate(Slope_type = factor(Slope_type, levels = c("Convex", "Linear", "Concave"))) %>%
   ggplot() +
-  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope_group, linetype = Slope_type), size = 1.2) +
+  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope_group, linetype = Slope_type), size = 1) +
   theme_bw() +
   scale_x_continuous("Pollinator abundance", expand = c(0, 0), labels = c("0", "0.25", "0.5", "0.75", "1")) + 
-  scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03), labels = c("0", "0.25", "0.5", "0.75", "1")) +
+  scale_y_continuous("Production", expand = c(0, 0), limits = c(-0.03, 1.03), labels = c("0", "0.25", "0.5", "0.75", "1")) +
   scale_colour_viridis("Gradient", discrete = TRUE) +
-  scale_linetype_discrete("Line shape") +
+  scale_linetype_manual("Line shape", values = c("dashed", "solid", "dotted")) +
   guides(linetype = guide_legend(order = 1), col = guide_legend(order = 2)) +
-  theme(panel.grid = element_blank(), legend.position = "right")
+  theme(panel.grid = element_blank(), legend.position = "right",
+        legend.box = "horizontal")
 
 # predict abundance at 0 warming on cropland
 zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
@@ -449,6 +457,12 @@ zero_warming_abundance <- exp(zero_warming_abundance)
 RCP_scenarios <- c("rcp85", "rcp60", "rcp26")
 RCP_plot <- list()
 
+# combine two vectors for convex and concave relationships, with separate vector for shape
+abundance_prod <- c(32, 16, 8, 4, 2, 4, 8, 16, 32)
+linear_relationship <- c("Convex", "Convex", "Convex", "Convex", 
+                         "Linear", 
+                         "Concave", "Concave", "Concave", "Concave")
+
 # loop through each RCP scenario
 for(k in 1:length(RCP_scenarios)){
 
@@ -456,7 +470,7 @@ for(k in 1:length(RCP_scenarios)){
   for(i in 1:length(years_list)){
     
     # file path for ISIMIP data
-    all.files <- dir(path = SSP_directory,recursive = TRUE, full.names = TRUE)
+    all.files <- dir(path = SSP_directory, recursive = TRUE, full.names = TRUE)
     
     # using RCP 8.5 calculate average of separate models
     mean.temp.2069.2071 <- stack(lapply(X = years_list[[i]], FUN = average_clim_models, RCP = RCP_scenarios[k], clim_models = "GFDL|HadGEM2|IPSL|MIROC5"))
@@ -501,7 +515,18 @@ for(k in 1:length(RCP_scenarios)){
       # calculate percentage change from place with 0 warming, and convert to vulnerability
       std_high_abun_adj[[i]]$abundance_change <- std_high_abun_adj[[i]]$abundance / zero_warming_abundance
       
-      std_high_abun_adj[[i]]$production_change <- 1-(-sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1)
+      # if the relationship is concave (or linear) use one linear function (less than 5 in iterator)
+      if(j <= 5){
+        std_high_abun_adj[[i]]$production_change <- 1-(-sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1)
+      print(j)
+        
+        }
+      
+      # if the relationship is concave use other linear function (greater than 5 in iterator)
+      else{
+        print("correct")
+        std_high_abun_adj[[i]]$production_change <- 1-(sqrt(std_high_abun_adj[[i]]$abundance_change^abundance_prod[j]))
+      }
       
       # convert spatial dataframe to coordinates
       std_anom_high[[i]] <- std_high_abun_adj[[i]] %>%
@@ -527,12 +552,13 @@ for(k in 1:length(RCP_scenarios)){
     vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
                                                       "model" = "GFDL|HadGEM2|IPSL|MIROC5",
                                                       "scenario" = "rcp85", 
-                                                      "abundance_service" = abundance_prod[j])
+                                                      "abundance_service" = abundance_prod[j],
+                                                  "linear_relationship" = linear_relationship[j])
   }
       
   # create dataframe for exposed production and build datafrmae
   RCP_plot[[k]] <- rbindlist(vulnerable_production_jack) %>%
-    mutate(year = rep(c(seq(2048, 2016, -1)), 5)) %>%
+    mutate(year = rep(c(seq(2048, 2016, -1)), 9)) %>%
     mutate(scenario = RCP_scenarios[k])
 
 }
@@ -543,26 +569,26 @@ abundance_prod_change <- rbindlist(RCP_plot) %>%
                                     levels = c(2, 4, 8, 16, 32),
                                     labels = c("2", "4","8", "16", "32"))) %>%
   mutate(scenario = factor(scenario, levels = c("rcp26", "rcp60", "rcp85"), labels = c("RCP 2.6", "RCP 6.0", "RCP 8.5"))) %>%
-  group_by(scenario, abundance_service) %>%
+  mutate(abundance_group = paste(abundance_service, linear_relationship, sep = "-")) %>%
+  group_by(scenario, abundance_group) %>%
   arrange(year) %>%
   mutate(vulnerability = cumprod(vulnerability/lag(vulnerability, default = vulnerability[1]))) %>% 
   ungroup() %>%
-  mutate(grouping = "index") %>%
+  mutate(linear_relationship = factor(linear_relationship, levels = c("Convex", "Linear", "Concave"))) %>%
   ggplot() +
-  geom_line(aes(x = year, y = vulnerability, colour = abundance_service)) +
-  facet_wrap(~scenario) +
-  geom_point(aes(x = year, y = vulnerability, colour = abundance_service)) +
+  geom_line(aes(x = year, y = vulnerability, colour = abundance_service, group = abundance_group, linetype = linear_relationship)) +
+  facet_grid(~scenario) +
   scale_y_continuous(limits = c(0.7, 2.5), expand = c(0, 0), breaks = c(1, 1.5, 2, 2.5), labels = c("1", "1.5", "2", "2.5")) +
-  geom_hline(yintercept = 1, linetype="dashed") + 
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE) +
+  scale_linetype_manual(values = c("dashed", "solid", "dotted")) +
   ylab("Production risk (index)") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank(),
-        strip.text.x = element_text(size = 12, margin = margin(0.3,0,0.3,0, "cm")), legend.position = "none", 
+        strip.text.x = element_text(size = 12, margin = margin(0.3,0,0.3,0, "cm")), 
         axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-        strip.background = element_rect(fill = "white", colour = "white"))
+        strip.background = element_rect(fill = "white", colour = "white"), legend.position = "none")
 
 # bind together the outputs and plot as facetted plot for each scenario
 abundance_prod_change_rel <- rbindlist(RCP_plot) %>% 
@@ -570,16 +596,16 @@ abundance_prod_change_rel <- rbindlist(RCP_plot) %>%
                                     levels = c(2, 4, 8, 16, 32),
                                     labels = c("2", "4","8", "16", "32"))) %>%
   mutate(scenario = factor(scenario, levels = c("rcp26", "rcp60", "rcp85"), labels = c("RCP 2.6", "RCP 6.0", "RCP 8.5"))) %>%
-  mutate(grouping = "absolute") %>%
+  mutate(abundance_group = paste(abundance_service, linear_relationship, sep = "-")) %>%
+  mutate(linear_relationship = factor(linear_relationship, levels = c("Convex", "Linear", "Concave"))) %>%
   ggplot() +
-  geom_line(aes(x = year, y = vulnerability, colour = abundance_service)) +
+  geom_line(aes(x = year, y = vulnerability, colour = abundance_service, group = abundance_group, linetype = linear_relationship)) +
   facet_grid(~scenario) +
-  geom_point(aes(x = year, y = vulnerability, colour = abundance_service)) +
-  scale_y_continuous(limits = c(0, 270000000), expand = c(0, 0), breaks = c(0, 40000000, 80000000, 120000000, 160000000, 200000000, 240000000), labels = c("0", "40",  "80",  "120",  "160",  "200", "240")) +
-  
+  scale_y_continuous(limits = c(0, 360000000), expand = c(0, 0), breaks = c(0, 80000000, 160000000, 240000000, 320000000), labels = c("0", "80",  "160",  "240", "320")) +
   geom_hline(yintercept = 1, linetype="dashed") +  
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE) +
+  scale_linetype_manual(values = c("dashed", "solid", "dotted")) +
   ylab("Production risk  (million tonnes)") +
   xlab("") +
   theme_bw() +
@@ -588,9 +614,9 @@ abundance_prod_change_rel <- rbindlist(RCP_plot) %>%
 
 # combine the index and absolute risk
 bottom_row <- plot_grid(abundance_prod_change, abundance_prod_change_rel, ncol = 1)
-top_row <- plot_grid(abundance_prod_plot, NULL, rel_widths = c(0.4, 0.6))
+top_row <- plot_grid(abundance_prod_plot, NULL, rel_widths = c(0.5, 0.5))
 combined_row <- plot_grid(top_row, bottom_row,  ncol = 1, rel_heights = c(0.4, 1))
 
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute_5.png", scale = 1.15, dpi = 350)
+ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute_6.png", scale = 1.15, dpi = 350)
 
