@@ -11,7 +11,7 @@ library(rworldxtra)
 library(lme4)
 library(cowplot)
 library(viridis)
-#library(snow)
+library(snow)
 
 
 # read in the original predicts database 
@@ -67,7 +67,7 @@ for(j in 1:length(pollinat_bound)){
   
   # PREDICTS data compilation
   # filter for main pollinating taxa
-  PREDICTS_pollinators <- pollinat_bound[[j]]
+  PREDICTS_pollinators <- pollinat_bound[[1]]
   
   # correct for sampling effort
   PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
@@ -141,7 +141,7 @@ for(j in 1:length(pollinat_bound)){
       # print(i)
       
       #Get end sample date for sample in predicts
-      sampDate <- predicts_sp$Sample_end_latest[i]
+      sampDate <- predicts_sp$Sample_end_latest[1]
       
       #Reformat date for string matching
       sampDate <- substr(sampDate,1, 7)
@@ -157,7 +157,7 @@ for(j in 1:length(pollinat_bound)){
       temp <- tmp[[surrounding_months]]
 
       ## Mask to improve speed
-      mask <- trim(rasterize(SP[i, ], temp[[1]]))
+      mask <- trim(rasterize(SP[1, ], temp[[1]]))
       mapCrop <- crop(temp, mask) 
       # plot(mapCrop) shows the one cell for each month
       
