@@ -123,8 +123,8 @@ for(j in 1:length(pollinat_bound)){
       date_raster <- grepl(pred_dates[i], names(tmp))
       site_index <- which(date_raster == TRUE)
       
-      # select the previous 11 indices - i.e. 11 months previous worth of pixels
-      ind_raster <- tmp[[names(tmp)[(site_index - 11): site_index]]]
+      # select the previous 59 indices - i.e. 59 months previous worth of pixels
+      ind_raster <- tmp[[names(tmp)[(site_index - 59): site_index]]]
       
       # filter the raster for only coordinates we have PREDICTS sites for that date
       PRED_sites_filt <- PRED_sites %>%
@@ -146,14 +146,64 @@ for(j in 1:length(pollinat_bound)){
       # remove the extra coordinate columns for calculating the row means
       ind_raster_values <- ind_raster_frame %>% select(-id_col, -Longitude, -Latitude)
       
+      # identify the active months for the 5 year previous to each PREDICTS site
+      raster_vals <- cbind("grouping" = names(tmp)[site_index], (ind_raster_frame %>% select(id_col, Longitude, Latitude)), ind_raster_values)
+      
+      # melt the dataframe to enable calc of average among months;
+      # create month column;
+      # calculate average temp among location/months
+      # filter for location/months that have a temp greater than or equal to 10
+      raster_vals <- reshape2::melt(raster_vals, id = c("grouping", "id_col", "Longitude", "Latitude")) %>%
+        mutate(month = substr(variable, start = 7, stop = 8))
+      
+    # calculate active months for each location/sample combination  
+     active_months_loc <- raster_vals %>%
+        group_by(id_col, month) %>%
+        summarise(mean_month = mean(value)) %>%
+        ungroup() %>%
+        filter(mean_month >= 10)
+      
+     # retrieve unique location ids 
+     unique_ids <- unique(active_months_loc$id_col)
+     
+     # if there are no location/months with an average month of 10 degrees, make NA dataframe to append
+     if(length(unique_ids) < 1){
+       active_vals_bound <- data.frame(active_mean)
+     }
+     
+     
+     
+     else{
+       
+      active_vals <- list()
+     
+       # for each location/sample combination, filter the original dataset for the active months and calculate mean
+       for(h in 1:length(unique_ids)){
+         active_vals[[h]] <- raster_vals %>%
+           filter(month %in% 
+                  (active_months_loc %>% filter(id_col == unique_ids[h]))$month) %>%
+           group_by(id_col) %>%
+           summarise(active_mean = mean(value)) %>%
+           ungroup() %>%
+           select(-id_col)
+         
+      }
+
+     
+       # bind together the active month averages for each predicts site
+       active_vals_bound <- rbindlist(active_vals)
+     }
+      
       # calculate the mean values for each coordinate and bind back onto the coordinates
-      raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(id_col, Longitude, Latitude)), rowMeans(ind_raster_values))
+      raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(id_col, Longitude, Latitude)), active_vals_bound)
       colnames(raster_means[[i]]) <- c("end_date", "id_col", "x", "y", "mean_value")
       
       # print the iteration number
-      print(i)
+      print("gap")
+      break()
     }
   )
+  
   
   ## adjust the mean value for each site for the baseline at that site
   # first, merge the baseline sd and mean by coordinate for each site
