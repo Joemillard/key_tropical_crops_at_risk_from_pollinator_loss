@@ -56,8 +56,8 @@ PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end
   filter(!is.na(Latitude))
 
 # calculate the means and standard deviation for the beginning of the series
-# take names of values for 1901 to 1931
-tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+# take names of values for 1901 to 1930
+tmp1901_1930 <- tmp[[names(tmp)[1:360]]]
 
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
@@ -80,7 +80,7 @@ calc_baseline <- function(data_file, func, pred_points, pred_points_sp){
 }
 
 # calculate the mean baseline, and convert to character for merging
-climate_start_mean <- calc_baseline(tmp1901_1931, 
+climate_start_mean <- calc_baseline(tmp1901_1930, 
                                     func = mean, 
                                     pred_points = PRED_sites, 
                                     pred_points_sp = PRED_sites_sp) %>%
@@ -88,7 +88,7 @@ climate_start_mean <- calc_baseline(tmp1901_1931,
   mutate(Longitude = as.character(Longitude))
 
 # calculate the sd baseline, and convert to character for merging
-climate_start_sd <- calc_baseline(tmp1901_1931, 
+climate_start_sd <- calc_baseline(tmp1901_1930, 
                                   func = stats::sd, 
                                   pred_points = PRED_sites, 
                                   pred_points_sp = PRED_sites_sp) %>%
@@ -365,11 +365,11 @@ average_clim_models <- function(yr, RCP, clim_models){
 
 ## standardised climate anomaly script
 # take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
 
 # calculate the mean and sd of the baseline values
-tmp1901_1931mean <- calc(tmp1901_1931, mean)
-tmp1901_1931sd <- calc(tmp1901_1931, stats::sd)
+tmp1901_1930mean <- calc(tmp1901_1930, mean)
+tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
 
 ## read in the rasters for the future data, start with SSP585
 # set up historical change to be added on
@@ -409,8 +409,8 @@ for(i in 1:length(years_list)){
   mean.temp.2069.2071 <- stackApply(x = mean.temp.2069.2071,indices = rep(1,3), fun = mean)
   
   # calc the anomalies for the future years
-  tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean)
-  tmp2069_71std_climate_anomaly[[i]] <- (mean.temp.2069.2071-tmp1901_1931mean) / tmp1901_1931sd
+  tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1930mean)
+  tmp2069_71std_climate_anomaly[[i]] <- (mean.temp.2069.2071-tmp1901_1930mean) / tmp1901_1930sd
   
 }
 

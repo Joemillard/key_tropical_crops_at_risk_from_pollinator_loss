@@ -55,8 +55,8 @@ PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end
   filter(!is.na(Latitude))
 
 # calculate the means and standard deviation for the beginning of the series
-# take names of values for 1901 to 1931
-tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+# take names of values for 1901 to 1930
+tmp1901_1930 <- tmp[[names(tmp)[1:360]]]
 
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
@@ -79,7 +79,7 @@ calc_baseline <- function(data_file, func, pred_points, pred_points_sp){
 }
 
 # calculate the mean baseline, and convert to character for merging
-climate_start_mean <- calc_baseline(tmp1901_1931, 
+climate_start_mean <- calc_baseline(tmp1901_1930, 
                                     func = mean, 
                                     pred_points = PRED_sites, 
                                     pred_points_sp = PRED_sites_sp) %>%
@@ -87,7 +87,7 @@ climate_start_mean <- calc_baseline(tmp1901_1931,
   mutate(Longitude = as.character(Longitude))
 
 # calculate the sd baseline, and convert to character for merging
-climate_start_sd <- calc_baseline(tmp1901_1931, 
+climate_start_sd <- calc_baseline(tmp1901_1930, 
                                   func = stats::sd, 
                                   pred_points = PRED_sites, 
                                   pred_points_sp = PRED_sites_sp) %>%
@@ -340,11 +340,11 @@ crop_df_locs <- crop_df %>%
 
 #### calculate standardised climate anomaly for present day
 # take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
 
 # calculate the mean and sd of the baseline values
-tmp1901_1931mean <- calc(tmp1901_1931, mean)
-tmp1901_1931sd <- calc(tmp1901_1931, stats::sd)
+tmp1901_1930mean <- calc(tmp1901_1930, mean)
+tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
 
 # extract data for the years 2004-2006
 tmp2004_6 <- tmp[[names(tmp)[1237:1272]]]
@@ -354,10 +354,10 @@ tmp2004_6 <- tmp[[names(tmp)[1237:1272]]]
 tmp2004_6mean <- calc(tmp[[names(tmp)[1237:1272]]], mean)
 
 # calc mean for baseline
-tmp2004_6_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1931mean)
+tmp2004_6_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1930mean)
 
 # standardise the baseline
-tmp2004_6std_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1931mean) / tmp1901_1931sd
+tmp2004_6std_climate_anomaly <- (calc(tmp2004_6, mean) - tmp1901_1930mean) / tmp1901_1930sd
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 tmp2004_6std_climate_anomaly <- projectRaster(tmp2004_6std_climate_anomaly, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -456,8 +456,8 @@ mean.temp.2069.2071 <- stack(lapply(X = years_list[[1]], FUN = average_clim_mode
 mean.temp.2069.2071 <- stackApply(x = mean.temp.2069.2071,indices = rep(1,3), fun = mean)
 
 # calc the anomalies for the future years
-tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean)
-tmp2069_71std_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1931mean) / tmp1901_1931sd
+tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1930mean)
+tmp2069_71std_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1930mean) / tmp1901_1930sd
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 tmp2069_71std_climate_anomaly <- projectRaster(tmp2069_71std_climate_anomaly, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")

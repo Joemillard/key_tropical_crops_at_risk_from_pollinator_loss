@@ -82,8 +82,8 @@ for(j in 1:length(pollinat_bound)){
     filter(!is.na(Latitude))
   
   # calculate the means and standard deviation for the beginning of the series
-  # take names of values for 1901 to 1931
-  tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+  # take names of values for 1901 to 1930
+  tmp1901_1930 <- tmp[[names(tmp)[1:360]]]
   
   # extract the points for each the predicts coordinates
   PRED_sites_sp <- PRED_sites %>%
@@ -92,7 +92,7 @@ for(j in 1:length(pollinat_bound)){
     SpatialPoints()
   
   # calculate the mean baseline, and convert to character for merging
-  climate_start_mean <- calc_baseline(tmp1901_1931, 
+  climate_start_mean <- calc_baseline(tmp1901_1930, 
                                       func = mean, 
                                       pred_points = PRED_sites, 
                                       pred_points_sp = PRED_sites_sp) %>%
@@ -100,7 +100,7 @@ for(j in 1:length(pollinat_bound)){
     mutate(Longitude = as.character(Longitude))
   
   # calculate the sd baseline, and convert to character for merging
-  climate_start_sd <- calc_baseline(tmp1901_1931, 
+  climate_start_sd <- calc_baseline(tmp1901_1930, 
                                     func = stats::sd, 
                                     pred_points = PRED_sites, 
                                     pred_points_sp = PRED_sites_sp) %>%
