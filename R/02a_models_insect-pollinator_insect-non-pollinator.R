@@ -11,11 +11,11 @@ library(rworldxtra)
 library(lme4)
 library(cowplot)
 library(viridis)
-library(snow)
+#library(snow)
 
 
 # read in the original predicts database 
-PREDICTS <- readRDS("data/database.rds") %>%
+PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/Data/PREDICTS/database.rds") %>%
   mutate(COL_ID = as.character(COL_ID))
 
 # source in additional functions
@@ -39,7 +39,7 @@ source("R/00_functions.R")
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
 # read in the predicts pollinators
-PREDICTS_pollinators_orig <- readRDS("data/PREDICTS_pollinators_8_exp.rds") %>%
+PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds") %>%
   dplyr::select(-clade_rank, -confidence)  %>%
   filter(Class == "Insecta") %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
@@ -94,7 +94,7 @@ for(j in 1:length(pollinat_bound)){
   # calculate the means and standard deviation for the beginning of the series
   # take names of values for 1901 to 1931
   # CO: edited values taken to be those for 1901-1930 (30yr baseline)
-  tmp1901_1931 <- tmp[[names(tmp)[1:360]]]
+  tmp1901_1930 <- tmp[[names(tmp)[1:360]]]
   
   # # extract the points for each the predicts coordinates
   # predicts_sp <- PRED_sites %>%
@@ -130,7 +130,7 @@ for(j in 1:length(pollinat_bound)){
     cl = cl,
     list = c('predicts_sp','names_sub','names_tmp', 'values', 'names', 'length', 'mean', 'sd',
              'tmp', 'SP','rasterize','crop','trim', 'grep', 'sapply', 'strsplit',
-             'cellStats', 'thresh', 'tmp1901_1931'),envir = environment())
+             'cellStats', 'thresh', 'tmp1901_1930'),envir = environment())
   
   temperatureVars <- data.frame(t(parSapply(
     cl = cl,X = (1:nrow(predicts_sp)),FUN = function(i){
@@ -218,7 +218,7 @@ for(j in 1:length(pollinat_bound)){
         ### now work out the baseline mean and sd for the active months###
         
         # get the values for that grid cell across all years
-        baseline <- crop(tmp1901_1931, mask)
+        baseline <- crop(tmp1901_1930, mask)
         
         # subset the baseline to just the required months
         baseline <-  baseline[[names(baseline)[sapply(strsplit(names(baseline), "[.]"), "[[", 2) %in% months]]]
@@ -279,7 +279,7 @@ for(j in 1:length(pollinat_bound)){
   ## Joe's from here
   
   # # calculate the mean baseline, and convert to character for merging
-  # climate_start_mean <- calc_baseline(tmp1901_1931, 
+  # climate_start_mean <- calc_baseline(tmp1901_1930, 
   #                                     func = mean, 
   #                                     pred_points = PRED_sites, 
   #                                     pred_points_sp = PRED_sites_sp) %>%
@@ -287,7 +287,7 @@ for(j in 1:length(pollinat_bound)){
   #   mutate(Longitude = as.character(Longitude))
   # 
   # # calculate the sd baseline, and convert to character for merging
-  # climate_start_sd <- calc_baseline(tmp1901_1931, 
+  # climate_start_sd <- calc_baseline(tmp1901_1930, 
   #                                   func = stats::sd, 
   #                                   pred_points = PRED_sites, 
   #                                   pred_points_sp = PRED_sites_sp) %>%
