@@ -229,6 +229,7 @@ system.time(
     frame_months <- cbind(frame_months, month_string) %>%
       filter(grepl(month_string, variable )) %>% reshape2::dcast(id_col ~ variable)
       
+    # NEED to account for data frame iterations with no data
     
     # remove the extra coordinate columns for calculating the row means
     ind_raster_values <- ind_raster_frame %>% select(-id_col)
@@ -242,29 +243,28 @@ system.time(
   }
 )
   
-  
-  ## adjust the mean value for each site for the baseline at that site
-  # first, merge the baseline sd and mean by coordinate for each site
-  adjusted_climate <- rbindlist(raster_means) %>%
-    select(-end_date) %>%
-    unique() %>%
-    inner_join(fin_baseline_mean, by = "id_col") %>%
-    rename("mean_base" = "data_fin") %>%
-    inner_join(fin_baseline_sd, by = "id_col") %>%
-    rename("sd_base" = "data_fin") %>%
-    mutate(anomaly = mean_value - mean_base) %>%
-    mutate(standard_anom = anomaly / sd_base)
-  
-  # bind the adjusted climate data back onto the predicts sites
-  predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col")
-  
-  # add 1 for abundance and simpson diversity
-  predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
-  predicts_climate$Simpson_diversity <- predicts_climate$Simpson_diversity + 1
-  
-  # assign to list of predicts_climate and insects and vertebrates
-  predict_climate_list[[j]] <- predicts_climate
-  
+## adjust the mean value for each site for the baseline at that site
+# first, merge the baseline sd and mean by coordinate for each site
+adjusted_climate <- rbindlist(raster_means) %>%
+  select(-end_date) %>%
+  unique() %>%
+  inner_join(fin_baseline_mean, by = "id_col") %>%
+  rename("mean_base" = "data_fin") %>%
+  inner_join(fin_baseline_sd, by = "id_col") %>%
+  rename("sd_base" = "data_fin") %>%
+  mutate(anomaly = mean_value - mean_base) %>%
+  mutate(standard_anom = anomaly / sd_base)
+
+# bind the adjusted climate data back onto the predicts sites
+predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col")
+
+# add 1 for abundance and simpson diversity
+predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
+predicts_climate$Simpson_diversity <- predicts_climate$Simpson_diversity + 1
+
+# assign to list of predicts_climate and insects and vertebrates
+predict_climate_list[[j]] <- predicts_climate
+
 
 # set up new lists for output
 model_2c_abundance <- list()
