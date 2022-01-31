@@ -279,7 +279,6 @@ for(j in 1:length(pollinat_bound)){
   
 }
 
-
 # set up new lists for output
 model_2c_abundance <- list()
 abundance_model <- list()
