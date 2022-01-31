@@ -1,0 +1,59 @@
+--- 
+title: TBD (Land use, climate change, pollinators, pollination risk)
+author: Joe Millard, Charlotte Outhwaite, Lynn Dicks(?), Jeff Ollerton(?), Silvia Ceausu, Tim Newbold
+output:
+  bookdown::pdf_document2:
+    latex_engine: lualatex
+always_allow_html: true
+csl: science.csl
+---
+
+# Science Instructions
+
+- Reports are up to 2,500 words (including references, notes and captions)
+- Up to 4 figures or tables
+- Approximately 30 references
+
+# Key Papers
+
+## Already Read
+
+- [ ] Outhwaite et al. (in press).
+- [ ] Biesmeijer et al. (2006). *Science*
+- [ ] van Klink et al. (2020). *Science*
+- [ ] Silva et al. (2021). *Science Advances*
+- [ ] Soroye et al. (2020). *Science*
+- [ ] Halsch et al. (2021). *PNAS*
+- [ ] Basset & Lamarre (2019). *Science*
+- [ ] Dainese et al. (2019). *Science Advances*
+- [ ] Albrecht et al. (2012). *Proceedings B*
+- [ ] Peters et al. (2019). *Nature*
+- [ ] Piano et al. (2017). *Global Change Biology*
+- [ ] Oliver et al. (2017). *Global Change Biology*
+
+## To Read
+
+- [ ] Potts et al. (2010). *Trends in Ecology & Evolution*
+- [ ] Rodger et al. (2021). *Science Advances*
+- [ ] Wagner et al. (2020). *Annual Review of Entomology*
+- [ ] Powney et al. (2019). *Nature Communications*
+- [ ] Samways et al. (2020). *Biological Conservation*
+- [ ] Brittain et al. (2013). *Global Change Biology*
+- [ ] Woodcock et al. (2019). *Nature Communications*
+- [ ] Aizen et al. (2008). *Current Biology*
+- [ ] Genung et al. (2017). *Ecology*
+- [ ] Oliver et al. (2016). *Landscape Ecology*
+- [ ] Uhler et al. (2021). *Nature Communications*
+- [ ] Wilson & Fox (2020). *Ecological Entomology*
+
+# Introduction
+
+Insect and pollinator declines
+
+Drivers - land use, climate change, interactions
+
+Risks to pollination + trade links
+
+Study aims and outline methods
+
+# Results and Discussion
