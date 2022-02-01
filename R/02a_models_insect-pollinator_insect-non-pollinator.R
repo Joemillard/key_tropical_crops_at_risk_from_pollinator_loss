@@ -152,13 +152,10 @@ for(j in 1:length(pollinat_bound)){
     filter(!is.na(Latitude)) %>%
     SpatialPoints()
   
-  # subset baseline (where there are PREDICTS sites) for places where active months greater than threshold
-  climate_start_mean <- lapply(X = monthly_mean, FUN = subset_base_months, 
-                               pred_points = PRED_sites, pred_points_sp = PRED_sites_sp, temp_threshold = temp_threshold)
-    
-  
-  # use mapply to ouput the coordinate over 10 for each month, and then add in the month
-  baseline_active_months <- mapply(X = climate_start_mean, FUN = assign_month, month_number = month_number, SIMPLIFY = FALSE) %>%
+  # subset baseline (where there are PREDICTS sites) for places where active months greater than threshold, and then add month comb column
+  baseline_active_months <- lapply(X = monthly_mean, FUN = subset_base_months, 
+                               pred_points = PRED_sites, pred_points_sp = PRED_sites_sp, temp_threshold = temp_threshold) %>%
+    mapply(FUN = assign_month, month_number = month_number, SIMPLIFY = FALSE) %>%
     rbindlist() %>%
     group_by(id_col) %>%
     mutate(month_group = paste(month, collapse = "|")) %>%
