@@ -30,21 +30,29 @@ csl: science.csl
 - [ ] Peters et al. (2019). *Nature*
 - [ ] Piano et al. (2017). *Global Change Biology*
 - [ ] Oliver et al. (2017). *Global Change Biology*
+- [ ] Potts et al. (2010). *Trends in Ecology & Evolution*
+- [ ] Rodger et al. (2021). *Science Advances*
+- [ ] Woodcock et al. (2019). *Nature Communications*
+- [ ] Lister & Garcia (2018). *PNAS*
+- [ ] Wagner et al. (2020). *Annual Review of Entomology*
+- [ ] Powney et al. (2019). *Nature Communications*
+- [ ] Brittain et al. (2013). *Global Change Biology*
 
 ## To Read
 
-- [ ] Potts et al. (2010). *Trends in Ecology & Evolution*
-- [ ] Rodger et al. (2021). *Science Advances*
-- [ ] Wagner et al. (2020). *Annual Review of Entomology*
-- [ ] Powney et al. (2019). *Nature Communications*
+- [x] Potts et al. (2010). *Trends in Ecology & Evolution*
+- [x] Rodger et al. (2021). *Science Advances*
+- [x] Wagner et al. (2020). *Annual Review of Entomology*
+- [x] Powney et al. (2019). *Nature Communications*
 - [ ] Samways et al. (2020). *Biological Conservation*
-- [ ] Brittain et al. (2013). *Global Change Biology*
-- [ ] Woodcock et al. (2019). *Nature Communications*
+- [x] Brittain et al. (2013). *Global Change Biology*
+- [x] Woodcock et al. (2019). *Nature Communications*
 - [ ] Aizen et al. (2008). *Current Biology*
 - [ ] Genung et al. (2017). *Ecology*
 - [ ] Oliver et al. (2016). *Landscape Ecology*
 - [ ] Uhler et al. (2021). *Nature Communications*
 - [ ] Wilson & Fox (2020). *Ecological Entomology*
+- [ ] Janzen & Hallwachs (2019). *Biological Conservation*
 
 # Introduction
 
