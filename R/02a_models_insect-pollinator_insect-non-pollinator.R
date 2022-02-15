@@ -34,7 +34,7 @@ PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand respon
 source("R/00_functions.R")
 
 # set active temperature threshold 
-temp_threshold <- 8
+temp_threshold <- 10
 
 # number of each month
 month_number <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
@@ -50,7 +50,7 @@ calc_baseline_month_av <- function(X, data_file, func){
 
 # subset the baseline for just month temps that are above the threshold
 subset_base_months <- function(X, pred_points, pred_points_sp, temp_threshold){
-
+  
   # bind the extracted values back onto the predicts coordinates
   data_fin <- X %>%
     extract(pred_points_sp)
@@ -154,7 +154,7 @@ for(j in 1:length(pollinat_bound)){
   
   # subset baseline (where there are PREDICTS sites) for places where active months greater than threshold, and then add month comb column
   baseline_active_months <- lapply(X = monthly_mean, FUN = subset_base_months, 
-                               pred_points = PRED_sites, pred_points_sp = PRED_sites_sp, temp_threshold = temp_threshold) %>%
+                                   pred_points = PRED_sites, pred_points_sp = PRED_sites_sp, temp_threshold = temp_threshold) %>%
     mapply(FUN = assign_month, month_number = month_number, SIMPLIFY = FALSE) %>%
     rbindlist() %>%
     group_by(id_col) %>%
