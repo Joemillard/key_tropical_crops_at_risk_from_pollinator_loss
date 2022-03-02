@@ -318,15 +318,12 @@ sensitive_object %>%
   mutate(Predominant_land_use = factor(Predominant_land_use, levels = c("Primary vegetation", "Cropland"))) %>%
   ggplot() +
     geom_point(aes(x = temp_threshold, y = (difference_change * -1), colour = Predominant_land_use), position=position_dodge(width=1)) +
-    geom_errorbar(aes(x = temp_threshold, 
-                      ymin = (lower_conf_change * -1), 
-                      ymax = (upper_conf_change * -1), colour = Predominant_land_use), position=position_dodge(width=1)) +
     geom_hline(yintercept = 0, linetype = "dotted") +
     theme_bw() +
-    scale_y_continuous(breaks = c(-1.5, -1, -0.5, 0, 0.5), labels = c("-150", "-100", "-50", "0", "50")) +
-    ylab("Percentage change (anomaly 0:1)") +
+    scale_y_continuous(breaks = c(-0.5, -0.25, 0, 0.25, 0.5), labels = c("-50", "-25", "0", "25", "50")) +
+    ylab("Mean abundance change (%)") +
     xlab("Active season temp. threshold (\u00B0C)") +
     scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
     theme(panel.grid = element_blank())
 
-ggsave("pollinating-insects_active_season_sensitivity.png", scale = 0.9, dpi = 350)
+ggsave("pollinating-insects_active_season_sensitivity_2.png", scale = 0.9, dpi = 350)
