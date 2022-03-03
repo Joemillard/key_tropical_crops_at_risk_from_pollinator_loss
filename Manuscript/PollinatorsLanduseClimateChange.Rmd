@@ -18,7 +18,7 @@ csl: science.csl
 
 ## Already Read
 
-- [ ] Outhwaite et al. (in press).
+- [ ] Outhwaite et al. (in press). *Nature*
 - [ ] Biesmeijer et al. (2006). *Science*
 - [ ] van Klink et al. (2020). *Science*
 - [ ] Silva et al. (2021). *Science Advances*
@@ -46,6 +46,9 @@ csl: science.csl
 - [ ] Suggitt et al. (2018). *Nature Climate Change*
 - [ ] Wilson & Fox (2021). *Ecological Entomology*
 - [ ] Janzen & Hallwachs (2019). *Biological Conservation*
+- [ ] Platts et al. (2019). *Scientific Reports*
+- [ ] Aizen et al. (2008). *Current Biology*
+- [ ] Holzschuh et al. (2011). *Proceedings B*
 
 ## To Read
 
@@ -61,12 +64,12 @@ csl: science.csl
 - [x] Uhler et al. (2021). *Nature Communications*
 - [x] Wilson & Fox (2021). *Ecological Entomology*
 - [x] Janzen & Hallwachs (2019). *Biological Conservation*
-- [ ] Platts et al. (2019). *Scientific Reports*
+- [x] Platts et al. (2019). *Scientific Reports*
 
 ### Pollen limitation
 
-- [ ] Aizen et al. (2008). *Current Biology*
-- [ ] Holzschuh et al. (2011). *Proceedings B*
+- [x] Aizen et al. (2008). *Current Biology*
+- [x] Holzschuh et al. (2011). *Proceedings B*
 
 # Introduction
 
