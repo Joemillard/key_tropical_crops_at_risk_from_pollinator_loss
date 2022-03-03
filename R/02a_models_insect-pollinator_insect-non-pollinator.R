@@ -11,20 +11,6 @@ library(rworldxtra)
 library(lme4)
 library(cowplot)
 library(viridis)
-library(parallel)
-
-# set up cores for parallel processing
-cl <- makeCluster(detectCores())
-
-# read in packages and data for each parallel session
-clusterEvalQ(cl, {
-  
-  library(raster)
-  library(dplyr)
-  library(data.table)
-  library(parallel)
-  
-})
 
 # read in the original predicts database 
 PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/Data/PREDICTS/database.rds") %>%
@@ -33,71 +19,22 @@ PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand respon
 # source in additional functions
 source("R/00_functions.R")
 
-# set active temperature threshold 
-temp_threshold <- 10
-
-# number of each month
-month_number <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
-month_number_filt <- paste("\\.", month_number, "\\.", sep = "")
-
-# function to calculate average temp for each month
-calc_baseline_month_av <- function(X, data_file, func){
-  monthly_average <- raster::subset(data_file, grep(X, names(data_file)), value = T) %>%
-    calc(fun = func) 
-  
-  return(monthly_average)
-}
-
-# subset the baseline for just month temps that are above the threshold
-subset_base_months <- function(X, pred_points, pred_points_sp, temp_threshold){
-  
-  # bind the extracted values back onto the predicts coordinates
-  data_fin <- X %>%
-    extract(pred_points_sp)
-  
-  data_fin <- data.frame(pred_points[,1:3 ], data_fin)  %>%
-    mutate(Latitude = as.character(Latitude)) %>%
-    mutate(Longitude = as.character(Longitude))  %>%
-    filter(data_fin >= temp_threshold)
-  return(data_fin)
-  
-}
-
-# calc baseline (mean and sd) - now for only months in which insects are considered active
-calc_baseline <- function(X, func, pred_points, pred_points_sp, data_file){
+# calc baseline (mean and sd)
+calc_baseline <- function(data_file, func, pred_points, pred_points_sp){
   
   # calcualte either the mean or standard error for baseline, then extract points for predicts sites
-  data_fin <- raster::subset(data_file, grep(X, names(data_file)), value = T) %>%
-    calc(func) %>%
+  data_fin <- calc(data_file, func) %>%
     extract(pred_points_sp)
   
   # bind the extracted values back onto the predicts coordinates
-  data_fin <- data.frame(pred_points[,1:3 ], data_fin)  %>%
-    mutate(Latitude = as.character(Latitude)) %>%
-    mutate(Longitude = as.character(Longitude)) %>%
-    mutate(months = X)
+  data_fin <- data.frame(pred_points[,1:3 ], data_fin)
   
   return(data_fin)
   
-}
-
-# for each coordinate, identify months that should be included in the active months
-assign_month <- function(X, month_number){
-  data_fin <- X %>%
-    mutate(month = month_number)
-  
-  return(data_fin)
 }
 
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
-
-# calculate the means and standard deviation for the beginning of the series
-# take names of values for 1901 to 1930
-tmp1901_1930 <- tmp[[names(tmp)[1:360]]]
-
-# subset the baseline period for each month, and then calculate the average for each month
-monthly_mean <- lapply(X = month_number_filt, FUN = calc_baseline_month_av, data_file = tmp1901_1930, func = mean)
 
 # read in the predicts pollinators
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds") %>%
@@ -119,13 +56,11 @@ pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
 # set up vector for filtering for vertebrates and invertebrates
 predict_climate_list <- list()
 
-# record initial time to calculate length of process time
-st1 <- Sys.time()
-
 # loop through each phylum
 for(j in 1:length(pollinat_bound)){
   
   # PREDICTS data compilation
+  # filter for main pollinating taxa
   PREDICTS_pollinators <- pollinat_bound[[j]]
   
   # correct for sampling effort
@@ -146,119 +81,88 @@ for(j in 1:length(pollinat_bound)){
     mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest)) %>%
     filter(!is.na(Latitude))
   
+  # calculate the means and standard deviation for the beginning of the series
+  # take names of values for 1901 to 1931
+  tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+  
   # extract the points for each the predicts coordinates
   PRED_sites_sp <- PRED_sites %>%
     select(Longitude, Latitude) %>%
     filter(!is.na(Latitude)) %>%
     SpatialPoints()
   
-  # subset baseline (where there are PREDICTS sites) for places where active months greater than threshold, and then add month comb column
-  baseline_active_months <- lapply(X = monthly_mean, FUN = subset_base_months, 
-                                   pred_points = PRED_sites, pred_points_sp = PRED_sites_sp, temp_threshold = temp_threshold) %>%
-    mapply(FUN = assign_month, month_number = month_number, SIMPLIFY = FALSE) %>%
-    rbindlist() %>%
-    group_by(id_col) %>%
-    mutate(month_group = paste(month, collapse = "|")) %>%
-    select(id_col, month_group) %>%
-    unique()
+  # calculate the mean baseline, and convert to character for merging
+  climate_start_mean <- calc_baseline(tmp1901_1931, 
+                                      func = mean, 
+                                      pred_points = PRED_sites, 
+                                      pred_points_sp = PRED_sites_sp) %>%
+    mutate(Latitude = as.character(Latitude)) %>%
+    mutate(Longitude = as.character(Longitude))
   
-  # derive the unique active months for combinations of baseline to calculate
-  unique_month_combinations <- unique(baseline_active_months$month_group)
-  
-  # calculate the mean baseline for each potential combination of active months
-  fin_baseline_mean <- parLapply(cl, X = unique_month_combinations, fun = calc_baseline, 
-                                 func = mean, 
-                                 pred_points = PRED_sites, 
-                                 pred_points_sp = PRED_sites_sp,
-                                 data_file = tmp1901_1930) %>%
-    rbindlist() %>%
-    inner_join(baseline_active_months, by = c("months" = "month_group", "id_col"))
-  
-  # calculate the sd baseline for each potential combination of active months
-  fin_baseline_sd <- parLapply(cl, X = unique_month_combinations, fun = calc_baseline, 
-                               func = stats::sd, 
-                               pred_points = PRED_sites, 
-                               pred_points_sp = PRED_sites_sp,
-                               data_file = tmp1901_1930) %>%
-    rbindlist() %>%
-    inner_join(baseline_active_months, by = c("months" = "month_group", "id_col"))
+  # calculate the sd baseline, and convert to character for merging
+  climate_start_sd <- calc_baseline(tmp1901_1931, 
+                                    func = stats::sd, 
+                                    pred_points = PRED_sites, 
+                                    pred_points_sp = PRED_sites_sp) %>%
+    mutate(Latitude = as.character(Latitude)) %>%
+    mutate(Longitude = as.character(Longitude))
   
   # calculate the mean temperatures for each predicts site, 11 months previously
   # set up empty list for each dataframe
   raster_means <- list()
   
-  # for each unique site month, select the pixels for that date, and 11 months previously, and then convert each raster set to a dataframe
-  for(i in 1:length(unique(PRED_sites$Sample_end_latest))){
-    
-    # create unique list of the end dates for the predicts sites
-    pred_dates <- unique(PRED_sites$Sample_end_latest)
-    
-    # select the raster pixels for the end date of the predicts site, and then the index of that name
-    date_raster <- grepl(pred_dates[i], names(tmp))
-    site_index <- which(date_raster == TRUE)
-    
-    # select the previous 11 indices - i.e. 11 months previous worth of pixels
-    ind_raster <- tmp[[names(tmp)[(site_index - 11): site_index]]]
-    
-    # filter the raster for only coordinates we have PREDICTS sites for that date
-    PRED_sites_filt <- PRED_sites %>%
-      filter(Sample_end_latest == pred_dates[i]) %>%
-      select(Longitude, Latitude) %>%
-      SpatialPoints()
-    
-    # identify site ids for merging
-    site_ids <- PRED_sites %>%
-      filter(Sample_end_latest == pred_dates[i]) %>%
-      select(id_col, Longitude, Latitude)
-    
-    # filter the raster for that date for the locations we have predicts sites
-    PRED_coords <- cbind(site_ids, extract(ind_raster, PRED_sites_filt, na.rm = FALSE))
-    
-    # convert that set of dates to a dataframe
-    ind_raster_frame <- as.data.frame(PRED_coords) %>%
-      inner_join(baseline_active_months, by = "id_col")
-    
-    # remove any columns for months that aren't active from the baseline for those coordinates
-    frame_months <- ind_raster_frame %>%
-      melt(id = c("id_col", "Longitude", "Latitude", "month_group"))
-    
-    # derive active month string for filtering months
-    month_string <- paste("\\.", strsplit(frame_months$month_group[1], split = "|", fixed = TRUE)[[1]], "\\.", collapse = "|", sep = "")
-    
-    # some locations have no active months, if so add an NA row
-    if(nrow(frame_months) == 0){
+  # time the length of the loop over each unique date in predicts sites
+  system.time(
+    # for each unique site month, select the pixels for that date, and 11 months previously, and then convert each raster set to a dataframe
+    for(i in 1:length(unique(PRED_sites$Sample_end_latest))){
       
-      # create dataframe for loations with no active months and rename columns
-      raster_means[[i]] <- data.frame( "end_date" = names(tmp)[site_index], site_ids, "mean_value" = NA)
+      # create unique list of the end dates for the predicts sites
+      pred_dates <- unique(PRED_sites$Sample_end_latest)
+      
+      # select the raster pixels for the end date of the predicts site, and then the index of that name
+      date_raster <- grepl(pred_dates[i], names(tmp))
+      site_index <- which(date_raster == TRUE)
+      
+      # select the previous 11 indices - i.e. 11 months previous worth of pixels
+      ind_raster <- tmp[[names(tmp)[(site_index - 11): site_index]]]
+      
+      # filter the raster for only coordinates we have PREDICTS sites for that date
+      PRED_sites_filt <- PRED_sites %>%
+        filter(Sample_end_latest == pred_dates[i]) %>%
+        select(Longitude, Latitude) %>%
+        SpatialPoints()
+      
+      # identify site ids for merging
+      site_ids <- PRED_sites %>%
+        filter(Sample_end_latest == pred_dates[i]) %>%
+        select(id_col, Longitude, Latitude)
+      
+      # filter the raster for that date for the locations we have predicts sites
+      PRED_coords <- cbind(site_ids, extract(ind_raster, PRED_sites_filt, na.rm = FALSE))
+      
+      # convert that set of dates to a dataframe
+      ind_raster_frame <- as.data.frame(PRED_coords)
+      
+      # remove the extra coordinate columns for calculating the row means
+      ind_raster_values <- ind_raster_frame %>% select(-id_col, -Longitude, -Latitude)
+      
+      # calculate the mean values for each coordinate and bind back onto the coordinates
+      raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(id_col, Longitude, Latitude)), rowMeans(ind_raster_values))
       colnames(raster_means[[i]]) <- c("end_date", "id_col", "x", "y", "mean_value")
       
-      # skip onto next iteration
-      next()
+      # print the iteration number
+      print(i)
     }
-    
-    # recast dataframe after subsetting months for each PREDICTS site for the active months
-    frame_months <- cbind(frame_months, month_string) %>%
-      filter(grepl(month_string, variable )) %>% reshape2::dcast(id_col ~ variable)
-    
-    # remove the extra coordinate columns for calculating the row means
-    ind_raster_values <- frame_months %>% select(-id_col)
-    
-    # calculate the mean values for each coordinate and bind back onto the coordinates
-    raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(id_col, Longitude, Latitude)), rowMeans(ind_raster_values))
-    colnames(raster_means[[i]]) <- c("end_date", "id_col", "x", "y", "mean_value")
-    
-    # print the iteration number
-    print(i)
-  }
+  )
   
   ## adjust the mean value for each site for the baseline at that site
   # first, merge the baseline sd and mean by coordinate for each site
   adjusted_climate <- rbindlist(raster_means) %>%
     select(-end_date) %>%
     unique() %>%
-    inner_join(fin_baseline_mean, by = "id_col") %>%
+    inner_join(climate_start_mean, by = "id_col") %>%
     rename("mean_base" = "data_fin") %>%
-    inner_join(fin_baseline_sd, by = "id_col") %>%
+    inner_join(climate_start_sd, by = "id_col") %>%
     rename("sd_base" = "data_fin") %>%
     mutate(anomaly = mean_value - mean_base) %>%
     mutate(standard_anom = anomaly / sd_base)
@@ -274,12 +178,6 @@ for(j in 1:length(pollinat_bound)){
   predict_climate_list[[j]] <- predicts_climate
   
 }
-
-# stop the cluster
-stopCluster(cl)
-
-st2 <- Sys.time()
-print(st2 - st1) # Time difference of 1.165101 hours on Charlie's laptop
 
 # set up new lists for output
 model_2c_abundance <- list()
