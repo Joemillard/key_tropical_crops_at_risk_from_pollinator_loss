@@ -6,7 +6,7 @@ output:
     latex_engine: lualatex
 always_allow_html: true
 csl: science.csl
-references: lu_cc_pollin_refs.bib
+bibliography: lu_cc_pollin_refs.bib
 ---
 
 # Science Instructions
@@ -20,6 +20,7 @@ references: lu_cc_pollin_refs.bib
 ## Already Read
 
 - [ ] Outhwaite et al. (in press). *Nature*
+- [ ] Millard et al. (2021). *Nature Communications*
 - [ ] Biesmeijer et al. (2006). *Science*
 - [ ] van Klink et al. (2020). *Science*
 - [ ] Silva et al. (2021). *Science Advances*
@@ -56,6 +57,8 @@ references: lu_cc_pollin_refs.bib
 - [ ] Hickling et al. (2006). *Global Change Biology*
 - [ ] Winfree et al. (2018). *Science*
 - [ ] Ricketts et al. (2004). *PNAS*
+- [ ] De Palma et al. (2016). *Scientific Reports*
+- [ ] Klein et al. (2007). *Proceedings B*
 
 ## To Read
 
@@ -73,6 +76,8 @@ references: lu_cc_pollin_refs.bib
 - [x] Janzen & Hallwachs (2019). *Biological Conservation*
 - [x] Platts et al. (2019). *Scientific Reports*
 - [ ] Lenoir et al. (2020). *Nature Ecology & Evolution*
+- [ ] Deutsch et al. (2008). *PNAS*
+- [ ] Lonsdorf et al. (2009). *Annals of Botany*
 
 ### Pollen limitation
 
@@ -81,12 +86,12 @@ references: lu_cc_pollin_refs.bib
 
 # Introduction
 
-Insect and pollinator declines
+Recent studies have highlighted rapid ongoing changes in insect biodiversity [@vanKlink2020; @Dornelas2019; @Lister2018]. Some of these studies have reported net declines [@vanKlink2020; @Lister2018], at least for terrestrial insects [@vanKlink2020], while others have shown mixtures of gains and losses [@Dornelas2019]. Pollinator biodiversity specifically has been shown to be undergoing rapid changes [@Biesmeijer2006; @Potts2010; @Oliver2015; @Powney2019; @Soroye2020], with potential consequences for the provision of pollination to wild plants and crops. Importantly, evidence for insect biodiversity trends has been biased toward Western Europe and North America, with little coverage of tropical regions [@Basset2019; @Wagner2020]. Although a few studies have shown steep declines of insects in the tropics [@Lister2018], evidence about insect biodiversity trends there often remains anecdotal [@Janzen2019], with global syntheses [@Dornelas2019; @vanKlink2020] having strong geographic biases towards non-tropical regions.
 
-Drivers - land use, climate change, interactions
+Among the drivers of insect and pollinator biodiversity changes, human land-use disturbance and climate change are prominent [@Potts2010; @Wagner2020]. A large number of studies have shown substantial effects of human land use and agricultural intensification on insects, including pollinators [@Warren2001; @DePalma2016; @Oliver2016; @Millard2021]. Climate change is emerging as an increasingly important driver of changes in insect biodiversity [@Warren2001; @Hickling2006; @Martay2017; @Soroye2020; @Lenoir2020; @Halsch2021]. Tropical insects are expected to be more susceptible to climate change, owing to their narrower physiological tolerance compared to non-tropical species [@Deutsch2008], but evidence about the response of tropical insects to climate change remains very scarce [@Halsch2021]. Evidence is now accumulating for strong interactive effects of land-use change and climate change on insects [@Suggitt2018; @Platts2019; @Oliver2017; @Peters2019; @OuthwaiteInPress]. A key mechanism underpinning this interactive effect is the altered microclimatic conditions in areas where vegetation has been modified for human land use [@Suggitt2018]. The interaction between the effects of climate change and land use is often synergistic, leading to greater declines in biodiversity than if the pressures acted alone [@Suggitt2018; @Oliver2017; @Peters2019; @OuthwaiteInPress], and larger declines in tropical than non-tropical insect biodiversity [@OuthwaiteInPress].
 
-Risks to pollination + trade links
+Changes in the biodiversity and composition of pollinator communities will have large effects on the provision of pollination services. Pollen limitation from animal pollinator losses has already been shown to reduce the reproductive success of wild plants [@Biesmeijer2006; @Rodger2021], and the productivity of certain crops [@Klein2003; @Ricketts2004; @Holzschuh2011; @Woodcock2019], although there is no evidence yet that pollen limitation is causing wholesale reductions in yields of crops that rely on animal pollination [@Aizen2008]. Evidence that insect biodiversity responds to human pressures more strongly in the tropics than elsewhere [@Millard2021; @OuthwaiteInPress] is noteworthy, given that the majority of animal-pollination-dependent crops are grown there [@Klein2007]. However, it is not only tropical countries that will experience the effects of pollinator losses and subsequent pollen limitation, with highly developed countries benefiting from imports of animal-pollination-dependent foods from tropical areas [@Silva2021]. Abundance, species diversity and functional diversity of pollinators have all been implicated as determinants of the delivery of pollination service [@Albrecht2012; @Brittain2013; @Genung2017; @Winfree2018; @Woodcock2019; @Dainese2019]. Previous attempts to model the provision of crop pollination service have been based on predictions of pollinator abundance, which bears a direct relation to pollination of plants, and has been shown to give a reasonable approximation of pollen deposition in at least some study systems [@Lonsdorf2009].
 
-Study aims and outline methods
+We present a global assessment of the interactive effects of climate change and land use on pollinator abundance, and predictions of the risk to crop pollination worldwide from the inferred changes in pollinator abundance. Our analyses are based on the PREDICTS database of biodiversity comparisons in different land uses [@Hudson2017], together with a list of species identified in the literature as likely pollinators [@Millard2021]. We use mixed-effects models to fit total pollinator community abundance as a function of land use (primary vegetation versus cropland) and a measure of historical climate change between a baseline period (XXXX-XXXX) and the X years prior to biodiversity sampling, standardized by monthly climate variability in the baseline period [@OuthwaiteInPress]. Using estimated proportional reduction of pollinator total abundance as a proxy for relative risk to pollination services, together with estimates of where crops are grown[@Monfreda2008], how dependent these crops are on animal pollination [@Klein2007], and projections of historical and future climate change, we predict which locations and crops are likely to be at greatest risk from pollination shortfalls. 
 
 # Results and Discussion
