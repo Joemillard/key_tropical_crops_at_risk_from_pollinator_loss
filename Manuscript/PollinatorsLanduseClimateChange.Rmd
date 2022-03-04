@@ -6,6 +6,7 @@ output:
     latex_engine: lualatex
 always_allow_html: true
 csl: science.csl
+references: lu_cc_pollin_refs.bib
 ---
 
 # Science Instructions
@@ -49,6 +50,12 @@ csl: science.csl
 - [ ] Platts et al. (2019). *Scientific Reports*
 - [ ] Aizen et al. (2008). *Current Biology*
 - [ ] Holzschuh et al. (2011). *Proceedings B*
+- [ ] Dornelas et al. (2019). *Ecology Letters*
+- [ ] Martay et al. (2017). *Ecography*
+- [ ] Oliver et al. (2015). *Nature Communications*
+- [ ] Hickling et al. (2006). *Global Change Biology*
+- [ ] Winfree et al. (2018). *Science*
+- [ ] Ricketts et al. (2004). *PNAS*
 
 ## To Read
 
@@ -65,6 +72,7 @@ csl: science.csl
 - [x] Wilson & Fox (2021). *Ecological Entomology*
 - [x] Janzen & Hallwachs (2019). *Biological Conservation*
 - [x] Platts et al. (2019). *Scientific Reports*
+- [ ] Lenoir et al. (2020). *Nature Ecology & Evolution*
 
 ### Pollen limitation
 
