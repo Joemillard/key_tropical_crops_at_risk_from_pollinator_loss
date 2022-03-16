@@ -220,9 +220,13 @@ for(m in 1:length(pollinat_bound)){
 plot_grid(main_plot_abundance[[1]] +
             ggtitle("Pollinating insects") + 
             scale_y_continuous(limits = c(1, 6.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
+            scale_x_continuous(limits = c(-0.6, 2.88)) +
             theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
             ggtitle("Non-pollinating insects") +
             scale_y_continuous(limits = c(1, 6.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
-            theme(legend.position = "bottom"), ncol = 2)
+            scale_x_continuous(limits = c(-0.6, 2.88)) +
+            guides(color = guide_legend(override.aes = list(color = NA)), 
+                   fill = guide_legend(override.aes = list(fill = NA))) +
+            theme(legend.position = "bottom", legend.key = element_rect(fill = "white"), legend.text = element_text(color = "white"), legend.title = element_text(color = "white")), ncol = 2) 
 
-ggsave("pollinating_non-pollinating_6.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_7.png", scale = 1.1, dpi = 350)
