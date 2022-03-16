@@ -83,7 +83,7 @@ for(j in 1:length(pollinat_bound)){
   
   # calculate the means and standard deviation for the beginning of the series
   # take names of values for 1901 to 1931
-  tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+  tmp1901_1931 <- tmp[[names(tmp)[1:360]]]
   
   # extract the points for each the predicts coordinates
   PRED_sites_sp <- PRED_sites %>%
