@@ -12,6 +12,7 @@ library(data.table)
 library(lme4)
 library(yarg)
 library(forcats)
+library(ggforce)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -310,9 +311,6 @@ crop.total <- projectRaster(crop.total, crs = "+proj=moll +datum=WGS84 +ellps=WG
 total_production <- sum(crop.total[])
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
-
 # calculate the mean and sd of the baseline values
 tmp1901_1930mean <- calc(tmp1901_1930, mean)
 tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
@@ -441,7 +439,7 @@ country_coords <- over(std_anom_high[[1]], base_map, by = "ISO2", returnList = F
 
 # assign the column for country, latitude and longitude back onto pollinator vulnerability data
 for(i in 1:length(std_high_abun_adj)){
-  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "LON", "LAT")])
+  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "REGION", "LON", "LAT")])
 }
 
 # check coordinates and countries are vaguely correct
@@ -455,79 +453,51 @@ country_sums <- list()
 # for each yearly set, calculate the pollinator vulnerability for each country
 for(i in 1:length(std_high_abun_adj)){
   country_sums[[i]] <-  std_high_abun_adj[[i]] %>%
-    group_by(SOVEREIGNT) %>%
+    group_by(SOVEREIGNT, REGION) %>%
     summarise(total = quantile(pollinator_vulnerability, probs = c(0.5), na.rm = TRUE), 
               upp_conf = quantile(pollinator_vulnerability, probs = c(0.975), na.rm = TRUE), 
-              lower_conf = quantile(pollinator_vulnerability, probs = c(0.025), na.rm = TRUE)) %>%
+              lower_conf = quantile(pollinator_vulnerability, probs = c(0.025), na.rm = TRUE),
+              pollination_production = sum(production)) %>%
     ungroup() %>%
     mutate(year = 2049 - i)
 } 
 
 # plot for trends in pollination vulnerability
 change_obj <- rbindlist(country_sums) %>%
-  group_by(SOVEREIGNT) %>%
+  group_by(SOVEREIGNT, REGION) %>%
   arrange(year) %>%
   mutate(av_total = mean(total)) %>%
   mutate(change = max(total) - min(total)) %>%
   ungroup()
 
-# top 10 countries for total exposure
-top_vul <- change_obj %>% 
-  select(SOVEREIGNT, av_total) %>% 
+# create object just with summary values
+plot_obj <- change_obj %>%
+  select(SOVEREIGNT, REGION, av_total, change, pollination_production) %>%
   unique() %>% 
-  arrange(desc(av_total)) %>% 
-  slice(0:10) %>%
-  mutate(SOVEREIGNT = fct_reorder(SOVEREIGNT, -av_total)) %>%
-  droplevels()
+  filter(!is.na(change)) %>% 
+  filter(!is.na(REGION))
 
-# top 10 countries for change over time
-top_change <- change_obj %>% 
-  select(SOVEREIGNT, change) %>% 
-  unique() %>% 
-  arrange(desc(change)) %>%
-  slice(0:10) %>%
-  mutate(SOVEREIGNT = fct_reorder(SOVEREIGNT, -change)) %>%
-  droplevels()
+# add separate regions
+plot_obj$main_region[plot_obj$REGION %in% c("Europe", "North America")] <- "North America & Europe"
+plot_obj$main_region[plot_obj$REGION %in% c("Asia", "Australia")] <- "Asia & Australia"
+plot_obj$main_region[plot_obj$REGION %in% c("Africa")] <- "Africa"
+plot_obj$main_region[plot_obj$REGION %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
 
-# plot of total production vulnerability for each country
-top_av_countries <- change_obj %>%
-  filter(SOVEREIGNT %in% top_vul$SOVEREIGNT) %>% 
-  mutate(SOVEREIGNT = factor(SOVEREIGNT, levels = top_vul$SOVEREIGNT)) %>%
-  ggplot() +
-    geom_ribbon(aes(x = year, ymin = lower_conf, ymax = upp_conf), fill = "white", colour = "grey", alpha = 0.2, linetype = "dashed") +
-    geom_line(aes(x = year, y = total, colour = total), size = 0.8) +
-    facet_wrap(~SOVEREIGNT, nrow = 2) +
-    scale_colour_viridis("", na.value = "transparent", option = "plasma", direction = -1,
-                         limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-    scale_y_continuous(limits = c(0, 1), labels = c("0", "0.25", "0.5", "0.75", "1"), expand = c(0, 0)) +
-    scale_x_continuous(breaks = c(2020, 2040), labels = c("", "")) +
-    xlab(NULL) + 
-    ylab("Proportional production risk\n (Top 10 overall)") +
+  ggplot(plot_obj) +
+    geom_point(aes(x = change, y = av_total, colour = REGION, size = pollination_production),  alpha = 0.5) +
+    
+    scale_x_continuous("Overall change in risk", expand = c(0, 0), limits = c(-0.01, 0.2), breaks = c(0, 0.05, 0.1, 0.15), 
+                       labels = c("0", "0.05", "0.1", "0.15")) +
+    scale_y_continuous("Overall mean risk", expand = c(0, 0), limits = c(0, 0.5), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
+                       labels = c("0", "0.1",  "0.2", "0.3", "0.4", "0.5")) +
+    scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+    scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+    
+    scale_size_continuous("Pollination dependent production (kg)", breaks = c(500000, 1000000, 1500000, 2000000, 2500000), labels = c("500,000", "1,000,000", "1,500,000", "2,000,000", "2,500,000")) +
     theme_bw() +
-    guides(guide_colourbar(ticks = FALSE)) +
-    theme(panel.grid = element_blank(),
-          legend.position = "none", axis.ticks.x = element_blank(), strip.text = element_text(size = 10.5))
+    facet_wrap(~main_region, ncol = 4) +
+    guides(size = guide_legend(order = 2), 
+             colour = guide_legend(order = 1)) +
+    theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-# plot of total production vulnerability for each country
-top_change_countries <- change_obj %>%
-  filter(SOVEREIGNT %in% top_change$SOVEREIGNT) %>% 
-  mutate(SOVEREIGNT = factor(SOVEREIGNT, levels = top_change$SOVEREIGNT)) %>%
-  ggplot() +
-  geom_ribbon(aes(x = year, ymin = lower_conf, ymax = upp_conf), fill = "white", colour = "grey", alpha = 0.2, linetype = "dashed") +
-  geom_line(aes(x = year, y = total, colour = total), size = 0.8) +
-  facet_wrap(~SOVEREIGNT, nrow = 2) +
-  scale_colour_viridis("", na.value = "transparent", option = "plasma", direction = -1,
-                       limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_y_continuous(limits = c(0, 1), labels = c("0", "0.25", "0.5", "0.75", "1"), expand = c(0, 0)) +
-  scale_x_continuous(breaks = c(2020, 2030, 2040)) +
-  xlab(NULL) + 
-  ylab("Proportional production risk\n (Top 10 change)") +
-  theme_bw() +
-  guides(guide_colourbar(ticks = FALSE)) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none", strip.text = element_text(size = 10.5))
-
-# combine the plots for top change and total change
-plot_grid(top_av_countries, top_change_countries, nrow = 2)
-
-ggsave("top_change_country_4.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_7.png", scale = 1, dpi = 350)
