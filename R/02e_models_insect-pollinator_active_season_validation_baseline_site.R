@@ -315,7 +315,8 @@ sensitive_object <- mapply(X = abundance_model, FUN = reformat_sensitivity, temp
   
 # plot of change according to active season threshold
 sensitive_object %>%
-  mutate(Predominant_land_use = factor(Predominant_land_use, levels = c("Primary vegetation", "Cropland"))) %>%
+  filter(Predominant_land_use != "Primary vegetation") %>%
+  mutate(Predominant_land_use = factor(Predominant_land_use, levels = c("Cropland"))) %>%
   ggplot() +
     geom_point(aes(x = temp_threshold, y = (difference_change * -1), colour = Predominant_land_use), position=position_dodge(width=1)) +
     geom_hline(yintercept = 0, linetype = "dotted") +
@@ -323,7 +324,7 @@ sensitive_object %>%
     scale_y_continuous(breaks = c(-0.5, -0.25, 0, 0.25, 0.5), labels = c("-50", "-25", "0", "25", "50")) +
     ylab("Mean abundance change (%)") +
     xlab("Active season temp. threshold (\u00B0C)") +
-    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    scale_colour_manual("Land-use type", values = c( "#E69F00")) +
     theme(panel.grid = element_blank())
 
-ggsave("pollinating-insects_active_season_sensitivity_2.png", scale = 0.9, dpi = 350)
+ggsave("pollinating-insects_active_season_sensitivity_3.png", scale = 0.9, dpi = 350)
