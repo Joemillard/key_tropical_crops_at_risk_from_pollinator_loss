@@ -12,6 +12,7 @@ library(data.table)
 library(lme4)
 library(yarg)
 library(forcats)
+library(patchwork)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -445,7 +446,7 @@ country_coords <- over(std_anom_high[[1]], base_map, by = "ISO2", returnList = F
 
 # assign the column for country, latitude and longitude back onto pollinator vulnerability data
 for(i in 1:length(std_high_abun_adj)){
-  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "LON", "LAT")])
+  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "REGION", "LON", "LAT")])
 }
 
 # check coordinates and countries are vaguely correct
@@ -459,7 +460,7 @@ country_sums <- list()
 # for each yearly set, calculate the pollinator vulnerability for each country
 for(i in 1:length(std_high_abun_adj)){
   country_sums[[i]] <-  std_high_abun_adj[[i]] %>%
-    group_by(SOVEREIGNT) %>%
+    group_by(SOVEREIGNT, REGION) %>%
     summarise(total_production = sum(pollinator_vulnerability, na.rm = TRUE)) %>% 
     ungroup() %>%
     mutate(year = 2049 - i)
@@ -487,30 +488,56 @@ change_importers <- joined_flows %>%
   group_by(partner_countries) %>%
   mutate(index_diff = max(index) - 1) %>%
   ungroup() %>%
-  select(partner_countries, index_diff) %>%
+  select(partner_countries, index_diff, total_import_risk) %>%
   unique() %>%
-  arrange(desc(index_diff)) %>%
-  slice(0:20) %>%
-  droplevels() %>%
-  mutate(partner_countries = fct_reorder(partner_countries, -index_diff))
+  arrange(desc(index_diff))
 
-# plot of total production vulnerability for each country
-top_import_risk <- joined_flows %>%
-  filter(partner_countries %in% change_importers$partner_countries) %>% 
-  mutate(partner_countries = factor(partner_countries, levels = change_importers$partner_countries)) %>%
+# build map of global import risk
+import_risk_map <- base_map %>% 
+  fortify() %>%
+  left_join(change_importers, by = c("id" = "partner_countries")) %>%
   ggplot() +
-  geom_line(aes(x = year, y = index), size = 0.8) +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  facet_wrap(~partner_countries, nrow = 4) +
-  scale_x_continuous(breaks = c(2020, 2030, 2040)) +
-  xlab(NULL) + 
-  ylab("Import production risk\n (Top 20 rate of change)") +
-  theme_bw() +
-  guides(guide_colourbar(ticks = FALSE)) +
-  theme(panel.grid = element_blank(),
-        legend.position = "none", strip.text = element_text(size = 10.5))
+    geom_polygon(aes(x = long, y = lat, fill = index_diff, group = group)) +
+    theme_bw() +
+    scale_fill_viridis("Import risk index change\n(2006-2050)",
+                     na.value = "grey", option = "inferno", direction = -1, 
+                     breaks = c(0, 0.5, 1), limits = c(0, 1.5), labels = c("0", "0.5", "1")) +
+    guides(fill = guide_colourbar(ticks = FALSE)) +
+    coord_equal() +
+    theme(panel.background = element_blank(),
+          panel.bord = element_blank(),
+          panel.grid = element_blank(), 
+          axis.text = element_blank(),    
+          axis.ticks = element_blank(), 
+          axis.title = element_blank())
 
-ggsave("top_20_import_risk.png", scale = 1.1, dpi = 350)
+ggsave("country_level_import_risk_map.png", scale = 1.2, dpi = 350)
+
+# combined with continental data
+change_import_cont <- change_importers %>%
+  left_join(base_map@data, by = c("partner_countries" = "SOVEREIGNT")) %>%
+  select(partner_countries, total_import_risk, index_diff, REGION) %>% 
+  unique() %>% 
+  filter(!is.na(REGION)) %>%
+  filter(!(partner_countries == "Cuba" & REGION == "North America")) %>%
+  filter(!(partner_countries == "France" & REGION == "Australia")) %>%
+  filter(!(partner_countries == "France" & REGION == "North America")) %>%
+  filter(!(partner_countries == "Kazakhstan" & REGION == "Europe")) %>%
+  filter(!(partner_countries == "Netherlands" & REGION == "South America and the Caribbean")) %>%
+filter(!(partner_countries == "United Kingdom" & REGION == "Australia")) %>%
+filter(!(partner_countries == "United Kingdom" & REGION == "South America and the Caribbean")) %>%
+filter(!(partner_countries == "United Kingdom" & REGION == "Africa")) %>%
+filter(!(partner_countries == "United States of America" & REGION == "Australia")) %>%
+filter(!(partner_countries == "United States of America" & REGION == "South America and the Caribbean"))
+
+
+
+change_import_cont %>%
+  mutate(partner_countries = forcats::fct_reorder(partner_countries, index_diff)) %>%
+  ggplot() +
+    geom_point(aes(x = partner_countries, y = index_diff, colour = REGION)) +
+    theme(axis.text.x = element_blank(), axis.ticks = element_blank())
+
 
 ## supply diversity plotted against rate of change
 # calculate top change for import risk
@@ -538,13 +565,19 @@ majority_supplier <- trade_flow %>%
   filter(percent_flow == maximum)
 
 # plot the rates of change against supplier
-ggplot(suppliers) + 
-  geom_point(aes(x = n, y = index_diff)) +
+supplier_risk <- ggplot(suppliers) + 
+  geom_point(aes(x = n, y = index_diff, colour = index_diff)) +
   theme_bw() +
   xlab("Total suppliers") +
   ylab("Import risk change") +
+  scale_colour_viridis("Import risk change",
+                     na.value = "grey", option = "inferno", direction = -1, 
+                     breaks = c(0, 0.5, 1), limits = c(0, 1.5), labels = c("0", "0.5", "1")) +
+  guides(colour = guide_colourbar(ticks = FALSE)) +
   scale_x_continuous(expand = c(0, 0), breaks = c(0, 50, 100, 150, 200), limits = c(0, 150)) +
-  scale_y_continuous(expand = c(0, 0), breaks = c(0, 0.5, 1, 1.5, 2), labels = c(0, 0.5, 1, 1.5, 2), limits = c(0, 1.6)) +
-  theme(panel.grid = element_blank())
+  scale_y_continuous(expand = c(0, 0), breaks = c(0, 0.5, 1, 1.5), labels = c(0, 0.5, 1, 1.5), limits = c(0, 1.6)) +
+  theme(panel.grid = element_blank(), legend.position = "none")
 
 ggsave("supply_diversity_importer.png", scale = 0.9, dpi = 350)
+
+import_risk_map + supplier_risk + plot_layout(ncol = 1, heights = c(1, 0.75))
