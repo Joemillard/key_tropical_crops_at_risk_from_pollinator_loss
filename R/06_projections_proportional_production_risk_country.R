@@ -43,32 +43,35 @@ fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFacto
 # calculate per country average total production value
 fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
   filter(Flag.Description == "Calculated data") %>%
-  group_by(Area, Item) %>%
-  summarise(av_total_value = mean(Value) * 1000) %>%
   filter(!grepl("Meat", Item)) %>%
   filter(!grepl("Eggs", Item)) %>%
   filter(!grepl("China, mainland", Area)) %>%
   filter(!grepl("China, Hong Kong SAR", Area)) %>%
-  filter(!grepl("Milk", Item)) 
+  filter(!grepl("Milk", Item)) %>%
+  rename(economic_value = Value) %>%
+  mutate(economic_value = economic_value * 1000)
 
 # calculate per country average total production value
 fao_prod <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_production.csv", stringsAsFactors = FALSE) %>%
   filter(Flag.Description == "Official data") %>%
-  group_by(Area, Item) %>%
-  summarise(av_total_prod = mean(Value) * 1000) %>%
   filter(!grepl("Meat", Item)) %>%
   filter(!grepl("Eggs", Item)) %>%
   filter(!grepl("China, mainland", Area)) %>%
   filter(!grepl("China, Hong Kong SAR", Area)) %>%
-  filter(!grepl("Milk", Item))
+  filter(!grepl("Milk", Item)) %>%
+  rename(production = Value) %>%
+  mutate(production = production * 1000)
 
-# join prod and value and calc price per kg
-joined_prod_value <- inner_join(fao_prod_value, fao_prod, by = c("Area", "Item")) %>%
-  mutate(price_per_kg = av_total_value / av_total_prod) %>%
+# calc average price per crop
+joined_prod_value <- inner_join(fao_prod, fao_prod_value, by = c("Year", "Area", "Item")) %>%
+  mutate(price_per_kg = economic_value / production) %>% 
+  group_by(Area, Item) %>%
+  summarise(mean_price_kg = mean(price_per_kg)) %>%
   group_by(Item) %>%
-  summarise(av_price = median(price_per_kg, na.rm = TRUE)) %>%
+  summarise(overall_price_kg = median(mean_price_kg, na.rm = TRUE)) %>% 
   mutate(Item = gsub(",", "", Item)) %>%
   inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO"))
+
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
