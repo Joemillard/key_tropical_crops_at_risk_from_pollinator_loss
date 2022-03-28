@@ -32,6 +32,44 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 # set up the starting directory for future climate data
 SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
+# read in fao to monfreda conversion
+fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFactors = FALSE) %>%
+  mutate(Cropname_FAO = gsub(",", "", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("corian.", "coriander", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Berries Nes", "Berries nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Stone fruit nes", "Fruit stone nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnut", Cropname_FAO))
+
+# calculate per country average total production value
+fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
+  filter(Flag.Description == "Calculated data") %>%
+  group_by(Area, Item) %>%
+  summarise(av_total_value = mean(Value) * 1000) %>%
+  filter(!grepl("Meat", Item)) %>%
+  filter(!grepl("Eggs", Item)) %>%
+  filter(!grepl("China, mainland", Area)) %>%
+  filter(!grepl("China, Hong Kong SAR", Area)) %>%
+  filter(!grepl("Milk", Item)) 
+
+# calculate per country average total production value
+fao_prod <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_production.csv", stringsAsFactors = FALSE) %>%
+  filter(Flag.Description == "Official data") %>%
+  group_by(Area, Item) %>%
+  summarise(av_total_prod = mean(Value) * 1000) %>%
+  filter(!grepl("Meat", Item)) %>%
+  filter(!grepl("Eggs", Item)) %>%
+  filter(!grepl("China, mainland", Area)) %>%
+  filter(!grepl("China, Hong Kong SAR", Area)) %>%
+  filter(!grepl("Milk", Item))
+
+# join prod and value and calc price per kg
+joined_prod_value <- inner_join(fao_prod_value, fao_prod, by = c("Area", "Item")) %>%
+  mutate(price_per_kg = av_total_value / av_total_prod) %>%
+  group_by(Item) %>%
+  summarise(av_price = median(price_per_kg, na.rm = TRUE)) %>%
+  mutate(Item = gsub(",", "", Item)) %>%
+  inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO"))
+
 # PREDICTS data compilation
 # filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
@@ -293,6 +331,8 @@ for(i in 1:length(rate_rasters)){
   print(i)
 }
 
+# raster layers adjusted for value
+
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
 crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
@@ -457,13 +497,15 @@ for(i in 1:length(std_high_abun_adj)){
     summarise(total = quantile(pollinator_vulnerability, probs = c(0.5), na.rm = TRUE), 
               upp_conf = quantile(pollinator_vulnerability, probs = c(0.975), na.rm = TRUE), 
               lower_conf = quantile(pollinator_vulnerability, probs = c(0.025), na.rm = TRUE),
-              pollination_production = sum(production)) %>%
+              pollination_production = sum(production),
+              all_production = sum(total_production),
+              percent_pollinated = (pollination_production/all_production) * 100) %>%
     ungroup() %>%
     mutate(year = 2049 - i)
 } 
 
 # plot for trends in pollination vulnerability
-change_obj <- rbindlist(country_sums) %>%
+change_obj <- rbindlist(country_sums) %>% 
   group_by(SOVEREIGNT, REGION) %>%
   arrange(year) %>%
   mutate(av_total = mean(total)) %>%
@@ -472,7 +514,7 @@ change_obj <- rbindlist(country_sums) %>%
 
 # create object just with summary values
 plot_obj <- change_obj %>%
-  select(SOVEREIGNT, REGION, av_total, change, pollination_production) %>%
+  select(SOVEREIGNT, REGION, av_total, change, pollination_production, percent_pollinated) %>%
   unique() %>% 
   filter(!is.na(change)) %>% 
   filter(!is.na(REGION))
@@ -483,21 +525,26 @@ plot_obj$main_region[plot_obj$REGION %in% c("Asia", "Australia")] <- "Asia & Aus
 plot_obj$main_region[plot_obj$REGION %in% c("Africa")] <- "Africa"
 plot_obj$main_region[plot_obj$REGION %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
 
-  ggplot(plot_obj) +
-    geom_point(aes(x = change, y = av_total, colour = REGION, size = pollination_production),  alpha = 0.5) +
-    
-    scale_x_continuous("Overall change in risk", expand = c(0, 0), limits = c(-0.01, 0.2), breaks = c(0, 0.05, 0.1, 0.15), 
-                       labels = c("0", "0.05", "0.1", "0.15")) +
+# merge the price per kg value with the pollination dependent monfreda
+joined_crop_val <- inner_join(klein_cleaned_filt, joined_prod_value, by = c("MonfredaCrop" = "CROPNAME"))
+
+# calculate pollination dependent production value per crop globally
+
+
+# build export risk plot
+ggplot(plot_obj) +
+    geom_point(aes(x = log10(pollination_production), y = av_total, colour = REGION),  alpha = 0.5) +
+   # scale_x_continuous("Overall change in risk", expand = c(0, 0), limits = c(-0.01, 0.2), breaks = c(0, 0.05, 0.1, 0.15), 
+   #                   labels = c("0", "0.05", "0.1", "0.15")) +
     scale_y_continuous("Overall mean risk", expand = c(0, 0), limits = c(0, 0.5), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
                        labels = c("0", "0.1",  "0.2", "0.3", "0.4", "0.5")) +
     scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
     scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
-    
-    scale_size_continuous("Pollination dependent production (kg)", breaks = c(500000, 1000000, 1500000, 2000000, 2500000), labels = c("500,000", "1,000,000", "1,500,000", "2,000,000", "2,500,000")) +
+    #scale_size_continuous("Pollination dependent production (kg)", breaks = c(500000, 1000000, 1500000, 2000000, 2500000), labels = c("500,000", "1,000,000", "1,500,000", "2,000,000", "2,500,000")) +
     theme_bw() +
     facet_wrap(~main_region, ncol = 4) +
-    guides(size = guide_legend(order = 2), 
-             colour = guide_legend(order = 1)) +
+    guides(size = guide_legend(order = 2, nrow = 1), 
+             colour = guide_legend(order = 1, nrow = 2)) +
     theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-ggsave("top_change_country_7.png", scale = 1, dpi = 350)
+ggsave("top_change_country_8.png", scale = 1, dpi = 350)
