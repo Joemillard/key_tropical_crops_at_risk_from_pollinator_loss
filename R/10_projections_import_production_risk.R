@@ -499,17 +499,17 @@ import_risk_map <- base_map %>%
   ggplot() +
     geom_polygon(aes(x = long, y = lat, fill = index_diff, group = group)) +
     theme_bw() +
-    scale_fill_viridis("Import risk index change\n(2006-2050)",
+    scale_fill_viridis("Import risk change (2006-2050)",
                      na.value = "grey", option = "inferno", direction = -1, 
                      breaks = c(0, 0.5, 1), limits = c(0, 1.5), labels = c("0", "0.5", "1")) +
-    guides(fill = guide_colourbar(ticks = FALSE)) +
+    guides(fill = guide_colourbar(ticks = FALSE, title.position="top")) +
     coord_equal() +
     theme(panel.background = element_blank(),
           panel.bord = element_blank(),
           panel.grid = element_blank(), 
           axis.text = element_blank(),    
           axis.ticks = element_blank(), 
-          axis.title = element_blank())
+          axis.title = element_blank(), legend.position = "bottom")
 
 ggsave("country_level_import_risk_map.png", scale = 1.2, dpi = 350)
 
@@ -564,20 +564,32 @@ majority_supplier <- trade_flow %>%
   ungroup() %>%
   filter(percent_flow == maximum)
 
+country_region <- change_import_cont %>%
+  select(partner_countries, REGION) %>%
+  unique()
+
+# add separate regions
+country_region$main_region[country_region$REGION %in% c("Europe", "North America")] <- "North America & Europe"
+country_region$main_region[country_region$REGION %in% c("Asia", "Australia")] <- "Asia & Australia"
+country_region$main_region[country_region$REGION %in% c("Africa")] <- "Africa"
+country_region$main_region[country_region$REGION %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+
 # plot the rates of change against supplier
-supplier_risk <- ggplot(suppliers) + 
-  geom_point(aes(x = n, y = index_diff, colour = index_diff)) +
+supplier_risk <- suppliers %>%
+  left_join(country_region, by = "partner_countries") %>%
+  filter(REGION != "Antarctica") %>%
+  ggplot() + 
+  geom_point(aes(x = n, y = index_diff, colour = main_region)) +
   theme_bw() +
   xlab("Total suppliers") +
   ylab("Import risk change") +
-  scale_colour_viridis("Import risk change",
-                     na.value = "grey", option = "inferno", direction = -1, 
-                     breaks = c(0, 0.5, 1), limits = c(0, 1.5), labels = c("0", "0.5", "1")) +
-  guides(colour = guide_colourbar(ticks = FALSE)) +
+  scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#009E73", "#56B4E9")) +
+  scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#009E73", "#56B4E9")) +
   scale_x_continuous(expand = c(0, 0), breaks = c(0, 50, 100, 150, 200), limits = c(0, 150)) +
   scale_y_continuous(expand = c(0, 0), breaks = c(0, 0.5, 1, 1.5), labels = c(0, 0.5, 1, 1.5), limits = c(0, 1.6)) +
-  theme(panel.grid = element_blank(), legend.position = "none")
+  guides(colour=guide_legend(nrow=2,byrow=TRUE, title.position="top")) +
+  theme(panel.grid = element_blank(), legend.position = "bottom")
 
-ggsave("supply_diversity_importer.png", scale = 0.9, dpi = 350)
+import_risk_map + supplier_risk + plot_layout(ncol = 2)
 
-import_risk_map + supplier_risk + plot_layout(ncol = 1, heights = c(1, 0.75))
+ggsave("supply_diversity_importer_2.png", scale = 1.1, dpi = 350)
