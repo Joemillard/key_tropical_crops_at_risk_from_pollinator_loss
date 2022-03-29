@@ -38,7 +38,16 @@ fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFacto
   mutate(Cropname_FAO = gsub("corian.", "coriander", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Berries Nes", "Berries nes", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Stone fruit nes", "Fruit stone nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnut", Cropname_FAO))
+  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnut", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Citrus fruit nes", "Fruit citrus nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Fruit Fresh Nes", "Fruit fresh nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Leguminous vegetables nes", "Vegetables leguminous nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Kolanuts", "Kola nuts", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Other melons", "Melons other", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Oilseeds Nes", "Oilseeds nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Pepper \\(Piper ", "Pepper \\(piper ", Cropname_FAO))
+
+
 
 # calculate per country average total production value
 fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
@@ -66,7 +75,7 @@ fao_prod <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_production.cs
 joined_prod_value <- inner_join(fao_prod, fao_prod_value, by = c("Year", "Area", "Item")) %>%
   mutate(price_per_kg = economic_value / production) %>% 
   group_by(Area, Item) %>%
-  summarise(mean_price_kg = mean(price_per_kg)) %>%
+  summarise(mean_price_kg = mean(price_per_kg, na.rm = TRUE)) %>%
   group_by(Item) %>%
   summarise(overall_price_kg = median(mean_price_kg, na.rm = TRUE)) %>% 
   mutate(Item = gsub(",", "", Item)) %>%
