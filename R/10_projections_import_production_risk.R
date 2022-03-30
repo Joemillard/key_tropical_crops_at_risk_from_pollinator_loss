@@ -302,6 +302,9 @@ for(i in 1:length(rate_rasters)){
 crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
 crop.total_all <- stack(rate_rasters) %>% sum(na.rm = T)
 
+rm(rate_rasters)
+rm(rate_rasters_adj)
+
 # baseplot of proportion needing pollination
 plot((crop.total / crop.total_all) * 100)
 
@@ -530,14 +533,11 @@ filter(!(partner_countries == "United Kingdom" & REGION == "Africa")) %>%
 filter(!(partner_countries == "United States of America" & REGION == "Australia")) %>%
 filter(!(partner_countries == "United States of America" & REGION == "South America and the Caribbean"))
 
-
-
 change_import_cont %>%
   mutate(partner_countries = forcats::fct_reorder(partner_countries, index_diff)) %>%
   ggplot() +
     geom_point(aes(x = partner_countries, y = index_diff, colour = REGION)) +
     theme(axis.text.x = element_blank(), axis.ticks = element_blank())
-
 
 ## supply diversity plotted against rate of change
 # calculate top change for import risk
@@ -579,6 +579,7 @@ supplier_risk <- suppliers %>%
   left_join(country_region, by = "partner_countries") %>%
   filter(REGION != "Antarctica") %>%
   ggplot() + 
+  geom_violin(aes(x = n, y = index_diff), orientation = "y", alpha = 0.2, fill = "grey", colour = NA) +
   geom_point(aes(x = n, y = index_diff, colour = main_region)) +
   theme_bw() +
   xlab("Total suppliers") +
@@ -590,6 +591,41 @@ supplier_risk <- suppliers %>%
   guides(colour=guide_legend(nrow=2,byrow=TRUE, title.position="top")) +
   theme(panel.grid = element_blank(), legend.position = "bottom")
 
-import_risk_map + supplier_risk + plot_layout(ncol = 2)
+# calc total 2050 import risk
+total_import_risk <- joined_flows %>%
+  filter(year == "2048") %>%
+  select(partner_countries, year, total_import_risk) %>%
+  unique()
 
-ggsave("supply_diversity_importer_2.png", scale = 1.1, dpi = 350)
+import_risk_total <- base_map %>% 
+  fortify() %>%
+  left_join(total_import_risk, by = c("id" = "partner_countries")) %>%
+  ggplot() +
+  geom_polygon(aes(x = long, y = lat, fill = total_import_risk, group = group)) +
+  theme_bw() +
+  #ggtitle("2050") +
+  scale_fill_viridis("Total 2050 import risk (1000 tonnes)",
+                     na.value = "grey", option = "inferno", direction = -1, 
+                     breaks = c(0, 10000000, 20000000, 30000000), limits = c(0, 35000000), labels = c("0", "10", "20", "30")) +
+  guides(fill = guide_colourbar(ticks = FALSE, title.position="top")) +
+  coord_equal() +
+  theme(panel.background = element_blank(),
+        panel.bord = element_blank(),
+        panel.grid = element_blank(), 
+        axis.text = element_blank(),    
+        axis.ticks = element_blank(), 
+        axis.title = element_blank(), legend.position = "bottom")
+
+first <- plot_grid(import_risk_map, import_risk_total, align = 'v', axis = 'l')
+second <- plot_grid(supplier_risk)
+
+cowplot::plot_grid(first, second, ncol = 1, rel_heights = c(0.75, 1))
+
+
+import_risk_map + import_risk_total + supplier_risk + plot_layout(ncol = 2)
+cowplot::plot_grid(import_risk_map, import_risk_total, supplier_risk, NULL, rel_heights = c(0.5, 0.5))
+                    
+cowplot::plot_grid(import_risk_map, import_risk_total, supplier_risk, NULL)
+
+
+ggsave("supply_diversity_importer_3.png", scale = 1.1, dpi = 350)
