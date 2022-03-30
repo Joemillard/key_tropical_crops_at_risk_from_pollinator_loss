@@ -12,6 +12,7 @@ library(data.table)
 library(lme4)
 library(yarg)
 library(forcats)
+library(ggrepel)
 # library(StatisticalModels)
 
 # source in additional functions
@@ -31,6 +32,53 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 
 # set up the starting directory for future climate data
 SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
+
+# read in fao to monfreda conversion
+fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFactors = FALSE) %>%
+  mutate(Cropname_FAO = gsub(",", "", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("corian.", "coriander", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Berries Nes", "Berries nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Stone fruit nes", "Fruit stone nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnut", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Citrus fruit nes", "Fruit citrus nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Fruit Fresh Nes", "Fruit fresh nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Leguminous vegetables nes", "Vegetables leguminous nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Kolanuts", "Kola nuts", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Other melons", "Melons other", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Oilseeds Nes", "Oilseeds nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Pepper \\(Piper ", "Pepper \\(piper ", Cropname_FAO))
+
+# calculate per country average total production value
+fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
+  filter(Flag.Description == "Calculated data") %>%
+  filter(!grepl("Meat", Item)) %>%
+  filter(!grepl("Eggs", Item)) %>%
+  filter(!grepl("China, mainland", Area)) %>%
+  filter(!grepl("China, Hong Kong SAR", Area)) %>%
+  filter(!grepl("Milk", Item)) %>%
+  rename(economic_value = Value) %>%
+  mutate(economic_value = economic_value * 1000)
+
+# calculate per country average total production value
+fao_prod <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_production.csv", stringsAsFactors = FALSE) %>%
+  filter(Flag.Description == "Official data") %>%
+  filter(!grepl("Meat", Item)) %>%
+  filter(!grepl("Eggs", Item)) %>%
+  filter(!grepl("China, mainland", Area)) %>%
+  filter(!grepl("China, Hong Kong SAR", Area)) %>%
+  filter(!grepl("Milk", Item)) %>%
+  rename(production = Value) %>%
+  mutate(production = production * 1000)
+
+# calc average price per crop
+joined_prod_value <- inner_join(fao_prod, fao_prod_value, by = c("Year", "Area", "Item")) %>%
+  mutate(price_per_kg = economic_value / production) %>% 
+  group_by(Area, Item) %>%
+  summarise(mean_price_kg = mean(price_per_kg, na.rm = TRUE)) %>%
+  group_by(Item) %>%
+  summarise(overall_price_kg = median(mean_price_kg, na.rm = TRUE)) %>% 
+  mutate(Item = gsub(",", "", Item)) %>%
+  inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO"))
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
@@ -511,30 +559,40 @@ rbindlist(all_crop_fin) %>%
   ungroup() %>% 
   arrange(desc(max_prop)) %>% View()
 
+#geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
+ #                nudge_x = .085,
+      #           nudge_y = .06,
+    #             segment.curvature = -1e-20,) +
+
 # build figure for variation with prop production at risk in brackets  
 rbindlist(all_crop_fin) %>%
   group_by(crop) %>%
   mutate(change = max(total) - min(total)) %>%
+  mutate(overall_val = mean(total)) %>%
   ungroup() %>%
-  filter(!crop %in% c("fruitnes", "tropicalnes")) %>%
-  mutate(crop = factor(crop, 
-         labels = c("Apple (11th)", "Bean (16th)", "Cocoa (1st)", "Coconut (9th)", "Coffee (5th)", "Cucumber (8th)",
-                    "Eggplant (13th)", "Mango (3rd)", "Melon (4th)", "Oilpalm (19th)", "Oilseed (15th)", 
-                    "Peach (7th)", "Pear (12th)", "Plum (10th)", "Pumpkin (2nd)","Rapeseed (18th)",  
-                    "Soybean (14th)",  "Sunflower (17th)", "Tomato (20th)", "Watermelon (6th)"))) %>%
-  mutate(crop = fct_reorder(crop, -change)) %>%
+  inner_join(joined_prod_value, by = c("crop" = "CROPNAME")) %>%
+  dplyr::select(crop, overall_val, change, overall_price_kg) %>%
+  unique() %>%
+  arrange(desc(overall_price_kg)) %>%
+  mutate(crop = ifelse(overall_price_kg > 0.68, crop, "")) %>%
+  mutate(crop = gsub("coffee", "Coffee", crop)) %>%
+  mutate(crop = gsub("bean", "Beans", crop)) %>%
+  mutate(crop = gsub("cocoa", "Cocoa", crop)) %>%
+  mutate(crop = gsub("fruitnes", "Fresh fruits", crop)) %>%
+  mutate(crop = gsub("tomato", "Tomatoes", crop)) %>%
+  
   ggplot() +
-  geom_ribbon(aes(x = year, ymin = lower_conf, ymax = upp_conf), fill = "white", colour = "grey", alpha = 0.2, linetype = "dashed") +
-  geom_line(aes(x = year, y = total, colour = total), size = 0.8) +
-  facet_wrap(~crop, nrow = 4) +
-  scale_colour_viridis("", na.value = "transparent", option = "plasma", direction = -1,
-                       limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_y_continuous(limits = c(0, 1), labels = c("0", "0.25", "0.5", "0.75", "1"), expand = c(0, 0)) +
-  scale_x_continuous(breaks = c(2020, 2030, 2040)) +
-  xlab(NULL) + 
-  ylab("Proportional production risk") +
+  geom_point(aes(x = change, y = overall_val, size = overall_price_kg), pch=21, fill = "grey", colour = "black") +
+  geom_label_repel(aes(x = change, y = overall_val, label = crop), alpha = 0.7,
+                   nudge_x = .1,
+                   nudge_y = .05,
+                   segment.curvature = 0.1) +
+  scale_size_continuous("Price (2015-2019; USD/kg)") +
+  scale_y_continuous(limits = c(0, 0.6), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"), expand = c(0, 0)) +
+  scale_x_continuous(breaks = c(0, 0.1, 0.2, 0.3), labels = c("0", "0.1", "0.2", "0.3"), limits = c(0, 0.3), expand = c(0, 0)) +
+  xlab("Change in crop pollination risk") + 
+  ylab("Overall crop pollination risk") +
   theme_bw() +
-  guides(guide_colourbar(ticks = FALSE)) +
-  theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "none")
+  theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "bottom")
 
-ggsave("top_change_crop_3.png", scale = 1, dpi = 350)
+ggsave("top_change_crop_4.png", scale = 0.8, dpi = 350)
