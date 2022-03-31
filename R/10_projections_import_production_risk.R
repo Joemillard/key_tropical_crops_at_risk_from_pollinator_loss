@@ -17,6 +17,24 @@ library(patchwork)
 # source in additional functions
 source("R/00_functions.R")
 
+# read in local population sizes
+population_size <- read.csv("data/population-past-future.csv") %>%
+  filter(Year %in% c(2015, 2016, 2017, 2018, 2019)) %>%
+  group_by(Entity) %>%
+  summarise(average_pop = mean(Population..historical.estimates.and.future.projections.))%>%
+  filter(!Entity %in% c("Africa", "Asia", "World", "Western Sahara", 
+                        "Oceania", "North America", "South America", "Europe")) %>%
+  mutate(Entity = gsub("United States", "United States of America", Entity)) %>%
+  mutate(Entity = gsub("Tanzania", "United Republic of Tanzania", Entity)) %>%
+  mutate(Entity = gsub("Republic of Congo", "Republic of the Congo", Entity)) %>%
+  mutate(Entity = gsub("^Congo", "Republic of the Congo", Entity)) %>%
+  mutate(Entity = gsub("Cote d'Ivoire", "Ivory Coast", Entity))%>%
+  mutate(Entity = gsub("Serbia", "Republic of Serbia", Entity))%>%
+  mutate(Entity = gsub("Czechia", "Czech Republic", Entity))%>%
+  mutate(Entity = gsub("Bahamas", "The Bahamas", Entity))%>%
+  mutate(Entity = gsub("Guinea-Bissau", "Guinea Bissau", Entity))
+  
+
 # read in the proportional trade flow data
 trade_flow <- readRDS(here::here("data/trade_flow/proportional_pollination_flow.rds")) %>%
   select(-country_flow, -total_flow)
@@ -449,7 +467,7 @@ country_coords <- over(std_anom_high[[1]], base_map, by = "ISO2", returnList = F
 
 # assign the column for country, latitude and longitude back onto pollinator vulnerability data
 for(i in 1:length(std_high_abun_adj)){
-  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "REGION", "LON", "LAT")])
+  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "ISO3", "REGION", "LON", "LAT")])
 }
 
 # check coordinates and countries are vaguely correct
@@ -463,7 +481,7 @@ country_sums <- list()
 # for each yearly set, calculate the pollinator vulnerability for each country
 for(i in 1:length(std_high_abun_adj)){
   country_sums[[i]] <-  std_high_abun_adj[[i]] %>%
-    group_by(SOVEREIGNT, REGION) %>%
+    group_by(SOVEREIGNT, ISO3, REGION) %>%
     summarise(total_production = sum(pollinator_vulnerability, na.rm = TRUE)) %>% 
     ungroup() %>%
     mutate(year = 2049 - i)
@@ -597,16 +615,20 @@ total_import_risk <- joined_flows %>%
   select(partner_countries, year, total_import_risk) %>%
   unique()
 
+suppliers <- total_import_risk %>%
+  mutate(partner_countries = gsub("^Republic of Congo", "Republic of the Congo", partner_countries)) %>%
+  inner_join(population_size, by = c("partner_countries" = "Entity")) %>%
+  mutate(per_capita_pollination = total_import_risk/average_pop)
+
 import_risk_total <- base_map %>% 
   fortify() %>%
-  left_join(total_import_risk, by = c("id" = "partner_countries")) %>%
+  left_join(suppliers, by = c("id" = "partner_countries")) %>% 
   ggplot() +
-  geom_polygon(aes(x = long, y = lat, fill = total_import_risk, group = group)) +
+  geom_polygon(aes(x = long, y = lat, fill = per_capita_pollination, group = group)) +
   theme_bw() +
-  #ggtitle("2050") +
-  scale_fill_viridis("Total 2050 import risk (1000 tonnes)",
+  scale_fill_viridis("Total 2050 import risk\n(1000 tonnes per capita)",
                      na.value = "grey", option = "inferno", direction = -1, 
-                     breaks = c(0, 10000000, 20000000, 30000000), limits = c(0, 35000000), labels = c("0", "10", "20", "30")) +
+                     breaks = c(0.2, 0.6, 1), limits = c(0, 1.3), labels = c("0.2",  "0.6", "1")) +
   guides(fill = guide_colourbar(ticks = FALSE, title.position="top")) +
   coord_equal() +
   theme(panel.background = element_blank(),
