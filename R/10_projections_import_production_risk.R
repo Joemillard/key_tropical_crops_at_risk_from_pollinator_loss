@@ -620,16 +620,22 @@ suppliers <- total_import_risk %>%
   inner_join(population_size, by = c("partner_countries" = "Entity")) %>%
   mutate(per_capita_pollination = total_import_risk/average_pop)
 
+# group the categories of climate anomaly into factors
+suppliers$value_group[suppliers$per_capita_pollination > 0.08204932] <- "75-100"
+suppliers$value_group[suppliers$per_capita_pollination > 0.02742838 & suppliers$per_capita_pollination <= 0.08204932 ] <- "50-75"
+suppliers$value_group[suppliers$per_capita_pollination > 0.007590929 & suppliers$per_capita_pollination <= 0.02742838 ] <- "25-50"
+suppliers$value_group[suppliers$per_capita_pollination <= 0.007590929] <- "0-25"
+
 import_risk_total <- base_map %>% 
   fortify() %>%
   left_join(suppliers, by = c("id" = "partner_countries")) %>% 
   ggplot() +
-  geom_polygon(aes(x = long, y = lat, fill = per_capita_pollination, group = group)) +
+  geom_polygon(aes(x = long, y = lat,  group = group), fill = "grey") +
+  geom_polygon(aes(x = long, y = lat, fill = value_group, group = group)) +
   theme_bw() +
-  scale_fill_viridis("Total 2050 import risk\n(1000 tonnes per capita)",
-                     na.value = "grey", option = "inferno", direction = -1, 
-                     breaks = c(0.2, 0.6, 1), limits = c(0, 1.3), labels = c("0.2",  "0.6", "1")) +
-  guides(fill = guide_colourbar(ticks = FALSE, title.position="top")) +
+  scale_fill_viridis_d("Total 2050 import risk\n(Tonnes per capita)", direction = -1, option = "plasma", na.translate = F,
+                       labels = c("0-25th percentile", "25-50th percentile", "50-75th percentile", "75-100th percentile")) +
+  guides(fill = guide_legend(nrow = 2,byrow = TRUE, title.position = "top")) +
   coord_equal() +
   theme(panel.background = element_blank(),
         panel.bord = element_blank(),
@@ -638,16 +644,6 @@ import_risk_total <- base_map %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank(), legend.position = "bottom")
 
-first <- plot_grid(import_risk_map, import_risk_total, align = 'v', axis = 'l')
-second <- plot_grid(supplier_risk)
-
-cowplot::plot_grid(first, second, ncol = 1, rel_heights = c(0.75, 1))
-
-
-import_risk_map + import_risk_total + supplier_risk + plot_layout(ncol = 2)
-cowplot::plot_grid(import_risk_map, import_risk_total, supplier_risk, NULL, rel_heights = c(0.5, 0.5))
-                    
 cowplot::plot_grid(import_risk_map, import_risk_total, supplier_risk, NULL)
 
-
-ggsave("supply_diversity_importer_3.png", scale = 1.1, dpi = 350)
+ggsave("supply_diversity_importer_5.png", scale = 1.4, dpi = 350)
