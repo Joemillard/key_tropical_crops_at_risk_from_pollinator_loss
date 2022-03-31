@@ -18,6 +18,12 @@ library(ggrepel)
 # source in additional functions
 source("R/00_functions.R")
 
+# read in local population sizes
+population_size <- read.csv("data/population-past-future.csv") %>%
+  filter(Year %in% c(2015, 2016, 2017, 2018, 2019)) %>%
+  group_by(Code) %>%
+  summarise(average_pop = mean(Population..historical.estimates.and.future.projections.))
+
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
@@ -487,7 +493,7 @@ country_coords <- over(std_anom_high[[1]], base_map, by = "ISO2", returnList = F
 
 # assign the column for country, latitude and longitude back onto pollinator vulnerability data
 for(i in 1:length(std_high_abun_adj)){
-  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "REGION", "LON", "LAT")])
+  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "ISO3", "REGION", "LON", "LAT")])
 }
 
 # check coordinates and countries are vaguely correct
@@ -501,7 +507,7 @@ country_sums <- list()
 # for each yearly set, calculate the pollinator vulnerability for each country
 for(i in 1:length(std_high_abun_adj)){
   country_sums[[i]] <-  std_high_abun_adj[[i]] %>%
-    group_by(SOVEREIGNT, REGION) %>%
+    group_by(SOVEREIGNT, ISO3, REGION) %>%
     summarise(total = quantile(pollinator_vulnerability, probs = c(0.5), na.rm = TRUE), 
               upp_conf = quantile(pollinator_vulnerability, probs = c(0.975), na.rm = TRUE), 
               lower_conf = quantile(pollinator_vulnerability, probs = c(0.025), na.rm = TRUE),
@@ -514,7 +520,7 @@ for(i in 1:length(std_high_abun_adj)){
 
 # plot for trends in pollination vulnerability
 change_obj <- rbindlist(country_sums) %>% 
-  group_by(SOVEREIGNT, REGION) %>%
+  group_by(SOVEREIGNT, ISO3, REGION) %>%
   arrange(year) %>%
   mutate(av_total = mean(total)) %>%
   mutate(change = max(total) - min(total)) %>%
@@ -522,7 +528,7 @@ change_obj <- rbindlist(country_sums) %>%
 
 # create object just with summary values
 plot_obj <- change_obj %>%
-  select(SOVEREIGNT, REGION, av_total, change, pollination_production, percent_pollinated) %>%
+  select(SOVEREIGNT, ISO3, REGION, av_total, change, pollination_production, percent_pollinated) %>%
   unique() %>% 
   filter(!is.na(change)) %>% 
   filter(!is.na(REGION))
@@ -586,21 +592,26 @@ country_value_bound %>%
 # join plot data onto the country total value
 plot_obj <- inner_join(plot_obj, country_totals, by = c("SOVEREIGNT", "REGION"))
 
+plot_obj_pop <- plot_obj %>%
+  inner_join(population_size, by = c("ISO3" = "Code")) %>%
+  mutate(per_capita_pollination = total_value/average_pop)
+
 # select top for adding text
-plot_obj_top <- plot_obj %>%
+plot_obj_top <- plot_obj_pop %>%
   group_by(main_region) %>%
   arrange(desc(total_value)) %>%
   slice(1:2) %>%
   mutate(SOVEREIGNT = gsub("United States of America", "USA", SOVEREIGNT))
 
+
 # build export risk plot
-ggplot(plot_obj) +
+ggplot(plot_obj_pop) +
     geom_point(aes(x = change, y = av_total, size = total_value, colour = REGION),  alpha = 0.7) +
     geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
                      nudge_x = .085,
                      nudge_y = .06,
                      segment.curvature = -1e-20,) +
-    scale_x_continuous("Change in crop pollination risk", expand = c(0, 0), limits = c(-0.01, 0.2), breaks = c(0, 0.05, 0.1, 0.15), 
+    scale_x_continuous("Change in crop pollination risk", expand = c(0, 0), limits = c(0, 0.2), breaks = c(0, 0.05, 0.1, 0.15), 
                       labels = c("0", "0.05", "0.1", "0.15")) +
     scale_y_continuous("Overall crop pollination risk", expand = c(0, 0), limits = c(0, 0.5), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
                        labels = c("0", "0.1",  "0.2", "0.3", "0.4", "0.5")) +
@@ -613,4 +624,5 @@ ggplot(plot_obj) +
              colour = guide_legend(order = 1, nrow = 2)) +
     theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-ggsave("top_change_country_8.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_9.png", scale = 1.1, dpi = 350)
+
