@@ -493,7 +493,7 @@ country_coords <- over(std_anom_high[[1]], base_map, by = "ISO2", returnList = F
 
 # assign the column for country, latitude and longitude back onto pollinator vulnerability data
 for(i in 1:length(std_high_abun_adj)){
-  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "ISO3", "REGION", "LON", "LAT")])
+  std_high_abun_adj[[i]] <- cbind(std_high_abun_adj[[i]], country_coords[c("SOVEREIGNT", "GBD", "ISO3", "SRES", "continent", "LON", "LAT")])
 }
 
 # check coordinates and countries are vaguely correct
@@ -507,7 +507,7 @@ country_sums <- list()
 # for each yearly set, calculate the pollinator vulnerability for each country
 for(i in 1:length(std_high_abun_adj)){
   country_sums[[i]] <-  std_high_abun_adj[[i]] %>%
-    group_by(SOVEREIGNT, ISO3, REGION) %>%
+    group_by(SOVEREIGNT, ISO3, SRES, continent, GBD) %>%
     summarise(total = quantile(pollinator_vulnerability, probs = c(0.5), na.rm = TRUE), 
               upp_conf = quantile(pollinator_vulnerability, probs = c(0.975), na.rm = TRUE), 
               lower_conf = quantile(pollinator_vulnerability, probs = c(0.025), na.rm = TRUE),
@@ -520,7 +520,7 @@ for(i in 1:length(std_high_abun_adj)){
 
 # plot for trends in pollination vulnerability
 change_obj <- rbindlist(country_sums) %>% 
-  group_by(SOVEREIGNT, ISO3, REGION) %>%
+  group_by(SOVEREIGNT, ISO3, SRES, continent, GBD) %>%
   arrange(year) %>%
   mutate(av_total = mean(total)) %>%
   mutate(change = max(total) - min(total)) %>%
@@ -528,16 +528,29 @@ change_obj <- rbindlist(country_sums) %>%
 
 # create object just with summary values
 plot_obj <- change_obj %>%
-  select(SOVEREIGNT, ISO3, REGION, av_total, change, pollination_production, percent_pollinated) %>%
+  select(SOVEREIGNT, ISO3, SRES, continent, GBD, av_total, change, pollination_production, percent_pollinated) %>%
   unique() %>% 
-  filter(!is.na(change)) %>% 
-  filter(!is.na(REGION))
+  filter(!is.na(change)) %>%
+  filter(!is.na(continent))
 
 # add separate regions
-plot_obj$main_region[plot_obj$REGION %in% c("Europe", "North America")] <- "North America & Europe"
-plot_obj$main_region[plot_obj$REGION %in% c("Asia", "Australia")] <- "Asia & Australia"
-plot_obj$main_region[plot_obj$REGION %in% c("Africa")] <- "Africa"
-plot_obj$main_region[plot_obj$REGION %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c("Central and Eastern Europe (EEU)", 
+                                                                                 "Western Europe (WEU)")] <- "North America & Europe"
+plot_obj$main_region[plot_obj$continent %in% c("North America")] <- "North America & Europe"
+plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c("Centrally planned Asia and China (CPA)", 
+                                                                                 "Middle East and North Africa (MEA)",
+                                                                                 "Other Pacific Asia (PAS)", 
+                                                                                 "Pacific OECD (PAO)", 
+                                                                                 "South Asia (SAS)")] <- "Asia & Australia"
+plot_obj$main_region[plot_obj$continent %in% c("Australia")] <- "Asia & Australia"
+plot_obj$main_region[plot_obj$continent %in% c("Africa")] <- "Africa"
+plot_obj$main_region[plot_obj$continent %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+
+# correcting for former soviet union states
+plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)") & plot_obj$GBD== "Asia, Central"] <- "Asia & Australia"
+plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)") & plot_obj$GBD == "Europe, Eastern"] <- "North America & Europe"
+
+
 
 # merge the price per kg value with the pollination dependent monfreda
 joined_crop_val <- left_join(klein_cleaned_filt, joined_prod_value, by = c("MonfredaCrop" = "CROPNAME"))
@@ -576,11 +589,11 @@ crop_total_price_points <- crop_total_price_frame %>%
 country_value <- over(crop_total_price_points, base_map, by = "ISO2", returnList = FALSE)
 
 # merge countries back onto values
-country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "REGION", "LON", "LAT", "GDP_MD_EST", "NAME_FORMA")])
+country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "SRES", "continent", "LON", "LAT", "GDP_MD_EST", "NAME_FORMA")])
 
 # calc country totals
 country_totals <- country_value_bound %>%
-  group_by(SOVEREIGNT, GDP_MD_EST, NAME_FORMA, REGION) %>%
+  group_by(SOVEREIGNT, GDP_MD_EST, NAME_FORMA, SRES, continent) %>%
   summarise(total_value = sum(layer))
   
 # check coordinates and countries are vaguely correct
@@ -590,7 +603,7 @@ country_value_bound %>%
   geom_point(aes(x = x, y = y, colour = SOVEREIGNT)) + theme(legend.position = "none")
 
 # join plot data onto the country total value
-plot_obj <- inner_join(plot_obj, country_totals, by = c("SOVEREIGNT", "REGION"))
+plot_obj <- inner_join(plot_obj, country_totals, by = c("SOVEREIGNT", "SRES", "continent"))
 
 plot_obj_pop <- plot_obj %>%
   inner_join(population_size, by = c("ISO3" = "Code")) %>%
@@ -608,7 +621,7 @@ plot_obj_top <- plot_obj_pop %>%
 
 # build export risk plot
 ggplot(plot_obj_pop) +
-    geom_point(aes(x = change, y = av_total, size = per_capita_pollination, colour = REGION),  alpha = 0.7) +
+    geom_point(aes(x = change, y = av_total, size = per_capita_pollination, colour = main_region),  alpha = 0.7) +
     geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
                      nudge_x = .085,
                      nudge_y = .06,
