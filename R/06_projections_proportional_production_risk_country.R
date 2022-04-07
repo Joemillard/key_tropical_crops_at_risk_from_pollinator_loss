@@ -619,19 +619,35 @@ plot_obj_top <- plot_obj_pop %>%
   slice(1:2) %>%
   mutate(SOVEREIGNT = gsub("United States of America", "USA", SOVEREIGNT))
 
+# assign sub regions
+plot_obj_pop$sub_region[plot_obj_pop$SRES %in% c("Central and Eastern Europe (EEU)", "Western Europe (WEU)")] <- "Europe"
+plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("North America")] <- "North America"
+plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("Australia")] <- "Australia"
+plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("Africa")] <- "Africa"
+plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("South America and the Caribbean")] <- "South America"
+plot_obj_pop$sub_region[plot_obj_pop$main_region %in% c("North America & Europe") & is.na(plot_obj_pop$sub_region)] <- "Europe"
+plot_obj_pop$sub_region[plot_obj_pop$GBD == "Caribbean"] <- "The Caribbean"
+plot_obj_pop$sub_region[is.na(plot_obj_pop$sub_region)] <- "Asia"
+
+# assign nudge parameter
+plot_obj_top$y_nudge[plot_obj_top$main_region == "Africa"] <- 0.09
+plot_obj_top$y_nudge[plot_obj_top$main_region == "Asia & Australia"] <- 0.3
+plot_obj_top$y_nudge[plot_obj_top$main_region == "North America & Europe"] <- 0.3
+plot_obj_top$y_nudge[plot_obj_top$main_region == "South America & the Caribbean"] <- 0.09
+
 # build export risk plot
 ggplot(plot_obj_pop) +
-    geom_point(aes(x = change, y = av_total, size = per_capita_pollination, colour = main_region),  alpha = 0.7) +
+    geom_point(aes(x = change, y = av_total, size = per_capita_pollination, colour = sub_region),  alpha = 0.7) +
     geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
                      nudge_x = .085,
-                     nudge_y = .06,
+                     nudge_y = c(.07, 0.15, 0.15, 0.18, 0.1, 0.01, 0.1, 0.1),
                      segment.curvature = -1e-20,) +
     scale_x_continuous("Change in crop pollination risk", expand = c(0, 0), limits = c(0, 0.2), breaks = c(0, 0.05, 0.1, 0.15), 
                       labels = c("0", "0.05", "0.1", "0.15")) +
     scale_y_continuous("Overall crop pollination risk", expand = c(0, 0), limits = c(0, 0.5), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
                        labels = c("0", "0.1",  "0.2", "0.3", "0.4", "0.5")) +
-    scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
-    scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+    scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
+    scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
     scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(25, 50, 75, 100, 125), labels = c(25, 50, 75, 100, 125)) +
     theme_bw() +
     facet_wrap(~main_region, ncol = 4) +
@@ -639,5 +655,5 @@ ggplot(plot_obj_pop) +
              colour = guide_legend(order = 1, nrow = 2)) +
     theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-ggsave("top_change_country_9.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_10.png", scale = 1.1, dpi = 350)
 
