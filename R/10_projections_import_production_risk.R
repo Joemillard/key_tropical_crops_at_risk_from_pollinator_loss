@@ -393,7 +393,7 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 # set up vector of climate models
-RCP_scenarios <- c("rcp85")
+RCP_scenarios <- c("rcp60")
 climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
 
 # iterate through each set of years as a rolling average
@@ -644,6 +644,6 @@ import_risk_total <- base_map %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank(), legend.position = "bottom")
 
-cowplot::plot_grid(import_risk_map, import_risk_total, supplier_risk, NULL)
+cowplot::plot_grid(import_risk_map, import_risk_total)
 
-ggsave("supply_diversity_importer_5.png", scale = 1.4, dpi = 350)
+ggsave("supply_diversity_importer_6.png", scale = 1.4, dpi = 350)
