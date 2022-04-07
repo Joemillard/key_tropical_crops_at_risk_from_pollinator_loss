@@ -453,7 +453,7 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 # set up vector of climate models
-RCP_scenarios <- c("rcp85")
+RCP_scenarios <- c("rcp60")
 climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
 
 # iterate through each set of years as a rolling average
@@ -580,19 +580,18 @@ rbindlist(all_crop_fin) %>%
   mutate(crop = gsub("cocoa", "Cocoa", crop)) %>%
   mutate(crop = gsub("fruitnes", "Fresh fruits", crop)) %>%
   mutate(crop = gsub("tomato", "Tomatoes", crop)) %>%
-  
   ggplot() +
-  geom_point(aes(x = change, y = overall_val, size = overall_price_kg), pch=21, fill = "grey", colour = "black") +
-  geom_label_repel(aes(x = change, y = overall_val, label = crop), alpha = 0.7,
-                   nudge_x = .1,
-                   nudge_y = .05,
-                   segment.curvature = 0.1) +
-  scale_size_continuous("Price (2015-2019; USD/kg)") +
-  scale_y_continuous(limits = c(0, 0.6), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"), expand = c(0, 0)) +
-  scale_x_continuous(breaks = c(0, 0.1, 0.2, 0.3), labels = c("0", "0.1", "0.2", "0.3"), limits = c(0, 0.3), expand = c(0, 0)) +
-  xlab("Change in crop pollination risk") + 
-  ylab("Overall crop pollination risk") +
-  theme_bw() +
-  theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "bottom")
+    geom_point(aes(x = change, y = overall_val, size = overall_price_kg), pch=21, fill = "grey", colour = "black") +
+    geom_label_repel(aes(x = change, y = overall_val, label = crop), alpha = 0.7,
+                     nudge_x = .1,
+                     nudge_y = .05,
+                     segment.curvature = 0.1) +
+    scale_size_continuous("Price (2015-2019; USD/kg)") +
+    scale_y_continuous(limits = c(0, 0.6), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"), expand = c(0, 0)) +
+    scale_x_continuous(breaks = c(0, 0.1, 0.2, 0.3), labels = c("0", "0.1", "0.2", "0.3"), limits = c(0, 0.3), expand = c(0, 0)) +
+    xlab("Change in crop pollination risk") + 
+    ylab("Overall crop pollination risk") +
+    theme_bw() +
+    theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "bottom")
 
-ggsave("top_change_crop_4.png", scale = 0.8, dpi = 350)
+ggsave("top_change_crop_5.png", scale = 0.7, dpi = 350)
