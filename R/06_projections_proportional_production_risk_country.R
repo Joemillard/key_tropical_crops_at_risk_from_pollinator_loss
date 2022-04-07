@@ -419,7 +419,7 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 # set up vector of climate models
-RCP_scenarios <- c("rcp85")
+RCP_scenarios <- c("rcp60")
 climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
 
 # iterate through each set of years as a rolling average
@@ -576,11 +576,11 @@ crop_total_price_points <- crop_total_price_frame %>%
 country_value <- over(crop_total_price_points, base_map, by = "ISO2", returnList = FALSE)
 
 # merge countries back onto values
-country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "REGION", "LON", "LAT")])
+country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "REGION", "LON", "LAT", "GDP_MD_EST", "NAME_FORMA")])
 
 # calc country totals
 country_totals <- country_value_bound %>%
-  group_by(SOVEREIGNT, REGION) %>%
+  group_by(SOVEREIGNT, GDP_MD_EST, NAME_FORMA, REGION) %>%
   summarise(total_value = sum(layer))
   
 # check coordinates and countries are vaguely correct
@@ -594,19 +594,21 @@ plot_obj <- inner_join(plot_obj, country_totals, by = c("SOVEREIGNT", "REGION"))
 
 plot_obj_pop <- plot_obj %>%
   inner_join(population_size, by = c("ISO3" = "Code")) %>%
-  mutate(per_capita_pollination = total_value/average_pop)
+  mutate(per_capita_pollination = total_value/GDP_MD_EST) %>%
+  filter(!(SOVEREIGNT == "United Kingdom" & is.na(NAME_FORMA))) %>%
+  filter(NAME_FORMA != "Hong Kong Special Administrative Region") %>%
+  filter(NAME_FORMA != "Gaza Strip")
 
 # select top for adding text
 plot_obj_top <- plot_obj_pop %>%
   group_by(main_region) %>%
-  arrange(desc(total_value)) %>%
+  arrange(desc(per_capita_pollination)) %>%
   slice(1:2) %>%
   mutate(SOVEREIGNT = gsub("United States of America", "USA", SOVEREIGNT))
 
-
 # build export risk plot
 ggplot(plot_obj_pop) +
-    geom_point(aes(x = change, y = av_total, size = total_value, colour = REGION),  alpha = 0.7) +
+    geom_point(aes(x = change, y = av_total, size = per_capita_pollination, colour = REGION),  alpha = 0.7) +
     geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
                      nudge_x = .085,
                      nudge_y = .06,
@@ -617,7 +619,7 @@ ggplot(plot_obj_pop) +
                        labels = c("0", "0.1",  "0.2", "0.3", "0.4", "0.5")) +
     scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
     scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
-    scale_size_continuous("Pollination dependent production value (US$/annum)", breaks = c(10000000, 20000000, 30000000, 40000000), labels = c("10,000,000", "20,000,000", "30,000,000", "40,000,000")) +
+    scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(25, 50, 75, 100, 125), labels = c(25, 50, 75, 100, 125)) +
     theme_bw() +
     facet_wrap(~main_region, ncol = 4) +
     guides(size = guide_legend(order = 2, nrow = 2), 
