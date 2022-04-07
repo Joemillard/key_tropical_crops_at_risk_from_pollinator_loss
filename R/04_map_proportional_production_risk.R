@@ -442,7 +442,7 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 # set up vector of climate models - just rcp85 for map
-RCP_scenarios <- c("rcp85")
+RCP_scenarios <- c("rcp60")
 
 # add in the full model set for single vector of all climate models - all for rcp85
 climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
@@ -482,8 +482,7 @@ vulnerability_2050 <- climate_poll_data_future %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
   geom_tile(aes(x = x, y = y, fill = poll_vulnerability)) +
-  ggtitle("2050") +
-  scale_fill_viridis("Proportional production risk",
+  scale_fill_viridis("Proportional\nproduction risk",
                        na.value = "transparent", option = "plasma", direction = -1,
                        limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
   coord_equal() +
@@ -494,8 +493,6 @@ vulnerability_2050 <- climate_poll_data_future %>%
         axis.text = element_blank(),
         axis.ticks = element_blank(), 
         axis.title = element_blank(),
-        legend.position = "none")
+        legend.position = "bottom")
 
-present_vulnerability + vulnerability_2050 + patchwork::plot_layout(ncol = 2)
-
-ggsave("vulnerability_weighted_production_map_8.png", scale = 1.1, dpi = 350)
+ggsave("vulnerability_weighted_production_map_9.png", scale = 1.1, dpi = 350)
