@@ -552,18 +552,6 @@ for(i in 1:length(all_crop_fin)){
   all_crop_fin[[i]]$crop <- pollination_production_sum$adj_it_vec[i]
 }
 
-# calculate crop with highest proportion of production at risk
-rbindlist(all_crop_fin) %>%
-  group_by(crop) %>%
-  summarise(max_prop = max(prop_prod)) %>%
-  ungroup() %>% 
-  arrange(desc(max_prop)) %>% View()
-
-#geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
- #                nudge_x = .085,
-      #           nudge_y = .06,
-    #             segment.curvature = -1e-20,) +
-
 # build figure for variation with prop production at risk in brackets  
 rbindlist(all_crop_fin) %>%
   group_by(crop) %>%
@@ -595,3 +583,15 @@ rbindlist(all_crop_fin) %>%
     theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "bottom")
 
 ggsave("top_change_crop_5.png", scale = 0.7, dpi = 350)
+
+# calculate crop with highest proportion of production at risk and write to csv
+rbindlist(all_crop_fin) %>%
+  group_by(crop) %>%
+  mutate(change = max(total) - min(total)) %>%
+  mutate(overall_val = mean(total)) %>%
+  ungroup() %>%
+  inner_join(joined_prod_value, by = c("crop" = "CROPNAME")) %>%
+  dplyr::select(crop, overall_val, change, overall_price_kg) %>%
+  unique() %>%
+  arrange(desc(overall_price_kg)) %>%
+  write.csv("crop_level_risk.csv")
