@@ -607,7 +607,7 @@ plot_obj <- inner_join(plot_obj, country_totals, by = c("SOVEREIGNT", "SRES", "c
 
 plot_obj_pop <- plot_obj %>%
   inner_join(population_size, by = c("ISO3" = "Code")) %>%
-  mutate(per_capita_pollination = total_value/GDP_MD_EST) %>%
+  mutate(per_GDP_pollination = total_value/GDP_MD_EST) %>%
   filter(!(SOVEREIGNT == "United Kingdom" & is.na(NAME_FORMA))) %>%
   filter(NAME_FORMA != "Hong Kong Special Administrative Region") %>%
   filter(NAME_FORMA != "Gaza Strip")
@@ -637,7 +637,7 @@ plot_obj_top$y_nudge[plot_obj_top$main_region == "South America & the Caribbean"
 
 # build export risk plot
 ggplot(plot_obj_pop) +
-    geom_point(aes(x = change, y = av_total, size = per_capita_pollination, colour = sub_region),  alpha = 0.7) +
+    geom_point(aes(x = change, y = av_total, size = per_GDP_pollination, colour = sub_region),  alpha = 0.7) +
     geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
                      nudge_x = .085,
                      nudge_y = c(.07, 0.15, 0.15, 0.18, 0.1, 0.01, 0.1, 0.1),
@@ -657,3 +657,5 @@ ggplot(plot_obj_pop) +
 
 ggsave("top_change_country_10.png", scale = 1.1, dpi = 350)
 
+# write file to csv for Silvia
+write.csv(plot_obj_pop, "country_level_risk.csv")
