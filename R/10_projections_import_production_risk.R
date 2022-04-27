@@ -534,6 +534,8 @@ import_risk_map <- base_map %>%
 
 ggsave("country_level_import_risk_map.png", scale = 1.2, dpi = 350)
 
+write.csv(change_importers %>% select(-total_import_risk) %>% unique(), "change_import_risk.csv")
+
 # combined with continental data
 change_import_cont <- change_importers %>%
   left_join(base_map@data, by = c("partner_countries" = "SOVEREIGNT")) %>%
@@ -647,3 +649,6 @@ import_risk_total <- base_map %>%
 cowplot::plot_grid(import_risk_map, import_risk_total)
 
 ggsave("supply_diversity_importer_6.png", scale = 1.4, dpi = 350)
+
+# write to csv for Silvia
+write.csv(suppliers, "total_import_risk.csv")
