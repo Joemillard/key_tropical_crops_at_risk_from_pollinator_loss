@@ -520,7 +520,7 @@ rbindlist(RCP_plot) %>%
           strip.text.x = element_text(size = 12))
 
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_8.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_8.png", scale = 1.1, dpi = 350)
 
 ## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
 # assign 0 as NA for intersection
