@@ -266,7 +266,7 @@ pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geot
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
-# read in each of the rasters
+# read in each of the rasters for pollinated crops
 for(i in 1:length(pollinated_crops)){
   rate_rasters[[i]] <- raster(pollinated_crops[i])
   print(i)
@@ -333,9 +333,6 @@ crop.total <-aggregate(crop.total, fact = 6, fun = sum)
 total_production <- sum(crop.total[])
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
-
 # calculate the mean and sd of the baseline values
 tmp1901_1930mean <- calc(tmp1901_1930, mean)
 tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
