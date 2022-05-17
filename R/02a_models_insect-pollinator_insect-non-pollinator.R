@@ -92,7 +92,7 @@ for(j in 1:length(pollinat_bound)){
     SpatialPoints()
   
   # calculate the mean baseline, and convert to character for merging
-  climate_start_mean <- calc_baseline(tmp1901_1931, 
+  climate_start_mean <- calc_baseline(tmp1901_1930, 
                                       func = mean, 
                                       pred_points = PRED_sites, 
                                       pred_points_sp = PRED_sites_sp) %>%
@@ -100,7 +100,7 @@ for(j in 1:length(pollinat_bound)){
     mutate(Longitude = as.character(Longitude))
   
   # calculate the sd baseline, and convert to character for merging
-  climate_start_sd <- calc_baseline(tmp1901_1931, 
+  climate_start_sd <- calc_baseline(tmp1901_1930, 
                                     func = stats::sd, 
                                     pred_points = PRED_sites, 
                                     pred_points_sp = PRED_sites_sp) %>%
