@@ -282,6 +282,8 @@ for(i in 1:length(cropdirs)){
 # file paths for each of per hectare application
 unlisted_crops <- unlist(crop.files)
 rate_rasters <- list()
+rate_rasters_adj <- list()
+rate_rasters_all <- list()
 
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
@@ -290,11 +292,16 @@ pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geot
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
-# read in each of the rasters
+# read in each of the rasters for pollinated crops
 for(i in 1:length(pollinated_crops)){
-  rate_rasters[[i]] <- raster(pollinated_crops[i])
+  rate_rasters[[i]] <- terra::rast(pollinated_crops[i])
   print(i)
+}
 
+# read in each of the rasters for pollinated crops
+for(i in 1:length(crop.files)){
+  rate_rasters_all[[i]] <- terra::rast(crop.files[[i]])
+  print(i)
 }
 
 # multiple each raster by the percentage attributable to pollination
@@ -347,13 +354,16 @@ for(i in 1:length(rate_rasters)){
   print(i)
 }
 
+rm(rate_rasters)
+
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
-crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
-crop.total_all <- stack(rate_rasters) %>% sum(na.rm = T)
+crop.total <- terra::rast(rate_rasters_adj) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
+crop.total_all <- terra::rast(rate_rasters_all) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
 
 # baseplot of proportion needing pollination
-plot((crop.total / crop.total_all) * 100)
+prop_poll <- crop.total / crop.total_all
+plot(prop_poll)
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 crop.total_all <- projectRaster(crop.total_all, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -565,7 +575,7 @@ for(i in 1:length(rate_rasters_adj)){
 }
 
 # sum total cell level price of pollination dependent crops geographically
-crop_total_price <- stack(rate_rasters_adj_val) %>% sum(na.rm = T)
+crop_total_price <- terra::rast(rate_rasters_adj_val) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 crop_total_price <- projectRaster(crop_total_price, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -577,7 +587,8 @@ rm(rate_rasters_adj_val)
 # convert the raster to a dataframe to plot with ggplot
 crop_total_price_frame <- as(crop_total_price, "SpatialPixelsDataFrame")
 crop_total_price_frame <- as.data.frame(crop_total_price_frame) %>%
-  filter(layer > 0)
+  filter(sum > 0) %>%
+  rename(layer = sum)
 
 # convert spatial dataframe to coordinates
 crop_total_price_points <- crop_total_price_frame %>%
@@ -614,11 +625,12 @@ plot_obj_pop <- plot_obj %>%
 
 # select top for adding text
 plot_obj_top <- plot_obj_pop %>%
-  group_by(main_region) %>%
-  arrange(desc(per_capita_pollination)) %>%
-  slice(1:2) %>%
-  mutate(SOVEREIGNT = gsub("United States of America", "USA", SOVEREIGNT))
-
+  filter(SOVEREIGNT  %in% c("Ivory Coast", "Somalia", "Guinea Bissau",
+                            "Philippines", "Indonesia", "Papua New Guinea",
+                            "Turkey", 
+                            "Suriname", "Haiti") | NAME_FORMA  %in% c("Commonwealth of Puerto Rico")) %>%
+  mutate(SOVEREIGNT = gsub("United States of America", "Puerto Rico", SOVEREIGNT))
+  
 # assign sub regions
 plot_obj_pop$sub_region[plot_obj_pop$SRES %in% c("Central and Eastern Europe (EEU)", "Western Europe (WEU)")] <- "Europe"
 plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("North America")] <- "North America"
@@ -639,13 +651,13 @@ plot_obj_top$y_nudge[plot_obj_top$main_region == "South America & the Caribbean"
 ggplot(plot_obj_pop) +
     geom_point(aes(x = change, y = av_total, size = per_GDP_pollination, colour = sub_region),  alpha = 0.7) +
     geom_label_repel(aes(x = change, y = av_total, label = SOVEREIGNT), data = plot_obj_top, alpha = 0.5,
-                     nudge_x = .085,
-                     nudge_y = c(.07, 0.15, 0.15, 0.18, 0.1, 0.01, 0.1, 0.1),
+                    nudge_x = .01,
+                     nudge_y = c(0.012, 0.01, 0.01, 0.01, -0.01, 0.01, 0.01, 0.01, 0.01, 0.01),
                      segment.curvature = -1e-20,) +
-    scale_x_continuous("Change in crop pollination risk", expand = c(0, 0), limits = c(0, 0.2), breaks = c(0, 0.05, 0.1, 0.15), 
-                      labels = c("0", "0.05", "0.1", "0.15")) +
-    scale_y_continuous("Overall crop pollination risk", expand = c(0, 0), limits = c(0, 0.5), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
-                       labels = c("0", "0.1",  "0.2", "0.3", "0.4", "0.5")) +
+    scale_x_continuous("Change in crop pollination risk", expand = c(0, 0), limits = c(0, 0.05), breaks = c(0, 0.02, 0.04), 
+                      labels = c("0", "0.02", "0.04")) +
+    scale_y_continuous("Overall crop pollination risk", expand = c(0, 0), limits = c(0, 0.14), breaks = c(0, 0.04, 0.08, 0.12),
+                       labels = c("0", "0.04","0.08", "0.12")) +
     scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
     scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
     scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(25, 50, 75, 100, 125), labels = c(25, 50, 75, 100, 125)) +
@@ -655,7 +667,7 @@ ggplot(plot_obj_pop) +
              colour = guide_legend(order = 1, nrow = 2)) +
     theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-ggsave("top_change_country_10.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_11.png", scale = 1.1, dpi = 350)
 
 # write file to csv for Silvia
 write.csv(plot_obj_pop, "country_level_risk.csv")
