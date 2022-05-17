@@ -10,6 +10,7 @@ library(rworldxtra)
 library(data.table)
 library(lme4)
 library(yarg)
+library(patchwork)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -221,11 +222,9 @@ main_plot_abundance <- abundance_model %>%
 # working curve for linear function
 curve(-sqrt((x-1)^2) + 1)
 
-curve(sqrt(-(x+1)^-0.6) - 1)
-
 # figure for supp info
 x <- (0:100)/100
-abundance_prod <- c(0.4, 0.8, 1.2, 1.6, 2, 4, 8, 16, 32)
+abundance_prod <- c(2, 4, 8, 16, 32)
 y <- list()
 frames <- list()
 
@@ -237,7 +236,7 @@ for(i in 1:length(abundance_prod)){
 
 # output figure for supp info and save
 abundance_prod_plot <- data.table::rbindlist(frames) %>%
- # mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
+  mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
   ggplot() +
   geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope), size = 1.5) +
   theme_bw() +
@@ -274,6 +273,8 @@ for(i in 1:length(cropdirs)){
 # file paths for each of per hectare application
 unlisted_crops <- unlist(crop.files)
 rate_rasters <- list()
+rate_rasters_adj <- list()
+rate_rasters_all <- list()
 
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
@@ -282,9 +283,15 @@ pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geot
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
-# read in each of the rasters
+# read in each of the rasters for pollinated crops
 for(i in 1:length(pollinated_crops)){
-  rate_rasters[[i]] <- raster(pollinated_crops[i])
+  rate_rasters[[i]] <- terra::rast(pollinated_crops[i])
+  print(i)
+}
+
+# read in each of the rasters for pollinated crops
+for(i in 1:length(crop.files)){
+  rate_rasters_all[[i]] <- terra::rast(crop.files[[i]])
   print(i)
 }
 
@@ -327,13 +334,16 @@ for(i in 1:length(rate_rasters)){
   print(i)
 }
 
+rm(rate_rasters)
+
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
-crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
-crop.total_all <- stack(rate_rasters) %>% sum(na.rm = T)
+crop.total <- terra::rast(rate_rasters_adj) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
+crop.total_all <- terra::rast(rate_rasters_all) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
 
 # baseplot of proportion needing pollination
-plot((crop.total / crop.total_all) * 100)
+prop_poll <- crop.total / crop.total_all
+plot(prop_poll)
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 crop.total_all <- projectRaster(crop.total_all, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -411,7 +421,7 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 # set up vector of climate models - just rcp85 for map
-RCP_scenarios <- c("rcp85")
+RCP_scenarios <- c("rcp60")
 
 # add in the full model set for single vector of all climate models - all for rcp85
 climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
@@ -446,7 +456,12 @@ for(i in 1:length(abundance_prod)){
   climate_poll_values_future <- extract(tmp2069_71std_climate_anomaly, crop_df_locs, na.rm = FALSE)
   
   # merge the climate standardised values onto the pollinator dependence data
-  climate_poll_data_future[[i]] <- cbind((crop_df %>% filter(!is.na(layer))), climate_poll_values_future, (crop_df_all %>% filter(!is.na(layer)) %>% select(layer) %>% rename("total_production" = "layer")))
+  climate_poll_data_future[[i]] <-  crop_df %>% filter(!is.na(sum)) %>%
+    cbind(climate_poll_values_future) %>%
+    dplyr::rename("layer" = "sum") %>%
+    select(-x, -y) %>%
+    cbind(crop_df_all %>% filter(!is.na(sum))) %>%
+    dplyr::rename("total_production" = "sum")
   
   # set up prediction data on basis of that set of years
   new_data_pred <- data.frame("standard_anom" = climate_poll_data_future[[i]]$climate_poll_values_future, Predominant_land_use = "Cropland")
@@ -473,7 +488,7 @@ for(i in 1:length(abundance_prod)){
     ggtitle(paste("2050 (slope parameter = ", abundance_prod[i], ")", sep = "")) +
     scale_fill_viridis("Proportional production risk",
                        na.value = "transparent", option = "plasma", direction = -1,
-                       limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.5", "0.75", "1")) +
+                       limits = c(0, 0.6), breaks = c(0, 0.2, 0.4, 0.6), labels = c("0", "0.2", "0.4", "0.6")) +
     coord_equal() +
     guides(fill = guide_colourbar(ticks = FALSE)) +
     theme(panel.background = element_blank(),
@@ -492,7 +507,7 @@ vulnerability_2050[[1]] +
   vulnerability_2050[[4]] +
   vulnerability_2050[[5]] + theme(legend.position = "bottom")
 
-ggsave("vulnerability_weighted_production_map_valid_relat.png", scale = 1.3, dpi = 350)
+ggsave("vulnerability_weighted_production_map_valid_relat_2.png", scale = 1.3, dpi = 350)
 
 # plot for standard deviation of cell level prodution risk
 for(i in 1:length(climate_poll_data_future)){
@@ -512,13 +527,12 @@ std_dev_data <- rbindlist(climate_poll_data_future) %>%
 # map of standard deviation among scenarios
 std_dev_plot <- ggplotGrob(ggplot(std_dev_data) +
                              geom_histogram(aes(x = standard_dev, fill = ..x..), colour = "white") +
-                             scale_y_continuous(expand = c(0, 0), limits = c(0, 140000),
-                                                breaks = c(0, 50000, 100000),
-                                                labels = c("0", "50,000", "100,000")) +
-                             scale_x_continuous(limits = c(0, 0.3), labels = c("0", "0.1", "0.2", "0.3")) +
+                             scale_y_continuous(trans = "log10", breaks = c(1, 1000, 100000),
+                                              labels = c("1", "1,000", "100,000")) +
+                             scale_x_continuous(breaks = c(0, 0.1, 0.2), labels = c("0", "0.1", "0.2")) +
                              scale_fill_viridis("Abundance/production risk st. dev.",
                                                 na.value = "transparent", option = "viridis", direction = -1,
-                                                limits = c(0, 0.3), breaks = c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3), labels = c("0", "0.05", "0.1", "0.15", "0.2", "0.25", "0.3")) +
+                                                limits = c(0, 0.25), breaks = c(0, 0.05, 0.1, 0.15, 0.2, 0.25), labels = c("0", "0.05", "0.1", "0.15", "0.2", "0.25")) +
                              ylab("Cell frequency") +
                              xlab("Standard deviation") +
                              theme_bw() +
@@ -530,7 +544,7 @@ stv_dev_map <- ggplot(std_dev_data) +
   geom_tile(aes(x = x, y = y, fill = standard_dev)) +
   scale_fill_viridis("2050 risk standard deviation \n",
                      na.value = "transparent", option = "viridis", direction = -1,
-                     limits = c(0, 0.3), breaks = c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3), labels = c("0", "0.05", "0.1", "0.15", "0.2", "0.25", "0.3")) +
+                     limits = c(0, 0.25), breaks = c(0, 0.05, 0.1, 0.15, 0.2, 0.25), labels = c("0", "0.05", "0.1", "0.15", "0.2", "0.25")) +
   coord_equal() +
   guides(fill = guide_colourbar(ticks = FALSE)) +
   theme(panel.background = element_blank(),
@@ -542,4 +556,4 @@ stv_dev_map <- ggplot(std_dev_data) +
   annotation_custom(
     grob = std_dev_plot, xmin = 12000000, xmax = 20000000, ymin = 5000000, ymax = 12000000)
 
-ggsave("std_dev.png", dpi = 350, scale = 1.5)
+ggsave("std_dev_2.png", dpi = 350, scale = 1.5)
