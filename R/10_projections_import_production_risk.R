@@ -336,9 +336,6 @@ crop.total <- projectRaster(crop.total, crs = "+proj=moll +datum=WGS84 +ellps=WG
 total_production <- sum(crop.total[])
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
-
 # calculate the mean and sd of the baseline values
 tmp1901_1930mean <- calc(tmp1901_1930, mean)
 tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
@@ -648,7 +645,7 @@ import_risk_total <- base_map %>%
 
 cowplot::plot_grid(import_risk_map, import_risk_total)
 
-ggsave("supply_diversity_importer_6.png", scale = 1.4, dpi = 350)
+ggsave("supply_diversity_importer_7.png", scale = 1.4, dpi = 350)
 
 # write to csv for Silvia
 write.csv(suppliers, "total_import_risk.csv")
