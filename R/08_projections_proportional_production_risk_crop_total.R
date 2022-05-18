@@ -340,9 +340,6 @@ for(i in 1:length(rate_rasters_adj_sub)){
 }
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
-
 # calculate the mean and sd of the baseline values
 tmp1901_1930mean <- calc(tmp1901_1930, mean)
 tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
@@ -397,7 +394,7 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 # set up vector of climate models
-RCP_scenarios <- c("rcp85")
+RCP_scenarios <- c("rcp60")
 climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
 
 # iterate through each set of years as a rolling average
@@ -504,4 +501,4 @@ rbindlist(all_crop_list) %>%
       theme_bw() +
       theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5))
 
-ggsave("crop_percentage_prod_change.png", scale = 1, dpi = 350)
+ggsave("crop_percentage_prod_change_2.png", scale = 1, dpi = 350)
