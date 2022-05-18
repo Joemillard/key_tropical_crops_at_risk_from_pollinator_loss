@@ -332,9 +332,6 @@ crop.total <-aggregate(crop.total, fact = 6, fun = sum)
 total_production <- sum(crop.total[])
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
-
 # calculate the mean and sd of the baseline values
 tmp1901_1930mean <- calc(tmp1901_1930, mean)
 tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
@@ -521,7 +518,7 @@ rbindlist(all_scenario) %>%
   theme(panel.grid = element_blank(),
         strip.text.x = element_text(size = 12))
 
-ggsave("rcp_85_all-models_cells_greater_max_3.png", scale = 1, dpi = 350)
+ggsave("rcp_85_all-models_cells_greater_max_4.png", scale = 1, dpi = 350)
 
 ## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
 # assign 0 as NA for intersection

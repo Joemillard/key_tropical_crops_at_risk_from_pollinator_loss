@@ -46,6 +46,9 @@ order.sites.div <- SiteMetrics(diversity = PREDICTS_pollinators,
                                sites.are.unique = TRUE,
                                srEstimators = TRUE)
 
+rm(PREDICTS_pollinators)
+rm(PREDICTS_pollinators_orig)
+
 # set id column for merging back into correct place
 order.sites.div$id_col <- 1:nrow(order.sites.div)
 
@@ -142,6 +145,8 @@ system.time(
     print(i)
   }
 )
+
+rm(ind_raster)
 
 # checking the average temperate 11 months previous to each predicts site
 rbindlist(raster_means) %>%
@@ -278,12 +283,6 @@ pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geot
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
-# read in each of the rasters
-for(i in 1:length(pollinated_crops_quality)){
-  quality_rasters[[i]] <- raster(pollinated_crops_quality[i])
-  print(i)
-}
-
 # read in the data quality for each crop
 for(i in 1:length(pollinated_crops)){
   rate_rasters[[i]] <- raster(pollinated_crops[i])
@@ -340,6 +339,8 @@ for(i in 1:length(rate_rasters)){
   print(i)
 }
 
+rm(rate_rasters)
+
 # average the set of climate models and calculate climate anomaly for the average
 average_clim_models <- function(yr, RCP, clim_models){
   
@@ -364,9 +365,6 @@ average_clim_models <- function(yr, RCP, clim_models){
 }
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
-
 # calculate the mean and sd of the baseline values
 tmp1901_1930mean <- calc(tmp1901_1930, mean)
 tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
@@ -392,7 +390,7 @@ for(i in 1:33){
 }
 
 # set up vector of climate models
-RCP_scenarios <- c("rcp85")
+RCP_scenarios <- c("rcp60")
 climate_model_combs_adj <- c("GFDL|HadGEM2|IPSL|MIROC5")
 
 tmp2069_71std_climate_anomaly <- list()
@@ -452,6 +450,18 @@ for(i in 1:length(tmp2069_71std_climate_anomaly)){
   
 }
 
+# clear out RAM
+rm(tmp2069_71std_climate_anomaly)
+rm(tmp)
+rm(map_fort)
+rm(base_map)
+rm(tmp1901_1930)
+rm(predicted_abundance)
+rm(hist.mean.temp.1979.2013)
+rm(mean.temp.2069.2071)
+rm(new_data_pred)
+rm(tmp2069_71_climate_anomaly)
+
 # jack knife for data quality, removing none, <0.2, <0.4, <0.6, and <0.8
 quality_string <- c(0, 0.25, 0.5, 0.75)
 
@@ -459,16 +469,17 @@ vulnerable_production_jack <- list()
 
 for(m in 1:length(quality_string)){
   
-  #rate_rasters_adj_quality <- list() 
-  
   # iterate through each of the data quality rasters
-  for(n in 1:length(quality_rasters)){
+  for(n in 1:length(pollinated_crops_quality)){
+    
+    # read in that quality raster to filter the pollinator production
+    quality_rasters <- raster(pollinated_crops_quality[n])
     
     # filter the data quality rasters for each
-    quality_rasters[[n]][quality_rasters[[n]][] < quality_string[m]] <- NA
+    quality_rasters[quality_rasters[] < quality_string[m]] <- NA
     
     # intersect the data quality raster with the crop rasters, only keep those where they intersect
-    rate_rasters_adj[[n]] <- raster::mask(rate_rasters_adj[[n]], quality_rasters[[n]])
+    rate_rasters_adj[[n]] <- raster::mask(rate_rasters_adj[[n]], quality_rasters)
     
     print(n)
     
@@ -476,23 +487,28 @@ for(m in 1:length(quality_string)){
   
   # sum the production for all the rasters
   # organise all of the rasters into a stack and sum
-  crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
-  
-  # resolution of the crop data is 6x the climate data, so need buffer by factor of 6x
-  crop.total <- aggregate(crop.total, fact = 6, fun = sum)
+  crop.total <- stack(rate_rasters_adj) %>% 
+    sum(na.rm = T) %>%
+    aggregate(fact = 6, fun = sum)
   
   # set up vector for total production
-  vulnerable_production_list <- list()
   vulnerable_production <- c()
+  vulnerable_production_list <- list()
   
-  # for each set of coordinates, extract the pollination dependent values and sum
-  for(i in 1:length(std_anom_high)){
+    # for each set of coordinates, extract the pollination dependent values and sum
+    for(i in 1:length(std_anom_high)){
+      
+      # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
+      vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
+      vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
     
-    # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
-    vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
-    vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
+    }
   
-  }
+  # before starting the next loop, remove crop total
+  rm(crop.total)
+  rm(vulnerable_production_list)
+  
+  # combine the vulnerable production onto data frame
   vulnerable_production_jack[[m]] <- data.frame("vulnerability" = vulnerable_production, 
                                                 "quality" = quality_string[m])
 }
@@ -514,15 +530,15 @@ RCP_plot %>%
   ggplot() +
   geom_line(aes(x = year, y = index, colour = quality), alpha = 0.5) +
   geom_point(aes(x = year, y = index, colour = quality), alpha = 0.5) +
-  scale_y_continuous(limits = c(0.9, 1.9), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6, 1.8)) +
+  scale_y_continuous(limits = c(0.9, 1.7), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6)) +
   geom_hline(yintercept = 1, linetype="dashed") +
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_manual("Data quality", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442"), labels = c("0-1", ">= 0.25", ">= 0.5", ">= 0.75")) +
-  ylab("Pollination production risk") +
+  ylab("Production risk (index)") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank(),
         strip.text.x = element_text(size = 12))
 
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_data_quality.png", scale = 0.9, dpi = 350)
+ggsave("rcp_60_pollination_exposure_data_quality_3.png", scale = 0.9, dpi = 350)
