@@ -396,9 +396,6 @@ for(i in 1:length(rate_rasters_sub)){
 }
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1930 <- tmp[[names(tmp)[1:349]]]
-
 # calculate the mean and sd of the baseline values
 tmp1901_1930mean <- calc(tmp1901_1930, mean)
 tmp1901_1930sd <- calc(tmp1901_1930, stats::sd)
@@ -562,17 +559,19 @@ rbindlist(all_crop_fin) %>%
   dplyr::select(crop, overall_val, change, overall_price_kg) %>%
   unique() %>%
   arrange(desc(overall_price_kg)) %>%
-  mutate(crop = ifelse(overall_price_kg > 0.68, crop, "")) %>%
+  mutate(crop = ifelse(overall_val > 0.15, crop, "")) %>%
   mutate(crop = gsub("coffee", "Coffee", crop)) %>%
-  mutate(crop = gsub("bean", "Beans", crop)) %>%
+  mutate(crop = gsub("mango", "Mango", crop)) %>%
   mutate(crop = gsub("cocoa", "Cocoa", crop)) %>%
-  mutate(crop = gsub("fruitnes", "Fresh fruits", crop)) %>%
-  mutate(crop = gsub("tomato", "Tomatoes", crop)) %>%
+  mutate(crop = gsub("watermelon", "Watermelon", crop)) %>%
+  mutate(crop = gsub("tropicalnes", "", crop)) %>%
+  mutate(crop = gsub("melonetc", "", crop)) %>%
+  mutate(crop = gsub("pumpkinetc", "", crop)) %>%
   ggplot() +
-    geom_point(aes(x = change, y = overall_val, size = overall_price_kg), pch=21, fill = "grey", colour = "black") +
+    geom_point(aes(x = change, y = overall_val, size = overall_price_kg), pch=21, fill = "grey", colour = "black", alpha = 0.5) +
     geom_label_repel(aes(x = change, y = overall_val, label = crop), alpha = 0.7,
-                     nudge_x = .1,
-                     nudge_y = .05,
+                     nudge_x = .04,
+                     nudge_y = c(0.02),
                      segment.curvature = 0.1) +
     scale_size_continuous("Price (2015-2019; USD/kg)") +
     scale_y_continuous(limits = c(0, 0.6), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"), expand = c(0, 0)) +
@@ -582,7 +581,7 @@ rbindlist(all_crop_fin) %>%
     theme_bw() +
     theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "bottom")
 
-ggsave("top_change_crop_5.png", scale = 0.7, dpi = 350)
+ggsave("top_change_crop_6.png", scale = 0.85, dpi = 350)
 
 # calculate crop with highest proportion of production at risk and write to csv
 rbindlist(all_crop_fin) %>%
