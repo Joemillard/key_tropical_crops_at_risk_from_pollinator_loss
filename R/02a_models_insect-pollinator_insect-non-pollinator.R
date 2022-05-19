@@ -43,12 +43,44 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
 
+# create table of number of unique species
+PREDICTS_pollinators_orig %>%
+  select(Class, Order, Best_guess_binomial) %>%
+  filter(Best_guess_binomial != "") %>%
+  unique() %>%
+  group_by(Class, Order) %>%
+  tally()
+
+# number of unique sites per land use
+PREDICTS_pollinators_orig %>%
+  select(Predominant_land_use, SSBS) %>%
+  unique() %>%
+  group_by(Predominant_land_use) %>%
+  tally()
+
 # filter the pollinators from the overall predicts database
 PREDICTS_non_pollinating <- PREDICTS %>%
   filter(Class == "Insecta") %>%
   filter(!COL_ID %in% as.character(PREDICTS_pollinators_orig$COL_ID)) %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
+
+# create table of number of unique species
+PREDICTS_non_pollinating %>%
+  select(Class, Order, Best_guess_binomial) %>%
+  filter(Best_guess_binomial != "") %>%
+  filter(Order != "") %>%
+  unique() %>%
+  group_by(Class, Order) %>%
+  tally() %>%
+  arrange(desc(n))
+
+# number of unique sites per land use
+PREDICTS_non_pollinating %>%
+  select(Predominant_land_use, SSBS) %>%
+  unique() %>%
+  group_by(Predominant_land_use) %>%
+  tally()
 
 # bind together the two dataframes
 pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
