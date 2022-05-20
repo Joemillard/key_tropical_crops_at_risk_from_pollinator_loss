@@ -658,7 +658,7 @@ ggplot(plot_obj_pop) +
                       labels = c("0", "0.02", "0.04")) +
     scale_y_continuous("Overall crop pollination risk", expand = c(0, 0), limits = c(0, 0.14), breaks = c(0, 0.04, 0.08, 0.12),
                        labels = c("0", "0.04","0.08", "0.12")) +
-    scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
+    scale_colour_manual("Geographic region", values = c("#56B4E9", "#E69F00", "#000000", "#009E73", "#F0E442", "#0072B2", "#999999")) +
     scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
     scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(25, 50, 75, 100, 125), labels = c(25, 50, 75, 100, 125)) +
     theme_bw() +
@@ -667,7 +667,7 @@ ggplot(plot_obj_pop) +
              colour = guide_legend(order = 1, nrow = 2)) +
     theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-ggsave("top_change_country_11.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_12.png", scale = 1.1, dpi = 350)
 
 # write file to csv for Silvia
 write.csv(plot_obj_pop, "country_level_risk.csv")
