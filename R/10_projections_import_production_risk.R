@@ -510,17 +510,31 @@ change_importers <- joined_flows %>%
   unique() %>%
   arrange(desc(index_diff))
 
+# select only the index diff to convert to quantiles
+change_importers_group <- change_importers %>%
+  select(partner_countries, index_diff) %>%
+  unique()
+  
+# group the categories of climate anomaly into factors
+change_importers_group$value_group[change_importers_group$index_diff > quantile(change_importers_group$index_diff, 0.75)] <- "75-100"
+change_importers_group$value_group[change_importers_group$index_diff > quantile(change_importers_group$index_diff, 0.5) & change_importers_group$index_diff <= quantile(change_importers_group$index_diff, 0.75)] <- "50-75"
+change_importers_group$value_group[change_importers_group$index_diff > quantile(change_importers_group$index_diff, 0.25) & change_importers_group$index_diff <= quantile(change_importers_group$index_diff, 0.5)] <- "25-50"
+change_importers_group$value_group[change_importers_group$index_diff <= quantile(change_importers_group$index_diff, 0.25)] <- "0-25"
+
 # build map of global import risk
-import_risk_map <- base_map %>% 
+import_risk_change <- base_map %>% 
   fortify() %>%
-  left_join(change_importers, by = c("id" = "partner_countries")) %>%
+  left_join(change_importers_group, by = c("id" = "partner_countries"))
+
+# build map of change in import risk with percentile
+import_risk_map <- import_risk_change %>%
   ggplot() +
-    geom_polygon(aes(x = long, y = lat, fill = index_diff, group = group)) +
+    geom_polygon(aes(x = long, y = lat,  group = group), fill = "grey") +
+    geom_polygon(aes(x = long, y = lat, fill = value_group, group = group)) +
     theme_bw() +
-    scale_fill_viridis("Import risk change (2006-2050)",
-                     na.value = "grey", option = "inferno", direction = -1, 
-                     breaks = c(0, 0.5, 1), limits = c(0, 1.5), labels = c("0", "0.5", "1")) +
-    guides(fill = guide_colourbar(ticks = FALSE, title.position="top")) +
+    scale_fill_viridis_d("Total import risk change\n(2006-2050)", direction = -1, option = "plasma", na.translate = F,
+                       labels = c("0-25th percentile", "25-50th percentile", "50-75th percentile", "75-100th percentile")) +
+  guides(fill = guide_legend(nrow = 2,byrow = TRUE, title.position = "top")) +
     coord_equal() +
     theme(panel.background = element_blank(),
           panel.bord = element_blank(),
@@ -529,7 +543,7 @@ import_risk_map <- base_map %>%
           axis.ticks = element_blank(), 
           axis.title = element_blank(), legend.position = "bottom")
 
-ggsave("country_level_import_risk_map.png", scale = 1.2, dpi = 350)
+#ggsave("country_level_import_risk_map_2.png", scale = 1.2, dpi = 350)
 
 write.csv(change_importers %>% select(-total_import_risk) %>% unique(), "change_import_risk.csv")
 
@@ -643,7 +657,7 @@ import_risk_total <- base_map %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank(), legend.position = "bottom")
 
-cowplot::plot_grid(import_risk_map, import_risk_total)
+cowplot::plot_grid(import_risk_total, import_risk_map)
 
 ggsave("supply_diversity_importer_7.png", scale = 1.4, dpi = 350)
 
