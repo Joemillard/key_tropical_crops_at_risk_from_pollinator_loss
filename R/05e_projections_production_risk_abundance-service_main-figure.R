@@ -483,7 +483,7 @@ abundance_prod_change <- rbindlist(RCP_plot) %>%
   mutate(abundance_service = factor(abundance_service, 
                                     levels = c(2, 4, 8, 16, 32),
                                     labels = c("2", "4","8", "16", "32"))) %>%
-  mutate(scenario = factor(scenario, levels = c("rcp26", "rcp60"), labels = c("RCP 2.6", "RCP 6.0"))) %>%
+  mutate(scenario = factor(scenario, levels = c("rcp26", "rcp60"), labels = c("(A) RCP 2.6", "(B) RCP 6.0"))) %>%
   mutate(abundance_group = paste(abundance_service, linear_relationship, sep = "-")) %>%
   group_by(scenario, abundance_group) %>%
   arrange(year) %>%
@@ -502,7 +502,7 @@ abundance_prod_change <- rbindlist(RCP_plot) %>%
   theme_bw() +
   theme(panel.grid = element_blank(),
         axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-        strip.text.x = element_text(size = 11),
+        strip.text.x = element_text(size = 11, hjust = -0.03),
         strip.background = element_rect(fill = "white", colour = "white"), legend.position = "right")
 
 # bind together the outputs and plot as facetted plot for each scenario
@@ -510,7 +510,7 @@ abundance_prod_change_rel <- rbindlist(RCP_plot) %>%
   mutate(abundance_service = factor(abundance_service, 
                                     levels = c(2, 4, 8, 16, 32),
                                     labels = c("2", "4","8", "16", "32"))) %>%
-  mutate(scenario = factor(scenario, levels = c("rcp26", "rcp60"), labels = c("RCP 2.6", "RCP 6.0"))) %>%
+  mutate(scenario = factor(scenario, levels = c("rcp26", "rcp60"), labels = c("(C) RCP 2.6", "(D) RCP 6.0"))) %>%
   mutate(abundance_group = paste(abundance_service, linear_relationship, sep = "-")) %>%
   mutate(linear_relationship = factor(linear_relationship, levels = c("Convex", "Linear"))) %>%
   ggplot() +
@@ -527,7 +527,7 @@ abundance_prod_change_rel <- rbindlist(RCP_plot) %>%
   guides(color = guide_legend(override.aes = list(color = NA)),
          linetype = guide_legend(override.aes = list(linetype = NA))) +
   theme(panel.grid = element_blank(),
-        strip.text.x = element_text(size = 11, colour = "white"), 
+        strip.text.x = element_text(size = 11, colour = "black", hjust = -0.03), 
         strip.background = element_rect(fill = "white", colour = "white"),
         legend.position = "right",  
         legend.key = element_rect(fill = "white"), 
