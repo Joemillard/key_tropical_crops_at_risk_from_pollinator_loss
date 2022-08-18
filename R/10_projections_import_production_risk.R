@@ -634,7 +634,7 @@ import_risk_total <- base_map %>%
   theme_bw() +
   scale_fill_viridis_d("Total 2050 import risk\n(Tonnes per capita)", direction = -1, option = "plasma", na.translate = F,
                        labels = c("0-25th percentile", "25-50th percentile", "50-75th percentile", "75-100th percentile")) +
-  guides(fill = guide_legend(nrow = 2,byrow = TRUE, title.position = "top")) +
+  guides(fill = guide_legend(nrow = 2,byrow = TRUE)) +
   coord_equal() +
   theme(panel.background = element_blank(),
         panel.bord = element_blank(),
@@ -643,9 +643,7 @@ import_risk_total <- base_map %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank(), legend.position = "bottom")
 
-cowplot::plot_grid(import_risk_map, import_risk_total)
-
-ggsave("supply_diversity_importer_7.png", scale = 1.4, dpi = 350)
+ggsave("supply_diversity_importer_7.png", scale = 1.1, dpi = 350)
 
 # write to csv for Silvia
 write.csv(suppliers, "total_import_risk.csv")

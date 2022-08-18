@@ -262,3 +262,26 @@ plot_grid(main_plot_abundance[[1]] +
             theme(legend.position = "bottom", legend.key = element_rect(fill = "white"), legend.text = element_text(color = "white"), legend.title = element_text(color = "white")), ncol = 2) 
 
 ggsave("pollinating_non-pollinating_7.png", scale = 1.1, dpi = 350)
+
+# subset data for just 4 rows, with 0 and 1 for cropland and primary vegetation
+new_data <- predict_climate_list[[m]] %>%
+  group_by(Predominant_land_use) %>%
+  slice(0:2) %>%
+  ungroup() %>%
+  mutate("standard_anom" = c(0, 1, 0, 1))
+
+# difference between cropland and primary, between standardised temperature anomaly of 0 and 1
+standard_anom_1_prediction <- predict_continuous(model = model_2c_abundance[[1]],
+                   model_data = new_data,
+                   response_variable = "Total_abundance",
+                   categorical_variable = c("Predominant_land_use"),
+                   continuous_variable = c("standard_anom"),
+                   continuous_transformation = "",
+                   random_variable = c("SS", "SSB", "SSBS")) %>%
+  mutate(y_value = exp(y_value)) %>%
+  select(Predominant_land_use, standard_anom, y_value)
+
+# calculate percentage change
+(standard_anom_1_prediction$y_value[1] - standard_anom_1_prediction$y_value[4]) / standard_anom_1_prediction$y_value[1]
+(standard_anom_1_prediction$y_value[4] / standard_anom_1_prediction$y_value[1])  * 100
+
