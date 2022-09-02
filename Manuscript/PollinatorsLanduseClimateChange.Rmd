@@ -78,7 +78,7 @@ Interacting effects of climate change and anthropogenic land use are rapidly res
 <div id="refs"></div>
 
 ## Acknowledgements
-Thanks to Richard Gregory, Robin Freeman, and colleagues on the GLITRS project for useful discussions and comments. Thanks also to the RSPB, NERC (GLiTRS, NE/V006800/1), the London NERC DTP, Andy Purvis, and Melinda Mills, who all provided support and or funding.
+Thanks to Richard Gregory, Robin Freeman, and colleagues on the GLITRS project for useful discussions and comments. Thanks to the RSPB, NERC (GLiTRS, NE/V006800/1), the London NERC DTP, Andy Purvis, and Melinda Mills, who all provided support and or funding. Thanks also to Opeyemi Adedoja, Sabrina Gavini, Esther Kioko, Michael Kuhlmann, Zong-Xin Ren, and Manu Saunders, who provided input on our set of likely pollinating species, and to all contributors of the PREDICTS database.
 
 ## Funding
 JM was funded on his PhD by the London NERC DTP and the RSPB, and is now funded by NERC on the GLITRS project (GLiTRS, NE/V006800/1)
