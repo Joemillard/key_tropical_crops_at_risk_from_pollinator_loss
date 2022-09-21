@@ -496,7 +496,7 @@ abundance_prod_change <- rbindlist(RCP_plot) %>%
   scale_y_continuous(limits = c(0.7, 2.5), expand = c(0, 0), breaks = c(1, 1.5, 2, 2.5), labels = c("1", "1.5", "2", "2.5")) +
   scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE, option = "viridis") +
-  scale_linetype_manual("Linear relationship", values = c("dashed", "solid")) +
+  scale_linetype_manual("Relationship", values = c("dashed", "solid")) +
   ylab("Production risk (index)") +
   xlab("") +
   theme_bw() +
