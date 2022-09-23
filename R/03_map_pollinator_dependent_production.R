@@ -75,19 +75,28 @@ klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollinati
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "essential"] <- 0.95
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest/great"] <- 0.45
 
+# standard error function
+std_error <- function(x, na.rm = FALSE) {
+  if (na.rm) x <- na.omit(x)
+  sd(x)/sqrt(length(x))}
+
 # calculate average and standard deviation of pollination dependence for each Monfreda crop
 klein_cleaned_av <- klein_cleaned %>%
   group_by(MonfredaCrop) %>%
   mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
   mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
+  mutate(standard_err = std_error(dependence_ratio, na.rm = TRUE)) %>%
   ungroup() %>%
-  select(MonfredaCrop, av, standard_dev) %>%
+  select(MonfredaCrop, av, standard_err) %>%
   unique()
 
 # subset klein_cleaned for those with crop data
 klein_cleaned_filt <- klein_cleaned_av %>%
   filter(MonfredaCrop %in% pollinat_crops_simp) %>%
   arrange(MonfredaCrop)
+
+# write csv for klein crop ratios
+write.csv(klein_cleaned_filt, "crop_dependence.csv")
 
 # multiply each raster by its pollination dependence for that crop
 rate_rasters_adj <- list()
