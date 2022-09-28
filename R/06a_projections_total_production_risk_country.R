@@ -571,7 +571,7 @@ all_crop_data <- joined_crop_val %>%
   group_by(ISO3) %>%
   mutate(country_production = sum(total_value, na.rm = TRUE)) %>%
   ungroup() %>%
-  mutate(ISO3 = fct_reorder(ISO3, country_production)) %>% 
+  #mutate(ISO3 = fct_reorder(ISO3, country_production)) %>% 
   filter(ISO3 %in% top_countries) %>%
   bind_rows(low_crop_data)
 
@@ -605,20 +605,31 @@ top_region <- all_crop_data %>%
 
 # reorder the crops by total value
 all_crop_data <- all_crop_data %>%
-  mutate(main_region = factor(main_region, levels = top_region))
+  mutate(main_region = factor(main_region, levels = top_region)) %>%
+  arrange(factor(ISO3, levels = top_countries))
 
-aux <- with(all_crop_data, match(sort(unique(crop)), crop))
+# add bars individually to enable order of each on its own
+bars <- lapply(X = unique(all_crop_data$ISO3),
+                   FUN = {geom_bar(stat = "identity", position = "stack", 
+                             data = all_crop_data %>% filter(ISO3 == X))})
+
+bars <- purrr::map(unique(all_crop_data$ISO3),
+                   ~geom_bar(stat = "identity", position = "stack", 
+                             data = all_crop_data %>% filter(ISO3 == .x)))
+
 
 # plot data for production of grouped countries
 all_crop_data %>%
+  arrange(factor(ISO3, levels = c(as.character(top_countries), "Other"))) %>% str()
+
   mutate(ISO2 = tolower(ISO2)) %>%
-  ggplot() +
-    geom_bar(aes(y = ISO3, x = total_value, fill = interaction(-total_value, crop)), stat = "identity") +
+  ggplot(aes(y = ISO3, x = total_value, fill = reorder(crop, total_value), stat = "identity")) +
+  bars +
     facet_wrap(~main_region, scales = "free_y") + 
     theme_bw() +
     scale_fill_manual("Crop", values = c("#000000", "#E69F00", "#56B4E9", "#009E73",
-                                         "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999"), 
-                      labels = c("Soybean", "Cocoa", "Watermelon", "Mango", "Coffee", "Fruit (not elsewhere)", "Apple", "Other crops")) +
+                                         "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")) +
+     #               #  labels = c("Soybean", "Cocoa", "Watermelon", "Mango", "Coffee", "Fruit (not elsewhere)", "Apple", "Other crops")) +
     scale_x_continuous("\n2050 pollination dependent crop production at risk (million US$/annum)", 
                        breaks = c(0, 50000000, 100000000, 150000000, 200000000), 
                        labels = c(0, 50, 100, 150, 200), 
@@ -627,7 +638,7 @@ all_crop_data %>%
     ylab("Country (ISO3)") +
     expand_limits(x = -9000000)  +
     theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
-          strip.background = element_rect(fill = NA), axis.line.x = element_line(), legend.position = "none")
+          strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
 # save figure for production risk
 ggsave("crop_production_risk.png", scale = 1.2, dpi = 350)
