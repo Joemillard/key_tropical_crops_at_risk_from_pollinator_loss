@@ -51,7 +51,18 @@ fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFacto
   mutate(Cropname_FAO = gsub("Kolanuts", "Kola nuts", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Other melons", "Melons other", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Oilseeds Nes", "Oilseeds nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Pepper \\(Piper ", "Pepper \\(piper ", Cropname_FAO))
+  mutate(Cropname_FAO = gsub("Pepper \\(Piper ", "Pepper \\(piper ", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Arecanuts", "Areca nuts", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Tung Nuts", "Tung nuts", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Roots and Tubers nes", "Roots and tubers nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("PyrethrumDried", "Pyrethrum dried", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Tangerines mandarins clem.", "Tangerines mandarins clementines satsumas", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Cinnamon \\(canella\\)", "Cinnamon \\(cannella\\)", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Hemp Tow Waste", "Hemp tow waste", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Natural rubber", "Rubber natural", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Plantains", "Plantains and others", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("MatŽ", "Mat?", Cropname_FAO))%>%
+  mutate(Cropname_FAO = gsub("Onions \\(inc\\. shallots\\) green", "Onions shallots green", Cropname_FAO))
 
 # calculate per country average total production value
 fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
@@ -434,6 +445,59 @@ for(i in 1:length(pollinated_crops)){
   print(i)
 }
 
+# subset all crops for just those we have prices
+non_pollinated_crops <- grep(paste(unique(paste("/", joined_prod_value$CROPNAME, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
+
+# read in each of the rasters for all crops to calculate all value of crop production
+for(i in 1:length(non_pollinated_crops)){
+  rate_rasters_all[[i]] <- terra::rast(non_pollinated_crops[[i]])
+  print(i)
+}
+
+# remove chicory from the list of crops since looks very wrong
+rate_rasters_all[[31]] <- NULL
+
+rate_rasters_adj_val <- list()
+for(i in 1:length(rate_rasters_all)){
+  rate_rasters_adj_val[[i]] <- rate_rasters_all[[i]] * (joined_prod_value$overall_price_kg[i] * 1000)
+  print(i)
+}
+
+# sum total cell level price of pollination dependent crops geographically
+crop_total_price <- terra::rast(rate_rasters_adj_val) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
+
+# reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
+crop_total_price <- projectRaster(crop_total_price, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+# convert the raster to a dataframe to plot with ggplot
+crop_total_price_frame <- as(crop_total_price, "SpatialPixelsDataFrame")
+crop_total_price_frame <- as.data.frame(crop_total_price_frame) %>%
+  filter(sum > 0) %>%
+  rename(layer = sum)
+
+# convert spatial dataframe to coordinates
+crop_total_price_points <- crop_total_price_frame %>%
+  dplyr::select(x, y) %>%
+  unique() %>%
+  SpatialPoints(proj4string = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+
+# assign each set of coordinates to a country
+country_value <- over(crop_total_price_points, base_map, by = "ISO2", returnList = FALSE)
+
+# merge countries back onto values
+country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "SRES", "continent", "LON", "LAT", "GDP_MD_EST", "NAME_FORMA")])
+
+# calc country totals
+country_totals <- country_value_bound %>%
+  group_by(SOVEREIGNT, NAME_FORMA, SRES, continent) %>%
+  summarise(total_value = sum(layer))
+
+# check coordinates and countries are vaguely correct
+country_value_bound %>% 
+  filter(!is.na(SOVEREIGNT)) %>% 
+  ggplot() +
+  geom_point(aes(x = x, y = y, colour = SOVEREIGNT)) + theme(legend.position = "none")
+
 # set up object for each crop iteration
 change_obj <- list()
 
@@ -517,11 +581,13 @@ for(m in 1:length(pollinated_crops)){
   
 }
 
+# merge the total value of each country with the rest of the data
+
+# script to adjust geographic regions, adjust for price, and then build plot
 # select just last year in series and remova na continents
 plot_obj <- rbindlist(change_obj) %>%
   filter(year == 2048) %>%
   filter(!is.na(continent))
-
 
 # add separate regions
 plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c("Central and Eastern Europe (EEU)", 
@@ -556,7 +622,6 @@ top_countries <- joined_crop_val %>%
   arrange(desc(total_value_production)) %>%
   slice(0:10) %>% pull(ISO3)
   
-
 # create data frame for production of low levels
 low_crop_data <- joined_crop_val %>%
   group_by(ISO3) %>%
@@ -608,35 +673,22 @@ all_crop_data <- all_crop_data %>%
   mutate(main_region = factor(main_region, levels = top_region)) %>%
   arrange(factor(ISO3, levels = top_countries))
 
-# add bars individually to enable order of each on its own
-bars <- lapply(X = unique(all_crop_data$ISO3),
-                   FUN = {geom_bar(stat = "identity", position = "stack", 
-                             data = all_crop_data %>% filter(ISO3 == X))})
-
-bars <- purrr::map(unique(all_crop_data$ISO3),
-                   ~geom_bar(stat = "identity", position = "stack", 
-                             data = all_crop_data %>% filter(ISO3 == .x)))
-
-
-# plot data for production of grouped countries
 all_crop_data %>%
-  arrange(factor(ISO3, levels = c(as.character(top_countries), "Other"))) %>% str()
-
   mutate(ISO2 = tolower(ISO2)) %>%
-  ggplot(aes(y = ISO3, x = total_value, fill = reorder(crop, total_value), stat = "identity")) +
-  bars +
+  ggplot() +
+    geom_bar(aes(y = ISO3, x = total_value, fill = crop), stat = "identity") +
     facet_wrap(~main_region, scales = "free_y") + 
     theme_bw() +
     scale_fill_manual("Crop", values = c("#000000", "#E69F00", "#56B4E9", "#009E73",
                                          "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")) +
-     #               #  labels = c("Soybean", "Cocoa", "Watermelon", "Mango", "Coffee", "Fruit (not elsewhere)", "Apple", "Other crops")) +
+                     # labels = c("Soybean", "Cocoa", "Watermelon", "Mango", "Coffee", "Fruit (not elsewhere)", "Apple", "Other crops")) +
     scale_x_continuous("\n2050 pollination dependent crop production at risk (million US$/annum)", 
                        breaks = c(0, 50000000, 100000000, 150000000, 200000000), 
-                       labels = c(0, 50, 100, 150, 200), 
+                       labels = c(0, 50, 100, 150, 200),
                        expand = c(0, 0), 
                        limits = c(0, 230000000)) +
     ylab("Country (ISO3)") +
-    expand_limits(x = -9000000)  +
+    #expand_limits(x = -9000000)  +
     theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
           strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
