@@ -485,12 +485,15 @@ crop_total_price_points <- crop_total_price_frame %>%
 country_value <- over(crop_total_price_points, base_map, by = "ISO2", returnList = FALSE)
 
 # merge countries back onto values
-country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "SRES", "continent", "LON", "LAT", "GDP_MD_EST", "NAME_FORMA")])
+country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "ISO3", "GBD", "SRES", "continent", "LON", "LAT", "GDP_MD_EST", "NAME_FORMA")])
 
-# calc country totals
+# calc country totals, and amend so will join on as rows to final data
 country_totals <- country_value_bound %>%
-  group_by(SOVEREIGNT, NAME_FORMA, SRES, continent) %>%
-  summarise(total_value = sum(layer))
+  group_by(SOVEREIGNT, SRES, GBD, ISO3, continent) %>%
+  summarise(all_production_value = sum(layer)) %>%
+  ungroup() %>%
+  rename(total_value = all_production_value) %>%
+  mutate(crop = "Pollinator independent")
 
 # check coordinates and countries are vaguely correct
 country_value_bound %>% 
@@ -581,13 +584,19 @@ for(m in 1:length(pollinated_crops)){
   
 }
 
-# merge the total value of each country with the rest of the data
-
 # script to adjust geographic regions, adjust for price, and then build plot
 # select just last year in series and remova na continents
 plot_obj <- rbindlist(change_obj) %>%
   filter(year == 2048) %>%
   filter(!is.na(continent))
+
+# merge the price per kg value with the pollination dependent monfreda, and convert to price per tonne
+plot_obj <- left_join(plot_obj, joined_prod_value, by = c("crop" = "CROPNAME")) %>%
+  mutate(overall_price_tonne = 1000 * overall_price_kg) %>%
+  mutate(total_value = total * overall_price_tonne)
+
+# merge the total value of each country with the rest of the data
+plot_obj <- rbind(plot_obj, country_totals, fill = TRUE)
 
 # add separate regions
 plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c("Central and Eastern Europe (EEU)", 
@@ -609,13 +618,10 @@ plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)
 # add country code for flags
 plot_obj$ISO2 <- countrycode(plot_obj$ISO3, "iso3c", "iso2c")
 
-# merge the price per kg value with the pollination dependent monfreda, and convert to price per tonne
-joined_crop_val <- left_join(plot_obj, joined_prod_value, by = c("crop" = "CROPNAME")) %>%
-  mutate(overall_price_tonne = 1000 * overall_price_kg) %>%
-  mutate(total_value = total * overall_price_tonne)
+
 
 # find top 10 countries in each main region
-top_countries <- joined_crop_val %>%
+top_countries <- plot_obj %>%
   group_by(main_region, ISO3) %>%
   summarise(total_value_production = sum(total_value, na.rm = TRUE)) %>%
   group_by(main_region) %>%
@@ -623,7 +629,7 @@ top_countries <- joined_crop_val %>%
   slice(0:10) %>% pull(ISO3)
   
 # create data frame for production of low levels
-low_crop_data <- joined_crop_val %>%
+low_crop_data <- plot_obj %>%
   group_by(ISO3) %>%
   mutate(country_production = sum(total_value, na.rm = TRUE)) %>%
   ungroup() %>%
@@ -632,18 +638,12 @@ low_crop_data <- joined_crop_val %>%
   summarise(ISO3 = "Other", total_value = sum(total_value))
 
 # combine low level production dataframe onto main frame
-all_crop_data <- joined_crop_val %>%
+all_crop_data <- plot_obj %>%
   group_by(ISO3) %>%
   mutate(country_production = sum(total_value, na.rm = TRUE)) %>%
   ungroup() %>%
-  #mutate(ISO3 = fct_reorder(ISO3, country_production)) %>% 
   filter(ISO3 %in% top_countries) %>%
   bind_rows(low_crop_data)
-
-# reorder factors for countries
-all_crop_data <- all_crop_data %>%
-  mutate(ISO3 = fct_reorder(ISO3, country_production),
-         ISO3 = fct_relevel(ISO3, "Other", after = 0L))
 
 # identify top 10 crops on total worth
 top_crop <- all_crop_data %>%
@@ -659,36 +659,56 @@ all_crop_data$crop[!all_crop_data$crop %in% top_crop] <- "Other"
 # reorder the crops by total value
 all_crop_data <- all_crop_data %>%
   mutate(crop = fct_reorder(crop, total_value),
-         crop = fct_relevel(crop, "Other", after = Inf))
-
-# reorder the main regions by total value
-top_region <- all_crop_data %>%
-  group_by(main_region) %>%
-  summarise(highest_production = sum(total_value, na.rm = TRUE)) %>%
-  arrange(desc(highest_production)) %>%
-  pull(main_region)
+         crop = fct_relevel(crop, "Other", after = Inf),
+         crop = fct_relevel(crop, "Pollinator independent", after = 0L))
 
 # reorder the crops by total value
 all_crop_data <- all_crop_data %>%
   mutate(main_region = factor(main_region, levels = top_region)) %>%
-  arrange(factor(ISO3, levels = top_countries))
+  arrange(factor(ISO3, levels = top_countries)) %>%
+  group_by(main_region, ISO3) %>%
+  mutate(all_risk = sum(total_value, na.rm = TRUE)) %>%
+  mutate(proportion_risk = total_value/all_risk) %>%
+  ungroup()
 
+# add column for pollinator dependent/non for ordering countries
+all_crop_data$pollinator_dependent[all_crop_data$crop != "Pollinator independent"] <- "Pollinator dependent"
+all_crop_data$pollinator_dependent[all_crop_data$crop == "Pollinator independent"] <- "Pollinator independent"
+
+# reorder the main regions by total value
+top_region <- all_crop_data %>%
+  filter(pollinator_dependent == "Pollinator dependent") %>%
+  group_by(main_region) %>%
+  summarise(highest_proportion_risk = max(proportion_risk, na.rm = TRUE)) %>%
+  arrange(desc(highest_proportion_risk)) %>%
+  pull(main_region)
+
+# reorder factors for countries and main regions
+all_crop_data <- all_crop_data %>%
+  group_by(pollinator_dependent, ISO3)%>%
+  mutate(total_dependent = sum(proportion_risk, na.rm = TRUE)) %>%
+  ungroup() %>%
+  arrange(factor(main_region, levels = top_region)) %>%
+  mutate(ISO3 = fct_reorder(ISO3, total_dependent),
+         ISO3 = fct_relevel(ISO3, "Other", after = 0L))
+
+# built plot of crop pollination at risk
 all_crop_data %>%
-  mutate(ISO2 = tolower(ISO2)) %>%
+  filter(!is.na(main_region)) %>%
   ggplot() +
-    geom_bar(aes(y = ISO3, x = total_value, fill = crop), stat = "identity") +
+    geom_bar(aes(y = ISO3, x = proportion_risk, fill = crop), stat = "identity") +
     facet_wrap(~main_region, scales = "free_y") + 
     theme_bw() +
-    scale_fill_manual("Crop", values = c("#000000", "#E69F00", "#56B4E9", "#009E73",
+    scale_fill_manual("Crop", values = c("lightgrey", "#E69F00", "#56B4E9", "#009E73",
                                          "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")) +
                      # labels = c("Soybean", "Cocoa", "Watermelon", "Mango", "Coffee", "Fruit (not elsewhere)", "Apple", "Other crops")) +
-    scale_x_continuous("\n2050 pollination dependent crop production at risk (million US$/annum)", 
-                       breaks = c(0, 50000000, 100000000, 150000000, 200000000), 
-                       labels = c(0, 50, 100, 150, 200),
-                       expand = c(0, 0), 
-                       limits = c(0, 230000000)) +
+    scale_x_continuous("\n2050 proportion crop production at risk (million US$/annum)", 
+                      breaks = c(0, 0.25, 0.5, 0.75, 1), 
+                       labels = c("0", "0.25", "0.5", "0.75", "1"),
+                       expand = c(0, 0)) +
+             #          limits = c(0, 1)) +
+
     ylab("Country (ISO3)") +
-    #expand_limits(x = -9000000)  +
     theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
           strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
