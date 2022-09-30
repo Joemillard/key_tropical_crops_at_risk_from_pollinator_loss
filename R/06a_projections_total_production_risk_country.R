@@ -38,7 +38,7 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 # set up the starting directory for future climate data
 SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
-# read in fao to monfreda conversion
+# read in fao to monfreda conversion, and correct spelling to merge over
 fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFactors = FALSE) %>%
   mutate(Cropname_FAO = gsub(",", "", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("corian.", "coriander", Cropname_FAO)) %>%
@@ -61,8 +61,12 @@ fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFacto
   mutate(Cropname_FAO = gsub("Hemp Tow Waste", "Hemp tow waste", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Natural rubber", "Rubber natural", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Plantains", "Plantains and others", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("MatŽ", "Mat?", Cropname_FAO))%>%
-  mutate(Cropname_FAO = gsub("Onions \\(inc\\. shallots\\) green", "Onions shallots green", Cropname_FAO))
+  mutate(Cropname_FAO = gsub("MatŽ", "Mat?", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Onions \\(inc\\. shallots\\) green", "Onions shallots green", Cropname_FAO))%>%
+  mutate(Cropname_FAO = gsub("Karite Nuts \\(Sheanuts\\)", "Karite nuts (sheanuts)", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Mixed grain", "Grain mixed", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Sour cherries", "Cherries sour", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Other Bastfibres", "Bastfibres other", Cropname_FAO))
 
 # calculate per country average total production value
 fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
@@ -86,7 +90,7 @@ fao_prod <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_production.cs
   rename(production = Value) %>%
   mutate(production = production * 1000)
 
-# calc average price per crop
+# calc average price per crop and filter out chicory
 joined_prod_value <- inner_join(fao_prod, fao_prod_value, by = c("Year", "Area", "Item")) %>%
   mutate(price_per_kg = economic_value / production) %>% 
   group_by(Area, Item) %>%
@@ -94,7 +98,9 @@ joined_prod_value <- inner_join(fao_prod, fao_prod_value, by = c("Year", "Area",
   group_by(Item) %>%
   summarise(overall_price_kg = median(mean_price_kg, na.rm = TRUE)) %>% 
   mutate(Item = gsub(",", "", Item)) %>%
-  inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO"))
+  inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO")) %>%
+  filter(CROPNAME != "chicory") %>%
+  arrange(desc(CROPNAME))
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
@@ -454,9 +460,6 @@ for(i in 1:length(non_pollinated_crops)){
   print(i)
 }
 
-# remove chicory from the list of crops since looks very wrong
-rate_rasters_all[[31]] <- NULL
-
 rate_rasters_adj_val <- list()
 for(i in 1:length(rate_rasters_all)){
   rate_rasters_adj_val[[i]] <- rate_rasters_all[[i]] * (joined_prod_value$overall_price_kg[i] * 1000)
@@ -464,7 +467,7 @@ for(i in 1:length(rate_rasters_all)){
 }
 
 # sum total cell level price of pollination dependent crops geographically
-crop_total_price <- terra::rast(rate_rasters_adj_val) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
+crop_total_price <- terra::rast(rate_rasters_adj_val) %>% terra::app(fun = "sum", na.rm = TRUE) #%>% raster()
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 crop_total_price <- projectRaster(crop_total_price, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -492,8 +495,7 @@ country_totals <- country_value_bound %>%
   group_by(SOVEREIGNT, SRES, GBD, ISO3, continent) %>%
   summarise(all_production_value = sum(layer)) %>%
   ungroup() %>%
-  rename(total_value = all_production_value) %>%
-  mutate(crop = "Pollinator independent")
+  rename(total_value = all_production_value)
 
 # check coordinates and countries are vaguely correct
 country_value_bound %>% 
@@ -596,7 +598,8 @@ plot_obj <- left_join(plot_obj, joined_prod_value, by = c("crop" = "CROPNAME")) 
   mutate(total_value = total * overall_price_tonne)
 
 # merge the total value of each country with the rest of the data
-plot_obj <- rbind(plot_obj, country_totals, fill = TRUE)
+plot_obj <- inner_join(plot_obj, country_totals, by = c("SOVEREIGNT", "SRES", "ISO3", "continent")) %>%
+  mutate(proportion_risk = total_value.x /total_value.y)
 
 # add separate regions
 plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c("Central and Eastern Europe (EEU)", 
@@ -623,7 +626,7 @@ plot_obj$ISO2 <- countrycode(plot_obj$ISO3, "iso3c", "iso2c")
 # find top 10 countries in each main region
 top_countries <- plot_obj %>%
   group_by(main_region, ISO3) %>%
-  summarise(total_value_production = sum(total_value, na.rm = TRUE)) %>%
+  summarise(total_value_production = sum(total_value.x, na.rm = TRUE)) %>%
   group_by(main_region) %>%
   arrange(desc(total_value_production)) %>%
   slice(0:10) %>% pull(ISO3)
@@ -631,16 +634,16 @@ top_countries <- plot_obj %>%
 # create data frame for production of low levels
 low_crop_data <- plot_obj %>%
   group_by(ISO3) %>%
-  mutate(country_production = sum(total_value, na.rm = TRUE)) %>%
+  mutate(country_production = sum(total_value.x, na.rm = TRUE)) %>%
   ungroup() %>%
   filter(!ISO3 %in% top_countries) %>%
   group_by(main_region, crop) %>%
-  summarise(ISO3 = "Other", total_value = sum(total_value))
+  summarise(ISO3 = "Other", total_value = sum(total_value.x))
 
 # combine low level production dataframe onto main frame
 all_crop_data <- plot_obj %>%
   group_by(ISO3) %>%
-  mutate(country_production = sum(total_value, na.rm = TRUE)) %>%
+  mutate(country_production = sum(total_value.x, na.rm = TRUE)) %>%
   ungroup() %>%
   filter(ISO3 %in% top_countries) %>%
   bind_rows(low_crop_data)
@@ -648,7 +651,7 @@ all_crop_data <- plot_obj %>%
 # identify top 10 crops on total worth
 top_crop <- all_crop_data %>%
   group_by(crop) %>%
-  summarise(highest_production = sum(total_value, na.rm = TRUE)) %>%
+  summarise(highest_production = sum(total_value.x, na.rm = TRUE)) %>%
   arrange(desc(highest_production)) %>%
   slice(0:7) %>%
   pull(crop)
@@ -656,24 +659,14 @@ top_crop <- all_crop_data %>%
 # group the crops for top 20 by production
 all_crop_data$crop[!all_crop_data$crop %in% top_crop] <- "Other"
 
-# reorder the crops by total value
-all_crop_data <- all_crop_data %>%
-  mutate(crop = fct_reorder(crop, total_value),
-         crop = fct_relevel(crop, "Other", after = Inf),
-         crop = fct_relevel(crop, "Pollinator independent", after = 0L))
 
 # reorder the crops by total value
 all_crop_data <- all_crop_data %>%
-  mutate(main_region = factor(main_region, levels = top_region)) %>%
-  arrange(factor(ISO3, levels = top_countries)) %>%
-  group_by(main_region, ISO3) %>%
-  mutate(all_risk = sum(total_value, na.rm = TRUE)) %>%
-  mutate(proportion_risk = total_value/all_risk) %>%
-  ungroup()
+  mutate(crop = fct_reorder(crop, total_value.x))
 
 # add column for pollinator dependent/non for ordering countries
-all_crop_data$pollinator_dependent[all_crop_data$crop != "Pollinator independent"] <- "Pollinator dependent"
-all_crop_data$pollinator_dependent[all_crop_data$crop == "Pollinator independent"] <- "Pollinator independent"
+all_crop_data$pollinator_dependent[all_crop_data$crop != "Other (pollinator indep.)"] <- "Pollinator dependent"
+all_crop_data$pollinator_dependent[all_crop_data$crop == "Other (pollinator indep.)"] <- "Pollinator independent"
 
 # reorder the main regions by total value
 top_region <- all_crop_data %>%
@@ -682,6 +675,11 @@ top_region <- all_crop_data %>%
   summarise(highest_proportion_risk = max(proportion_risk, na.rm = TRUE)) %>%
   arrange(desc(highest_proportion_risk)) %>%
   pull(main_region)
+
+# reorder the crops by total value
+all_crop_data <- all_crop_data %>%
+  mutate(main_region = factor(main_region, levels = top_region)) %>%
+  arrange(factor(ISO3, levels = top_countries))
 
 # reorder factors for countries and main regions
 all_crop_data <- all_crop_data %>%
@@ -705,9 +703,8 @@ all_crop_data %>%
     scale_x_continuous("\n2050 proportion crop production at risk (million US$/annum)", 
                       breaks = c(0, 0.25, 0.5, 0.75, 1), 
                        labels = c("0", "0.25", "0.5", "0.75", "1"),
-                       expand = c(0, 0)) +
-             #          limits = c(0, 1)) +
-
+                       expand = c(0, 0),
+                      limits = c(0, 0.003)) +
     ylab("Country (ISO3)") +
     theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
           strip.background = element_rect(fill = NA), axis.line.x = element_line())
