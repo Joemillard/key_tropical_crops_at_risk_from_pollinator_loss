@@ -597,8 +597,6 @@ plot_obj <- left_join(plot_obj, joined_prod_value, by = c("crop" = "CROPNAME")) 
   mutate(overall_price_tonne = 1000 * overall_price_kg) %>%
   mutate(total_value = total * overall_price_tonne)
 
-
-
 # add separate regions
 plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c("Central and Eastern Europe (EEU)", 
                                                                                  "Western Europe (WEU)")] <- "North America & Europe"
@@ -618,8 +616,6 @@ plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)
 
 # add country code for flags
 plot_obj$ISO2 <- countrycode(plot_obj$ISO3, "iso3c", "iso2c")
-
-
 
 # find top 10 countries in each main region
 top_countries <- plot_obj %>%
