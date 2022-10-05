@@ -86,7 +86,6 @@ fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFacto
   mutate(Cropname_FAO = gsub("Leguminous vegetables nes", "Broad beans and horse beans green", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Groundnuts with shell", "Groundnuts excluding shelled", Cropname_FAO))
 
-
 # calculate per country average total production value
 fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_en_10-4-2022_producer_price.csv", stringsAsFactors = FALSE) %>%
   filter(!grepl("Meat", Item)) %>%
@@ -576,8 +575,6 @@ plot_obj$main_region[plot_obj$continent %in% c("South America and the Caribbean"
 # correcting for former soviet union states
 plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)") & plot_obj$GBD== "Asia, Central"] <- "Asia & Australia"
 plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)") & plot_obj$GBD == "Europe, Eastern"] <- "North America & Europe"
-
-
 
 # merge the price per kg value with the pollination dependent monfreda
 joined_crop_val <- inner_join(klein_cleaned_filt, fao_prod_value, by = c("MonfredaCrop" = "CROPNAME")) %>%
