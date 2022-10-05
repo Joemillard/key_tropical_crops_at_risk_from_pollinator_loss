@@ -631,9 +631,11 @@ country_value_bound %>%
 # join plot data onto the country total value
 plot_obj <- inner_join(plot_obj, country_totals, by = c("SOVEREIGNT", "SRES", "continent"))
 
+# convert GDP to million dollars, and then calculate production per GDP
 plot_obj_pop <- plot_obj %>%
   inner_join(population_size, by = c("ISO3" = "Code")) %>%
-  mutate(per_GDP_pollination = total_value/GDP_MD_EST) %>%
+  mutate(GDP_EST = GDP_MD_EST * 1000000) %>%
+  mutate(per_GDP_pollination = total_value/GDP_EST) %>%
   filter(!(SOVEREIGNT == "United Kingdom" & is.na(NAME_FORMA))) %>%
   filter(NAME_FORMA != "Hong Kong Special Administrative Region") %>%
   filter(NAME_FORMA != "Gaza Strip")
@@ -675,7 +677,7 @@ ggplot(plot_obj_pop) +
                        labels = c("0", "0.04","0.08", "0.12")) +
     scale_colour_manual("Geographic region", values = c("#56B4E9", "#E69F00", "#000000", "#009E73", "#F0E442", "#0072B2", "#999999")) +
     scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
-    scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(30000, 60000, 90000), labels = c("30,000", "60,000", "90,000")) +
+    scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(0.03, 0.06, 0.09), labels = c("0.03", "0.06", "0.09")) +
     theme_bw() +
     facet_wrap(~main_region, ncol = 4) +
     guides(size = guide_legend(order = 2, nrow = 2), 
