@@ -13,6 +13,7 @@ library(forcats)
 library(ggforce)
 library(ggimage)
 library(countrycode)
+library(viridis)
 
 # source in additional functions
 source("R/00_functions.R")
@@ -38,19 +39,16 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
 # set up the starting directory for future climate data
 SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/ISIMIPAnomalies")
 
-# read in fao to monfreda conversion, and correct spelling to merge over
+# read in fao to monfreda conversion
 fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFactors = FALSE) %>%
   mutate(Cropname_FAO = gsub(",", "", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("corian.", "coriander", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Berries Nes", "Berries nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Stone fruit nes", "Fruit stone nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnut", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Citrus fruit nes", "Fruit citrus nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Fruit Fresh Nes", "Fruit fresh nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Leguminous vegetables nes", "Vegetables leguminous nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Stone fruit nes", "Other stone fruits", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Fruit Fresh Nes", "Other fruits n.e.c.", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Kolanuts", "Kola nuts", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Other melons", "Melons other", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Oilseeds Nes", "Oilseeds nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Other melons \\(inc\\.cantaloupes\\)", "Cantaloupes and other melons", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Oilseeds Nes", "Other oil seeds n\\.e\\.c\\.", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Pepper \\(Piper ", "Pepper \\(piper ", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Arecanuts", "Areca nuts", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Tung Nuts", "Tung nuts", Cropname_FAO)) %>%
@@ -64,43 +62,43 @@ fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFacto
   mutate(Cropname_FAO = gsub("MatŽ", "Mat?", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Onions \\(inc\\. shallots\\) green", "Onions shallots green", Cropname_FAO))%>%
   mutate(Cropname_FAO = gsub("Karite Nuts \\(Sheanuts\\)", "Karite nuts (sheanuts)", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Mixed grain", "Grain mixed", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Sour cherries", "Cherries sour", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Other Bastfibres", "Bastfibres other", Cropname_FAO))
+  mutate(Cropname_FAO = gsub("Other Bastfibres", "Bastfibres other", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Agave Fibres Nes", "Agave fibres raw n.e.c.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Almonds with shell", "Almonds in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Brazil nuts with shell", "Brazil nuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Broad beans horse beans dry", "Broad beans and horse beans dry", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Cashew nuts with shell", "Cashew nuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Anise badian fennel coriander", "Anise badian coriander cumin caraway fennel and juniper berries raw", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Chillies and peppers green", "Chillies and peppers green (Capsicum spp. and Pimenta spp.)", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Citrus fruit nes", "Other citrus fruit n.e.c.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Berries Nes", "Other berries and fruits of the genus vaccinium n.e.c.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Coconuts", "Coconuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Mangoes mangosteens guavas", "Mangoes guavas and mangosteens", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Vanilla", "Vanilla raw", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Fruit tropical fresh nes", "Other tropical fruits n\\.e\\.c\\.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Spices nes", "Other stimulant spice and aromatic crops n\\.e\\.c\\.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Soybeans", "Soya beans", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Rapeseed", "Rape or colza seed", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Nutmeg mace and cardamoms", "Nutmeg mace cardamoms raw", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Pigeon peas", "Pigeon peas dry", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Nuts nes", "Other nuts \\(excluding wild edible nuts and groundnuts\\) in shell n\\.e\\.c\\.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Leguminous vegetables nes", "Broad beans and horse beans green", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Groundnuts with shell", "Groundnuts excluding shelled", Cropname_FAO))
 
 # calculate per country average total production value
-fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
-  filter(Flag.Description == "Calculated data") %>%
+fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_en_10-4-2022_producer_price.csv", stringsAsFactors = FALSE) %>%
   filter(!grepl("Meat", Item)) %>%
   filter(!grepl("Eggs", Item)) %>%
   filter(!grepl("China, mainland", Area)) %>%
   filter(!grepl("China, Hong Kong SAR", Area)) %>%
   filter(!grepl("Milk", Item)) %>%
-  rename(economic_value = Value) %>%
-  mutate(economic_value = economic_value * 1000)
-
-# calculate per country average total production value
-fao_prod <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_production.csv", stringsAsFactors = FALSE) %>%
-  filter(Flag.Description == "Official data") %>%
-  filter(!grepl("Meat", Item)) %>%
-  filter(!grepl("Eggs", Item)) %>%
-  filter(!grepl("China, mainland", Area)) %>%
-  filter(!grepl("China, Hong Kong SAR", Area)) %>%
-  filter(!grepl("Milk", Item)) %>%
-  rename(production = Value) %>%
-  mutate(production = production * 1000)
-
-# calc average price per crop and filter out chicory
-joined_prod_value <- inner_join(fao_prod, fao_prod_value, by = c("Year", "Area", "Item")) %>%
-  mutate(price_per_kg = economic_value / production) %>% 
   group_by(Area, Item) %>%
-  summarise(mean_price_kg = mean(price_per_kg, na.rm = TRUE)) %>%
+  summarise(mean_price_tonne = mean(Value, na.rm = TRUE)) %>%
   group_by(Item) %>%
-  summarise(overall_price_kg = median(mean_price_kg, na.rm = TRUE)) %>% 
-  mutate(Item = gsub(",", "", Item)) %>%
-  inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO")) %>%
-  filter(CROPNAME != "chicory") %>%
-  arrange(desc(CROPNAME))
+  summarise(overall_price_tonne = median(mean_price_tonne, na.rm = TRUE)) %>% 
+  mutate(Item = gsub(",", "", Item)) %>% 
+  inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO"))
 
 # PREDICTS data compilation
 # filter for main pollinating taxa
@@ -301,6 +299,7 @@ unlisted_crops <- unlist(crop.files)
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
 pollinated_crops <- grep(paste(unique(paste("/", klein_cleaned$MonfredaCrop, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
+pollinated_crops <- sort(pollinated_crops)
 pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
@@ -451,57 +450,26 @@ for(i in 1:length(pollinated_crops)){
   print(i)
 }
 
-# subset all crops for just those we have prices
-non_pollinated_crops <- grep(paste(unique(paste("/", joined_prod_value$CROPNAME, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
+# pollination dependent ratios
+# each crop in the monfreda data can have a different pollination dependence
+# 0 = no increase
+# 0.05 = little
+# 0.25 = modest
+# 0.45 = modest/great
+# 0.65 = great
+# 0.95 = essential
 
-# read in each of the rasters for all crops to calculate all value of crop production
-for(i in 1:length(non_pollinated_crops)){
-  rate_rasters_all[[i]] <- terra::rast(non_pollinated_crops[[i]])
-  print(i)
-}
+# dependence ratio assignment
+klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "no increase"] <- 0
+klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "little"] <- 0.05
+klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest"] <- 0.25
+klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "great"] <- 0.65
+klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "essential"] <- 0.95
+klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest/great"] <- 0.45
 
-rate_rasters_adj_val <- list()
-for(i in 1:length(rate_rasters_all)){
-  rate_rasters_adj_val[[i]] <- rate_rasters_all[[i]] * (joined_prod_value$overall_price_kg[i] * 1000)
-  print(i)
-}
-
-# sum total cell level price of pollination dependent crops geographically
-crop_total_price <- terra::rast(rate_rasters_adj_val) %>% terra::app(fun = "sum", na.rm = TRUE) #%>% raster()
-
-# reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
-crop_total_price <- projectRaster(crop_total_price, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
-# convert the raster to a dataframe to plot with ggplot
-crop_total_price_frame <- as(crop_total_price, "SpatialPixelsDataFrame")
-crop_total_price_frame <- as.data.frame(crop_total_price_frame) %>%
-  filter(sum > 0) %>%
-  rename(layer = sum)
-
-# convert spatial dataframe to coordinates
-crop_total_price_points <- crop_total_price_frame %>%
-  dplyr::select(x, y) %>%
-  unique() %>%
-  SpatialPoints(proj4string = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-
-# assign each set of coordinates to a country
-country_value <- over(crop_total_price_points, base_map, by = "ISO2", returnList = FALSE)
-
-# merge countries back onto values
-country_value_bound <- cbind(crop_total_price_frame, country_value[c("SOVEREIGNT", "ISO3", "GBD", "SRES", "continent", "LON", "LAT", "GDP_MD_EST", "NAME_FORMA")])
-
-# calc country totals, and amend so will join on as rows to final data
-country_totals <- country_value_bound %>%
-  group_by(SOVEREIGNT, SRES, GBD, ISO3, continent) %>%
-  summarise(all_production_value = sum(layer)) %>%
-  ungroup() %>%
-  rename(total_value = all_production_value)
-
-# check coordinates and countries are vaguely correct
-country_value_bound %>% 
-  filter(!is.na(SOVEREIGNT)) %>% 
-  ggplot() +
-  geom_point(aes(x = x, y = y, colour = SOVEREIGNT)) + theme(legend.position = "none")
+# run function for average pollination dependence and subset klein for those with crop data
+klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned)) %>%
+  arrange(MonfredaCrop)
 
 # set up object for each crop iteration
 change_obj <- list()
@@ -511,30 +479,8 @@ for(m in 1:length(pollinated_crops)){
   std_anom_high_crop <- std_anom_high
   std_high_abun_adj_crop <- std_high_abun_adj
   
-  # multiple each raster by the percentage attributable to pollination
-  # pollination dependent ratios
-  # each crop in the monfreda data can have a different pollination dependence
-  # 0 = no increase
-  # 0.05 = little
-  # 0.25 = modest
-  # 0.45 = modest/great
-  # 0.65 = great
-  # 0.95 = essential
-  
-  # dependence ratio assignment
-  klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "no increase"] <- 0
-  klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "little"] <- 0.05
-  klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest"] <- 0.25
-  klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "great"] <- 0.65
-  klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "essential"] <- 0.95
-  klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest/great"] <- 0.45
-  
-  # run function for average pollination dependence and subset klein for those with crop data
-  klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned))
-    
   rate_rasters_adj <- rate_rasters[[m]] * klein_cleaned_filt$av[m]
 
-  #rm(rate_rasters)
   # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
   crop.total <- stack(rate_rasters_adj)  %>% sum(na.rm = T)
   crop.total <- projectRaster(crop.total, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -554,12 +500,6 @@ for(m in 1:length(pollinated_crops)){
   for(i in 1:length(std_high_abun_adj_crop)){
     std_high_abun_adj_crop[[i]] <- cbind(std_high_abun_adj_crop[[i]], country_coords[c("SOVEREIGNT", "GBD", "ISO3", "SRES", "continent", "LON", "LAT")])
   }
-  
-  # check coordinates and countries are vaguely correct
-  std_high_abun_adj_crop[[1]] %>% 
-    filter(!is.na(SOVEREIGNT)) %>% 
-    ggplot() +
-    geom_point(aes(x = x, y = y, colour = SOVEREIGNT)) + theme(legend.position = "none")
   
   country_sums <- list()
     
@@ -593,8 +533,7 @@ plot_obj <- rbindlist(change_obj) %>%
   filter(!is.na(continent))
 
 # merge the price per kg value with the pollination dependent monfreda, and convert to price per tonne
-plot_obj <- left_join(plot_obj, joined_prod_value, by = c("crop" = "CROPNAME")) %>%
-  mutate(overall_price_tonne = 1000 * overall_price_kg) %>%
+plot_obj <- left_join(plot_obj, fao_prod_value, by = c("crop" = "CROPNAME")) %>%
   mutate(total_value = total * overall_price_tonne)
 
 # add separate regions
@@ -608,7 +547,7 @@ plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c
                                                                                  "South Asia (SAS)")] <- "Asia & Australia"
 plot_obj$main_region[plot_obj$continent %in% c("Australia")] <- "Asia & Australia"
 plot_obj$main_region[plot_obj$continent %in% c("Africa")] <- "Africa"
-plot_obj$main_region[plot_obj$continent %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+plot_obj$main_region[plot_obj$continent %in% c("South America and the Caribbean")] <- "Latin America & the Caribbean"
 
 # correcting for former soviet union states
 plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)") & plot_obj$GBD== "Asia, Central"] <- "Asia & Australia"
@@ -658,10 +597,13 @@ top_crop <- all_crop_data %>%
 # group the crops for top 20 by production
 all_crop_data$crop[!all_crop_data$crop %in% top_crop] <- "Other"
 
+# append other to factor level order of crops
+top_crop <- c(top_crop, "Other")
+
 # reorder the crops by total value
 all_crop_data <- all_crop_data %>%
-  mutate(crop = fct_reorder(crop, total_value))
-
+  mutate(crop = factor(crop, levels = top_crop))
+  
 # reorder the main regions by total value
  top_region <- all_crop_data %>%
   group_by(main_region) %>%
@@ -683,17 +625,17 @@ all_crop_data %>%
     theme_bw() +
     scale_fill_manual("Crop", values = c("lightgrey", "black", "#D55E00", "#E69F00", "#0072B2",
                                          "#F0E442", "#009E73", "#56B4E9"),
-                      labels = c("Soybean", "Cocoa", "Watermelon", "Mango", "Fruit (not elsewhere)", "Coffee", "Apple", "Other crops")) +
+                      labels = c("Cocoa", "Tropical fruits (not elsewhere)", "Fruits (not elsewhere)", "Mango" ,"Coffee", "Watermelon", "Coconut", "Other crops")) +
     scale_x_continuous("\n2050 pollination dependent production at risk (million US$/annum)", 
                        breaks = c(0, 50000000, 100000000, 150000000, 200000000), 
                        labels = c(0, 50, 100, 150, 200), 
                        expand = c(0, 0), 
-                       limits = c(0, 230000000)) +
+                       limits = c(0, 260000000)) +
     ylab("Country (ISO3)") +
     theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
           strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
 # save figure for production risk
-ggsave("crop_production_risk_2.png", scale = 1.2, dpi = 350)
+ggsave("crop_production_risk_3.png", scale = 1.2, dpi = 350)
 
 
