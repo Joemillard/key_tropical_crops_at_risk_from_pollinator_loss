@@ -43,47 +43,62 @@ SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/I
 fao_monfreda <- read.csv("data/trade_flow/FAO_Monfreda_conv.csv", stringsAsFactors = FALSE) %>%
   mutate(Cropname_FAO = gsub(",", "", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("corian.", "coriander", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Berries Nes", "Berries nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Stone fruit nes", "Fruit stone nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnut", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Citrus fruit nes", "Fruit citrus nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Fruit Fresh Nes", "Fruit fresh nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Leguminous vegetables nes", "Vegetables leguminous nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Stone fruit nes", "Other stone fruits", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Chestnuts", "Chestnuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Fruit Fresh Nes", "Other fruits n.e.c.", Cropname_FAO)) %>%
   mutate(Cropname_FAO = gsub("Kolanuts", "Kola nuts", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Other melons", "Melons other", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Oilseeds Nes", "Oilseeds nes", Cropname_FAO)) %>%
-  mutate(Cropname_FAO = gsub("Pepper \\(Piper ", "Pepper \\(piper ", Cropname_FAO))
+  mutate(Cropname_FAO = gsub("Other melons \\(inc\\.cantaloupes\\)", "Cantaloupes and other melons", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Oilseeds Nes", "Other oil seeds n\\.e\\.c\\.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Pepper \\(Piper ", "Pepper \\(piper ", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Arecanuts", "Areca nuts", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Tung Nuts", "Tung nuts", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Roots and Tubers nes", "Roots and tubers nes", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("PyrethrumDried", "Pyrethrum dried", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Tangerines mandarins clem.", "Tangerines mandarins clementines satsumas", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Cinnamon \\(canella\\)", "Cinnamon \\(cannella\\)", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Hemp Tow Waste", "Hemp tow waste", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Natural rubber", "Rubber natural", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Plantains", "Plantains and others", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("MatŽ", "Mat?", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Onions \\(inc\\. shallots\\) green", "Onions shallots green", Cropname_FAO))%>%
+  mutate(Cropname_FAO = gsub("Karite Nuts \\(Sheanuts\\)", "Karite nuts (sheanuts)", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Sour cherries", "Cherries sour", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Other Bastfibres", "Bastfibres other", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Agave Fibres Nes", "Agave fibres raw n.e.c.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Almonds with shell", "Almonds in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Brazil nuts with shell", "Brazil nuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Broad beans horse beans dry", "Broad beans and horse beans dry", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Cashew nuts with shell", "Cashew nuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Anise badian fennel coriander", "Anise badian coriander cumin caraway fennel and juniper berries raw", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Chillies and peppers green", "Chillies and peppers green (Capsicum spp. and Pimenta spp.)", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Citrus fruit nes", "Other citrus fruit n.e.c.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Berries Nes", "Other berries and fruits of the genus vaccinium n.e.c.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Coconuts", "Coconuts in shell", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Mangoes mangosteens guavas", "Mangoes guavas and mangosteens", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Vanilla", "Vanilla raw", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Fruit tropical fresh nes", "Other tropical fruits n\\.e\\.c\\.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Spices nes", "Other stimulant spice and aromatic crops n\\.e\\.c\\.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Soybeans", "Soya beans", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Rapeseed", "Rape or colza seed", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Nutmeg mace and cardamoms", "Nutmeg mace cardamoms raw", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Pigeon peas", "Pigeon peas dry", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Nuts nes", "Other nuts \\(excluding wild edible nuts and groundnuts\\) in shell n\\.e\\.c\\.", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Leguminous vegetables nes", "Broad beans and horse beans green", Cropname_FAO)) %>%
+  mutate(Cropname_FAO = gsub("Groundnuts with shell", "Groundnuts excluding shelled", Cropname_FAO))
+
 
 # calculate per country average total production value
-fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_value.csv", stringsAsFactors = FALSE) %>%
-  filter(Flag.Description == "Calculated data") %>%
+fao_prod_value <- read.csv("data/trade_flow/FAOSTAT_data_en_10-4-2022_producer_price.csv", stringsAsFactors = FALSE) %>%
   filter(!grepl("Meat", Item)) %>%
   filter(!grepl("Eggs", Item)) %>%
   filter(!grepl("China, mainland", Area)) %>%
   filter(!grepl("China, Hong Kong SAR", Area)) %>%
   filter(!grepl("Milk", Item)) %>%
-  rename(economic_value = Value) %>%
-  mutate(economic_value = economic_value * 1000)
-
-# calculate per country average total production value
-fao_prod <- read.csv("data/trade_flow/FAOSTAT_data_3-28-2022_total_production.csv", stringsAsFactors = FALSE) %>%
-  filter(Flag.Description == "Official data") %>%
-  filter(!grepl("Meat", Item)) %>%
-  filter(!grepl("Eggs", Item)) %>%
-  filter(!grepl("China, mainland", Area)) %>%
-  filter(!grepl("China, Hong Kong SAR", Area)) %>%
-  filter(!grepl("Milk", Item)) %>%
-  rename(production = Value) %>%
-  mutate(production = production * 1000)
-
-# calc average price per crop
-joined_prod_value <- inner_join(fao_prod, fao_prod_value, by = c("Year", "Area", "Item")) %>%
-  mutate(price_per_kg = economic_value / production) %>% 
   group_by(Area, Item) %>%
-  summarise(mean_price_kg = mean(price_per_kg, na.rm = TRUE)) %>%
+  summarise(mean_price_tonne = mean(Value, na.rm = TRUE)) %>%
   group_by(Item) %>%
-  summarise(overall_price_kg = median(mean_price_kg, na.rm = TRUE)) %>% 
-  mutate(Item = gsub(",", "", Item)) %>%
+  summarise(overall_price_tonne = median(mean_price_tonne, na.rm = TRUE)) %>% 
+  mutate(Item = gsub(",", "", Item)) %>% 
   inner_join(fao_monfreda, by = c("Item" = "Cropname_FAO"))
 
 # PREDICTS data compilation
@@ -288,6 +303,7 @@ rate_rasters_all <- list()
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
 pollinated_crops <- grep(paste(unique(paste("/", klein_cleaned$MonfredaCrop, "_", sep = "")), collapse = "|"), unlisted_crops, value = TRUE)
+pollinated_crops <- sort(pollinated_crops)
 pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff/", "", pollinated_crops)
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
@@ -298,7 +314,7 @@ for(i in 1:length(pollinated_crops)){
   print(i)
 }
 
-# read in each of the rasters for pollinated crops
+# read in each of the rasters for all crops
 for(i in 1:length(crop.files)){
   rate_rasters_all[[i]] <- terra::rast(crop.files[[i]])
   print(i)
@@ -345,7 +361,8 @@ subset_klein <- function(klein_cleaned_av){
 }
 
 # run function for average pollination dependence and subset klein for those with crop data
-klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned))
+klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned)) %>%
+  arrange(MonfredaCrop)
 
 # multiply each raster by its pollination dependence for that crop
 rate_rasters_adj <- list()
@@ -563,14 +580,15 @@ plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)
 
 
 # merge the price per kg value with the pollination dependent monfreda
-joined_crop_val <- left_join(klein_cleaned_filt, joined_prod_value, by = c("MonfredaCrop" = "CROPNAME"))
+joined_crop_val <- inner_join(klein_cleaned_filt, fao_prod_value, by = c("MonfredaCrop" = "CROPNAME")) %>%
+  arrange(MonfredaCrop)
 
 # calculate pollination dependent production value per crop globally
 # raster layers adjusted for value
 # multiply each raster by its pollination dependence for that crop
 rate_rasters_adj_val <- list()
 for(i in 1:length(rate_rasters_adj)){
-  rate_rasters_adj_val[[i]] <- rate_rasters_adj[[i]] * joined_crop_val$overall_price_kg[i]
+  rate_rasters_adj_val[[i]] <- rate_rasters_adj[[i]] * joined_crop_val$overall_price_tonne[i]
   print(i)
 }
 
@@ -660,14 +678,14 @@ ggplot(plot_obj_pop) +
                        labels = c("0", "0.04","0.08", "0.12")) +
     scale_colour_manual("Geographic region", values = c("#56B4E9", "#E69F00", "#000000", "#009E73", "#F0E442", "#0072B2", "#999999")) +
     scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#999999")) +
-    scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(25, 50, 75, 100, 125), labels = c(25, 50, 75, 100, 125)) +
+    scale_size_continuous("Pollination dependent production value per GDP (US$/annum)", breaks = c(30000, 60000, 90000), labels = c("30,000", "60,000", "90,000")) +
     theme_bw() +
     facet_wrap(~main_region, ncol = 4) +
     guides(size = guide_legend(order = 2, nrow = 2), 
              colour = guide_legend(order = 1, nrow = 2)) +
     theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-ggsave("top_change_country_12.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_13.png", scale = 1.1, dpi = 350)
 
 # write file to csv for Silvia
 write.csv(plot_obj_pop, "country_level_risk.csv")
