@@ -597,7 +597,7 @@ rbindlist(all_crop_fin) %>%
     theme_bw() +
     theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "bottom")
 
-ggsave("top_change_crop_6.png", scale = 0.85, dpi = 350)
+ggsave("top_change_crop_7.png", scale = 0.85, dpi = 350)
 
 # calculate crop with highest proportion of production at risk and write to csv
 rbindlist(all_crop_fin) %>%
