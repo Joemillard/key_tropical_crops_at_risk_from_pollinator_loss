@@ -729,6 +729,8 @@ import_risk_total <- base_map %>%
   annotation_custom(
     grob = std_dev_plot, xmin = 12300000, xmax = 20000000, ymin = 5000000, ymax = 12000000)
 
+ggsave("import_sub_plot.png", scale = 1.4, dpi = 350)
+
 # map with just raw import risk per capita
 import_risk_total_log_map <- base_map %>% 
   fortify() %>%
