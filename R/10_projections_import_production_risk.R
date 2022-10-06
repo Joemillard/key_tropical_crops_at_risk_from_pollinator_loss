@@ -708,6 +708,7 @@ std_dev_plot <- ggplotGrob(suppliers %>%
                                             axis.ticks.x = element_blank(),
                                             axis.text.x = element_blank(), axis.text.y = element_text(angle = 0)))
 
+# map with eprcentile and inset distribution
 import_risk_total <- base_map %>% 
   fortify() %>%
   left_join(suppliers, by = c("id" = "partner_countries")) %>% 
@@ -727,6 +728,24 @@ import_risk_total <- base_map %>%
         axis.title = element_blank(), legend.position = "bottom") + 
   annotation_custom(
     grob = std_dev_plot, xmin = 12300000, xmax = 20000000, ymin = 5000000, ymax = 12000000)
+
+# map with just raw import risk per capita
+import_risk_total_log_map <- base_map %>% 
+  fortify() %>%
+  left_join(suppliers, by = c("id" = "partner_countries")) %>% 
+  ggplot() +
+  geom_polygon(aes(x = long, y = lat,  group = group), fill = "grey") +
+  geom_polygon(aes(x = long, y = lat, fill = log10(per_capita_pollination *10000000), group = group)) +
+  theme_bw() +
+  scale_fill_viridis("Import risk\n(Tonnes/capita)", direction = -1, option = "plasma",
+                     expand = c(0, 0), limits = c(0, 7.3), breaks = c(7, 5, 3, 1),  labels = c(expression("1x10"^1), expression("1x10"^-2), expression("1x10"^-4), expression("1x10"^-6))) +
+  coord_equal() +
+  theme(panel.background = element_blank(),
+        panel.bord = element_blank(),
+        panel.grid = element_blank(), 
+        axis.text = element_blank(),    
+        axis.ticks = element_blank(), 
+        axis.title = element_blank(), legend.position = "bottom", legend.text = element_text(angle = 45, hjust = 1))
 
 ggsave("supply_diversity_importer_8.png", scale = 1.4, dpi = 350)
 
