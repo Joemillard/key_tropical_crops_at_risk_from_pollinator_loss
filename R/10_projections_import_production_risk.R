@@ -696,11 +696,11 @@ std_dev_plot <- ggplotGrob(suppliers %>%
                                       scale_y_continuous(expand = c(0, 0), limits = c(0, 7.3),
                                                          breaks = c(7, 5, 3, 1),
                                                          labels = c(expression("1x10"^1), expression("1x10"^-2), expression("1x10"^-4), expression("1x10"^-6))) +
-                                      scale_fill_viridis_d("Total 2050 import risk\n(Tonnes/capita; percentile)", direction = -1, option = "plasma", na.translate = F,
+                                      scale_fill_viridis_d("Percentile", direction = -1, option = "plasma", na.translate = F,
                                                            labels = c("0-25", "25-50", "50-75", "75-100")) +
-                             scale_colour_viridis_d("Total 2050 import risk\n(Tonnes/capita; percentile)", direction = -1, option = "plasma", na.translate = F,
+                             scale_colour_viridis_d("Percentile", direction = -1, option = "plasma", na.translate = F,
                                                   labels = c("0-25", "25-50", "50-75", "75-100")) +
-                                      ylab(NULL) +
+                                      ylab("Tonnes/capita") +
                                       xlab("Country") +
                                       theme_bw() +
                                       theme(panel.grid = element_blank(), 
