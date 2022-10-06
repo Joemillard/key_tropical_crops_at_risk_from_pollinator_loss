@@ -751,5 +751,41 @@ import_risk_total_log_map <- base_map %>%
 
 ggsave("supply_diversity_importer_8.png", scale = 1.4, dpi = 350)
 
+# bar plot of import risk
+suppliers_region <- suppliers %>%
+  inner_join(base_map@data %>% filter(TYPE %in% c("Country", "Sovereign country")), by = c("partner_countries" = "SOVEREIGNT")) %>%
+  filter(!ISO3 %in% c("HKG", "MAC", "GRL", "SXM", "CUW", "WEB", "GGY", "IMN", "JEY", "ABW"))
+
+# add separate regions
+suppliers_region$main_region[suppliers_region$continent %in% c("Eurasia") & suppliers_region$SRES %in% c("Central and Eastern Europe (EEU)", 
+                                                                                 "Western Europe (WEU)")] <- "North America & Europe"
+suppliers_region$main_region[suppliers_region$continent %in% c("North America")] <- "North America & Europe"
+suppliers_region$main_region[suppliers_region$continent %in% c("Eurasia") & suppliers_region$SRES %in% c("Centrally planned Asia and China (CPA)", 
+                                                                                 "Middle East and North Africa (MEA)",
+                                                                                 "Other Pacific Asia (PAS)", 
+                                                                                 "Pacific OECD (PAO)", 
+                                                                                 "South Asia (SAS)")] <- "Asia & Australia"
+suppliers_region$main_region[suppliers_region$continent %in% c("Australia")] <- "Asia & Australia"
+suppliers_region$main_region[suppliers_region$continent %in% c("Africa")] <- "Africa"
+suppliers_region$main_region[suppliers_region$continent %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+
+# correcting for former soviet union states
+suppliers_region$main_region[suppliers_region$SRES %in% c("Newly Independent States of FSU (FSU)") & suppliers_region$GBD== "Asia, Central"] <- "Asia & Australia"
+suppliers_region$main_region[suppliers_region$SRES %in% c("Newly Independent States of FSU (FSU)") & suppliers_region$GBD == "Europe, Eastern"] <- "North America & Europe"
+
+# plot of absolute total import risk, as for export risk
+suppliers_region %>%
+  mutate(ISO3 = fct_reorder(ISO3, total_import_risk)) %>%
+  filter(!is.na(main_region)) %>%
+  ggplot() +
+    facet_wrap(~main_region, scales = "free_y") +
+    geom_bar(aes(y = ISO3, x = total_import_risk), stat = "identity") + 
+    theme_bw() +
+    ylab("Country (ISO3)") +
+    theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
+        strip.background = element_rect(fill = NA), axis.line.x = element_line())
+
+# import risk plot for total at risk
+
 # write to csv for Silvia
 write.csv(suppliers, "total_import_risk.csv")
