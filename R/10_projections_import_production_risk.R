@@ -643,15 +643,15 @@ majority_supplier <- trade_flow %>%
   ungroup() %>%
   filter(percent_flow == maximum)
 
-country_region <- change_import_cont %>%
-  select(partner_countries, REGION) %>%
-  unique()
+#country_region <- change_import_cont %>%
+#  select(partner_countries, REGION) %>%
+#  unique()
 
 # add separate regions
-country_region$main_region[country_region$REGION %in% c("Europe", "North America")] <- "North America & Europe"
-country_region$main_region[country_region$REGION %in% c("Asia", "Australia")] <- "Asia & Australia"
-country_region$main_region[country_region$REGION %in% c("Africa")] <- "Africa"
-country_region$main_region[country_region$REGION %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+#country_region$main_region[country_region$REGION %in% c("Europe", "North America")] <- "North America & Europe"
+#country_region$main_region[country_region$REGION %in% c("Asia", "Australia")] <- "Asia & Australia"
+#country_region$main_region[country_region$REGION %in% c("Africa")] <- "Africa"
+#country_region$main_region[country_region$REGION %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
 
 # plot the rates of change against supplier
 supplier_risk <- suppliers %>%
@@ -816,6 +816,7 @@ all_crop_data %>%
         strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
 # import risk plot for total at risk
+ggsave("total_import_risk.png", scale = 1.2, dpi = 350)
 
 # write to csv for Silvia
 write.csv(suppliers, "total_import_risk.csv")
