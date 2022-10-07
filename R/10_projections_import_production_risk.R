@@ -767,21 +767,51 @@ suppliers_region$main_region[suppliers_region$continent %in% c("Eurasia") & supp
                                                                                  "South Asia (SAS)")] <- "Asia & Australia"
 suppliers_region$main_region[suppliers_region$continent %in% c("Australia")] <- "Asia & Australia"
 suppliers_region$main_region[suppliers_region$continent %in% c("Africa")] <- "Africa"
-suppliers_region$main_region[suppliers_region$continent %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+suppliers_region$main_region[suppliers_region$continent %in% c("South America and the Caribbean")] <- "Latin America & the Caribbean"
 
 # correcting for former soviet union states
 suppliers_region$main_region[suppliers_region$SRES %in% c("Newly Independent States of FSU (FSU)") & suppliers_region$GBD== "Asia, Central"] <- "Asia & Australia"
 suppliers_region$main_region[suppliers_region$SRES %in% c("Newly Independent States of FSU (FSU)") & suppliers_region$GBD == "Europe, Eastern"] <- "North America & Europe"
 
+# order the main regions
+top_region <- suppliers_region %>%
+  group_by(main_region) %>%
+  summarise(total_risk = sum(total_import_risk, na.rm = TRUE)) %>%
+  arrange(desc(total_risk)) %>% pull(main_region)
+
+# find top 10 countries in each main region
+top_countries <- suppliers_region %>%
+  group_by(main_region) %>%
+  arrange(desc(total_import_risk)) %>%
+  slice(0:10) %>% pull(ISO3)
+
+# create data frame for production of low levels
+low_crop_data <- suppliers_region %>%
+  filter(!ISO3 %in% top_countries) %>%
+  group_by(main_region) %>%
+  summarise(ISO3 = "Other", total_import_risk = sum(total_import_risk))
+
+# combine low level production dataframe onto main frame
+all_crop_data <- suppliers_region %>%
+  filter(ISO3 %in% top_countries) %>%
+  bind_rows(low_crop_data)
+
+# reorder factors for countries
+all_crop_data <- all_crop_data %>%
+  mutate(ISO3 = fct_reorder(ISO3, total_import_risk),
+         ISO3 = fct_relevel(ISO3, "Other", after = 0L))
+
 # plot of absolute total import risk, as for export risk
-suppliers_region %>%
-  mutate(ISO3 = fct_reorder(ISO3, total_import_risk)) %>%
+all_crop_data %>%
+  mutate(main_region = factor(main_region, levels = top_region)) %>%
   filter(!is.na(main_region)) %>%
   ggplot() +
     facet_wrap(~main_region, scales = "free_y") +
     geom_bar(aes(y = ISO3, x = total_import_risk), stat = "identity") + 
     theme_bw() +
     ylab("Country (ISO3)") +
+    scale_x_continuous("2050 pollination dependent production total import risk (million tonnes/annum)", breaks = c(0, 10000000, 20000000, 30000000), 
+                                  labels = c(0, 10, 20, 30)) +
     theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
         strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
