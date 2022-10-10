@@ -228,19 +228,19 @@ for(m in 1:length(pollinat_bound)){
 plot_grid(main_plot_abundance[[1]] +
             ggtitle("Pollinating insects (Coleoptera)") + 
             xlim(-0.25, 3.5) +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(-4.628887, -3.2425924, -1.856298, -0.4700036, 0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(0.01, 0.04, 0.156, 0.625, 2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[2]] + 
             xlim(-0.25, 3.5) +
             ggtitle("Pollinating insects (Diptera)") +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(-4.628887, -3.2425924, -1.856298, -0.4700036, 0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(0.01, 0.04, 0.156, 0.625, 2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[3]] + 
             xlim(-0.25, 3.5) +
             ggtitle("Pollinating insects (Hymenoptera)") +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(-4.628887, -3.2425924, -1.856298, -0.4700036, 0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(0.01, 0.04, 0.156, 0.625, 2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), main_plot_abundance[[4]] + 
             xlim(-0.25, 3.5) +
             ggtitle("Pollinating insects (Lepidoptera)") +
-            scale_y_continuous(limits = c(-6, 8.5), breaks = c(0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(2.5, 10, 40,  160, 640)) +
+            scale_y_continuous(limits = c(-6, 8.5), breaks = c(-4.628887, -3.2425924, -1.856298, -0.4700036, 0.9162907, 2.302585, 3.6888795, 5.075174, 6.461468), labels = c(0.01, 0.04, 0.156, 0.625, 2.5, 10, 40,  160, 640)) +
             theme(legend.position = "none"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_6.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_7.png", scale = 1, dpi = 350)
