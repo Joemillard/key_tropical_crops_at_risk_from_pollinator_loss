@@ -1,4 +1,5 @@
 # script for country level proportion production risk projections at the cell level
+## CHECK CODR FOR MEMORY AND AMEND SOUTH AMERICA TO LATIN AMERICA
 
 # read in packages
 library(raster)
@@ -107,6 +108,8 @@ PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
   dplyr::filter(Phylum %in% "Arthropoda") %>%
   droplevels()
 
+rm(PREDICTS_pollinators_orig)
+
 # correct for sampling effort
 PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
 
@@ -120,7 +123,7 @@ order.sites.div <- SiteMetrics(diversity = PREDICTS_pollinators,
 order.sites.div$id_col <- 1:nrow(order.sites.div)
 
 # PREDICTS sites with the month of the recording
-PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
+PRED_sites <- order.sites.div %>% dplyr::select(id_col, Latitude, Longitude, Sample_end_latest) %>%
   mutate(Sample_end_latest = paste("X", substr(Sample_end_latest, start = 1, stop = 7), sep = "")) %>%
   mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest)) %>%
   filter(!is.na(Latitude))
@@ -131,7 +134,7 @@ tmp1901_1930 <- tmp[[names(tmp)[1:360]]]
 
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
-  select(Longitude, Latitude) %>%
+  dplyr::select(Longitude, Latitude) %>%
   filter(!is.na(Latitude)) %>%
   SpatialPoints()
 
@@ -187,13 +190,13 @@ system.time(
     # filter the raster for only coordinates we have PREDICTS sites for that date
     PRED_sites_filt <- PRED_sites %>%
       filter(Sample_end_latest == pred_dates[i]) %>%
-      select(Longitude, Latitude) %>%
+      dplyr::select(Longitude, Latitude) %>%
       SpatialPoints()
     
     # identify site ids for merging
     site_ids <- PRED_sites %>%
       filter(Sample_end_latest == pred_dates[i]) %>%
-      select(id_col, Longitude, Latitude)
+      dplyr::select(id_col, Longitude, Latitude)
     
     # filter the raster for that date for the locations we have predicts sites
     PRED_coords <- cbind(site_ids, extract(ind_raster, PRED_sites_filt, na.rm = FALSE))
@@ -202,10 +205,10 @@ system.time(
     ind_raster_frame <- as.data.frame(PRED_coords)
     
     # remove the extra coordinate columns for calculating the row means
-    ind_raster_values <- ind_raster_frame %>% select(-id_col, -Longitude, -Latitude)
+    ind_raster_values <- ind_raster_frame %>% dplyr::select(-id_col, -Longitude, -Latitude)
     
     # calculate the mean values for each coordinate and bind back onto the coordinates
-    raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% select(id_col, Longitude, Latitude)), rowMeans(ind_raster_values))
+    raster_means[[i]] <- cbind(names(tmp)[site_index], (ind_raster_frame %>% dplyr::select(id_col, Longitude, Latitude)), rowMeans(ind_raster_values))
     colnames(raster_means[[i]]) <- c("end_date", "id_col", "x", "y", "mean_value")
     
     # print the iteration number
@@ -222,7 +225,7 @@ rbindlist(raster_means) %>%
 ## adjust the mean value for each site for the baseline at that site
 # first, merge the baseline sd and mean by coordinate for each site
 adjusted_climate <- rbindlist(raster_means) %>%
-  select(-end_date) %>%
+  dplyr::select(-end_date) %>%
   unique() %>%
   inner_join(climate_start_mean, by = "id_col") %>%
   rename("mean_base" = "data_fin") %>%
@@ -344,7 +347,7 @@ av_dependence <- function(klein_cleaned){
     mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
     mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
     ungroup() %>%
-    select(MonfredaCrop, av, standard_dev) %>%
+    dplyr::select(MonfredaCrop, av, standard_dev) %>%
     unique()
   
   return(klein_cleaned_av)
@@ -376,10 +379,6 @@ rm(rate_rasters)
 # organise all of the rasters into a stack and sum
 crop.total <- terra::rast(rate_rasters_adj) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
 crop.total_all <- terra::rast(rate_rasters_all) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
-
-# baseplot of proportion needing pollination
-prop_poll <- crop.total / crop.total_all
-plot(prop_poll)
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 crop.total_all <- projectRaster(crop.total_all, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -554,7 +553,7 @@ change_obj <- rbindlist(country_sums) %>%
 
 # create object just with summary values
 plot_obj <- change_obj %>%
-  select(SOVEREIGNT, ISO3, SRES, continent, GBD, av_total, change, pollination_production, percent_pollinated) %>%
+  dplyr::select(SOVEREIGNT, ISO3, SRES, continent, GBD, av_total, change, pollination_production, percent_pollinated) %>%
   unique() %>% 
   filter(!is.na(change)) %>%
   filter(!is.na(continent))
@@ -570,7 +569,7 @@ plot_obj$main_region[plot_obj$continent %in% c("Eurasia") & plot_obj$SRES %in% c
                                                                                  "South Asia (SAS)")] <- "Asia & Australia"
 plot_obj$main_region[plot_obj$continent %in% c("Australia")] <- "Asia & Australia"
 plot_obj$main_region[plot_obj$continent %in% c("Africa")] <- "Africa"
-plot_obj$main_region[plot_obj$continent %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
+plot_obj$main_region[plot_obj$continent %in% c("South America and the Caribbean")] <- "Latin America & the Caribbean"
 
 # correcting for former soviet union states
 plot_obj$main_region[plot_obj$SRES %in% c("Newly Independent States of FSU (FSU)") & plot_obj$GBD== "Asia, Central"] <- "Asia & Australia"
@@ -588,6 +587,9 @@ for(i in 1:length(rate_rasters_adj)){
   rate_rasters_adj_val[[i]] <- rate_rasters_adj[[i]] * joined_crop_val$overall_price_tonne[i]
   print(i)
 }
+
+rm(crop.total)
+rm(crop.total_all)
 
 # sum total cell level price of pollination dependent crops geographically
 crop_total_price <- terra::rast(rate_rasters_adj_val) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
@@ -653,7 +655,7 @@ plot_obj_pop$sub_region[plot_obj_pop$SRES %in% c("Central and Eastern Europe (EE
 plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("North America")] <- "North America"
 plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("Australia")] <- "Australia"
 plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("Africa")] <- "Africa"
-plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("South America and the Caribbean")] <- "South America"
+plot_obj_pop$sub_region[plot_obj_pop$continent %in% c("South America and the Caribbean")] <- "Latin America"
 plot_obj_pop$sub_region[plot_obj_pop$main_region %in% c("North America & Europe") & is.na(plot_obj_pop$sub_region)] <- "Europe"
 plot_obj_pop$sub_region[plot_obj_pop$GBD == "Caribbean"] <- "The Caribbean"
 plot_obj_pop$sub_region[is.na(plot_obj_pop$sub_region)] <- "Asia"
@@ -684,7 +686,7 @@ ggplot(plot_obj_pop) +
              colour = guide_legend(order = 1, nrow = 2)) +
     theme(panel.grid = element_blank(), legend.position = "bottom", legend.box="vertical") 
 
-ggsave("top_change_country_13.png", scale = 1.1, dpi = 350)
+ggsave("top_change_country_14.png", scale = 1.1, dpi = 350)
 
 # write file to csv for Silvia
 write.csv(plot_obj_pop, "country_level_risk.csv")
