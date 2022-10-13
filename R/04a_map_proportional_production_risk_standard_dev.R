@@ -532,7 +532,7 @@ std_dev_data <- rbindlist(climate_poll_data_future) %>%
 
 # map of standard deviation among scenarios
 std_dev_plot <- ggplotGrob(ggplot(std_dev_data) +
-                             geom_histogram(aes(x = standard_dev, fill = ..x..), colour = "white") +
+                             geom_histogram(aes(x = standard_dev, fill = ..x..), colour = "white", bins = 15) +
                              scale_y_continuous(trans = "log10", breaks = c(1, 1000, 100000),
                                               labels = c("1", "1,000", "100,000")) +
                              scale_x_continuous(breaks = c(0, 0.1, 0.2), labels = c("0", "0.1", "0.2")) +
@@ -540,7 +540,7 @@ std_dev_plot <- ggplotGrob(ggplot(std_dev_data) +
                                                 na.value = "transparent", option = "viridis", direction = -1,
                                                 limits = c(0, 0.25), breaks = c(0, 0.05, 0.1, 0.15, 0.2, 0.25), labels = c("0", "0.05", "0.1", "0.15", "0.2", "0.25")) +
                              ylab("Cell frequency") +
-                             xlab("Standard deviation") +
+                             xlab("Standard deviation\n(2050 prop. prod. risk)") +
                              theme_bw() +
                              theme(panel.grid = element_blank(), legend.position = "none"))
 
@@ -562,4 +562,4 @@ stv_dev_map <- ggplot(std_dev_data) +
   annotation_custom(
     grob = std_dev_plot, xmin = 12000000, xmax = 20000000, ymin = 5000000, ymax = 12000000)
 
-ggsave("std_dev_2.png", dpi = 350, scale = 1.5)
+ggsave("std_dev_3.png", dpi = 350, scale = 1.5)
