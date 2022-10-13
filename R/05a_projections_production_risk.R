@@ -348,13 +348,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -495,7 +496,7 @@ for(k in 1:length(RCP_scenarios)){
   
   # create dataframe for exposed production and build datafrmae
   RCP_plot[[k]] <- rbindlist(vulnerable_production_jack) %>%
-    mutate(year = rep(c(seq(2048, 2016, -1)), 5)) %>%
+    mutate(year = rep(c(seq(2050, 2016, -1)), 5)) %>%
     mutate(scenario = RCP_scenarios[k])
 }
 
@@ -510,10 +511,10 @@ rbindlist(RCP_plot) %>%
     geom_point(aes(x = year, y = vulnerability, colour = model, alpha = model)) +
     facet_wrap(~scenario, ncol = 2) +
     scale_y_continuous(limits = c(67000000, 150000000), expand = c(0, 0), breaks = c(80000000, 100000000, 120000000, 140000000), labels = c("80", "100", "120", "140")) +
-    scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
+    scale_x_continuous(limits = c(2015, 2052), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
     scale_colour_manual("Climate model", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
     scale_alpha_manual("Climate model", values = c(1, 0.4, 0.4, 0.4, 0.4)) +
-    ylab("Pollination production risk (million tonnes)") +
+    ylab("Production risk (million tonnes)") +
     xlab("") +
     theme_bw() +
     theme(panel.grid = element_blank(),
