@@ -347,13 +347,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -489,7 +490,7 @@ for(k in 1:length(RCP_scenarios)){
     
     # create dataframe for exposed production and build dataframe
     RCP_plot[[j]] <- vulnerable_production_jack %>%
-      mutate(year = seq(2048, 2016, -1)) %>%
+      mutate(year = seq(2050, 2016, -1)) %>%
       mutate(capping = capping[j]) %>%
       mutate(scenario = RCP_scenarios[k])
 
@@ -509,16 +510,16 @@ rbindlist(all_scenario) %>%
   geom_point(aes(x = year, y = vulnerability, colour = percent_unknown * 100, shape = capping)) +
   facet_wrap(~scenario, ncol = 2) +
   scale_y_continuous(limits = c(68000000, 150000000), expand = c(0, 0), breaks = c(80000000, 100000000, 120000000, 140000000), labels = c("80", "100", "120", "140")) +
-  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
-  scale_colour_viridis("Cells extrapolated \nbeyond max SCA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 13)) +
-  scale_shape_discrete("Abundance loss \ncapped at max SCA") +
-  ylab("Pollination production risk (million tonnes)") +
+  scale_x_continuous(limits = c(2015, 2052), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+  scale_colour_viridis("Cells extrapolated \nbeyond max STA (%)", breaks = c(0, 3, 6, 9, 12), limits = c(0, 14)) +
+  scale_shape_discrete("Abundance loss \ncapped at max STA") +
+  ylab("Production risk (million tonnes)") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank(),
         strip.text.x = element_text(size = 12))
 
-ggsave("rcp_85_all-models_cells_greater_max_4.png", scale = 1, dpi = 350)
+ggsave("rcp_85_all-models_cells_greater_max_5.png", scale = 1, dpi = 350)
 
 ## check raster overlap for value discrepancy after changing resolutions to the same (0.5)
 # assign 0 as NA for intersection
