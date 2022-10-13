@@ -320,13 +320,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -510,7 +511,7 @@ for(m in 1:length(pollinated_crops)){
       summarise(total = sum(pollinator_vulnerability, na.rm = TRUE), 
                 pollination_production = sum(production)) %>%
       ungroup() %>%
-      mutate(year = 2049 - i)
+      mutate(year = 2051 - i)
   } 
 
   # plot for trends in pollination vulnerability
@@ -529,7 +530,7 @@ for(m in 1:length(pollinated_crops)){
 # script to adjust geographic regions, adjust for price, and then build plot
 # select just last year in series and remova na continents
 plot_obj <- rbindlist(change_obj) %>%
-  filter(year == 2048) %>%
+  filter(year == 2050) %>%
   filter(!is.na(continent))
 
 # merge the price per kg value with the pollination dependent monfreda, and convert to price per tonne
@@ -626,7 +627,7 @@ all_crop_data %>%
     scale_fill_manual("Crop", values = c("lightgrey", "black", "#D55E00", "#E69F00", "#0072B2",
                                          "#F0E442", "#009E73", "#56B4E9"),
                       labels = c("Cocoa", "Tropical fruits (not elsewhere)", "Fruits (not elsewhere)", "Mango" ,"Coffee", "Watermelon", "Coconut", "Other crops")) +
-    scale_x_continuous("\n2050 pollination dependent production at risk (million US$/annum)", 
+    scale_x_continuous("2050 production risk (million US$/annum)", 
                        breaks = c(0, 50000000, 100000000, 150000000, 200000000), 
                        labels = c(0, 50, 100, 150, 200), 
                        expand = c(0, 0), 
@@ -636,6 +637,4 @@ all_crop_data %>%
           strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
 # save figure for production risk
-ggsave("crop_production_risk_3.png", scale = 1.2, dpi = 350)
-
-
+ggsave("crop_production_risk_4.png", scale = 1.2, dpi = 350)
