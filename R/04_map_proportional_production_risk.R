@@ -371,7 +371,7 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of one element (2048-2050)
@@ -456,4 +456,4 @@ vulnerability_2050 <- climate_poll_data_future %>%
         axis.title = element_blank(),
         legend.position = "bottom")
 
-ggsave("vulnerability_weighted_production_map_9.png", scale = 1.1, dpi = 350)
+ggsave("vulnerability_weighted_production_map_10.png", scale = 1.1, dpi = 350)
