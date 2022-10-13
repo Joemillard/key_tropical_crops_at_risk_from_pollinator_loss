@@ -394,7 +394,7 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of one element (2048-2050)
@@ -478,6 +478,7 @@ for(i in 1:length(abundance_prod)){
 # map plot list for each abundance/production relationship
 vulnerability_2050 <- list()
 
+
 for(i in 1:length(abundance_prod)){
 
   # plot the ggplot map for climate anomaly - multipane plot for each map
@@ -485,8 +486,8 @@ for(i in 1:length(abundance_prod)){
     ggplot() +
     geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
     geom_tile(aes(x = x, y = y, fill = poll_vulnerability)) +
-    ggtitle(paste("2050 (slope parameter = ", abundance_prod[i], ")", sep = "")) +
-    scale_fill_viridis("Proportional production risk",
+    ggtitle(paste("slope parameter = ", abundance_prod[i], sep = "")) +
+    scale_fill_viridis("2050 proportional\nproduction risk",
                        na.value = "transparent", option = "plasma", direction = -1,
                        limits = c(0, 0.6), breaks = c(0, 0.2, 0.4, 0.6), labels = c("0", "0.2", "0.4", "0.6")) +
     coord_equal() +
@@ -500,6 +501,11 @@ for(i in 1:length(abundance_prod)){
           legend.position = "none")
 }
   
+# remove extra objects to free up space for save
+rm(crop_df_locs)
+rm(crop_df)
+rm(crop_df_all)
+
 # plot compiled map for pollination production risk
 vulnerability_2050[[1]] +
   vulnerability_2050[[2]] +
@@ -507,7 +513,7 @@ vulnerability_2050[[1]] +
   vulnerability_2050[[4]] +
   vulnerability_2050[[5]] + theme(legend.position = "bottom")
 
-ggsave("vulnerability_weighted_production_map_valid_relat_2.png", scale = 1.3, dpi = 350)
+ggsave("vulnerability_weighted_production_map_valid_relat_3.png", scale = 1.3, dpi = 350)
 
 # plot for standard deviation of cell level prodution risk
 for(i in 1:length(climate_poll_data_future)){
