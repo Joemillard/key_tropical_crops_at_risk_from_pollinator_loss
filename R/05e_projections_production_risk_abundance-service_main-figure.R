@@ -333,13 +333,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -473,7 +474,7 @@ for(k in 1:length(RCP_scenarios)){
   
   # create dataframe for exposed production and build datafrmae
   RCP_plot[[k]] <- rbindlist(vulnerable_production_jack) %>%
-    mutate(year = rep(c(seq(2048, 2016, -1)), 5)) %>%
+    mutate(year = rep(c(seq(2050, 2016, -1)), 5)) %>%
     mutate(scenario = RCP_scenarios[k])
   
 }
@@ -494,7 +495,7 @@ abundance_prod_change <- rbindlist(RCP_plot) %>%
   geom_line(aes(x = year, y = vulnerability, colour = abundance_service, group = abundance_group, linetype = linear_relationship)) +
   facet_grid(~scenario) +
   scale_y_continuous(limits = c(0.7, 2.5), expand = c(0, 0), breaks = c(1, 1.5, 2, 2.5), labels = c("1", "1.5", "2", "2.5")) +
-  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
+  scale_x_continuous(limits = c(2015, 2052), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE, option = "viridis") +
   scale_linetype_manual("Relationship", values = c("dashed", "solid")) +
   ylab("Production risk (index)") +
@@ -518,7 +519,7 @@ abundance_prod_change_rel <- rbindlist(RCP_plot) %>%
   facet_grid(~scenario) +
   scale_y_continuous(limits = c(0, 360000000), expand = c(0, 0), breaks = c(0, 80000000, 160000000, 240000000, 320000000), labels = c("0", "80",  "160",  "240", "320")) +
   geom_hline(yintercept = 1, linetype="dashed") +  
-  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045)) +
+  scale_x_continuous(limits = c(2015, 2052), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE) +
   scale_linetype_manual(values = c("dashed", "solid")) +
   ylab("Production risk  (million tonnes)") +
@@ -538,4 +539,4 @@ abundance_prod_change_rel <- rbindlist(RCP_plot) %>%
 bottom_row <- plot_grid(abundance_prod_change, abundance_prod_change_rel, ncol = 1)
 
 # save facetted plot
-ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute_7.png", scale = 1, dpi = 350)
+ggsave("rcp_85_pollination_exposure_abundance_mod_comb_absolute_8.png", scale = 1, dpi = 350)
