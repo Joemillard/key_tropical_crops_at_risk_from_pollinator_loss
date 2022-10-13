@@ -443,7 +443,7 @@ vulnerability_2050 <- climate_poll_data_future %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group), data = map_fort, fill = "grey", alpha = 0.3) +
   geom_tile(aes(x = x, y = y, fill = poll_vulnerability)) +
-  scale_fill_viridis("Proportional\nproduction risk",
+  scale_fill_viridis("2050 proportional\nproduction risk",
                        na.value = "transparent", option = "plasma", direction = -1,
                        limits = c(0, 0.6), breaks = c(0, 0.2, 0.4, 0.6), labels = c("0", "0.2", "0.4", "0.6")) +
   coord_equal() +
