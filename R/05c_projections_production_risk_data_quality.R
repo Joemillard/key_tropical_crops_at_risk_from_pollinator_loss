@@ -380,13 +380,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # set up vector of climate models
@@ -515,7 +516,7 @@ for(m in 1:length(quality_string)){
       
 # create dataframe for exposed production and build datafrmae
 RCP_plot <- rbindlist(vulnerable_production_jack) %>%
-  mutate(year = rep(c(seq(2048, 2016, -1)), 4)) %>%
+  mutate(year = rep(c(seq(2050, 2016, -1)), 4)) %>%
   mutate(scenario = RCP_scenarios)
 
 # bind together the outputs and plot as facetted plot for each scenario
@@ -532,8 +533,8 @@ RCP_plot %>%
   geom_point(aes(x = year, y = index, colour = quality), alpha = 0.5) +
   scale_y_continuous(limits = c(0.9, 1.7), expand = c(0, 0), breaks = c(1, 1.2, 1.4, 1.6)) +
   geom_hline(yintercept = 1, linetype="dashed") +
-  scale_x_continuous(limits = c(2015, 2050), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045)) +
-  scale_colour_manual("Data quality", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442"), labels = c("0-1", ">= 0.25", ">= 0.5", ">= 0.75")) +
+  scale_x_continuous(limits = c(2015, 2052), expand = c(0, 0), breaks = c(2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
+  scale_colour_manual("Earthstat \ndata quality", values = c("black", "#E69F00", "#56B4E9", "#009E73", "#F0E442"), labels = c("0-1", ">= 0.25", ">= 0.5", ">= 0.75")) +
   ylab("Production risk (index)") +
   xlab("") +
   theme_bw() +
@@ -541,4 +542,4 @@ RCP_plot %>%
         strip.text.x = element_text(size = 12))
 
 # save facetted plot
-ggsave("rcp_60_pollination_exposure_data_quality_3.png", scale = 0.9, dpi = 350)
+ggsave("rcp_60_pollination_exposure_data_quality_4.png", scale = 0.9, dpi = 350)
