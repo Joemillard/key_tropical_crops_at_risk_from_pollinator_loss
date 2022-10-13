@@ -355,13 +355,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -478,7 +479,7 @@ for(j in 1:length(rate_rasters_adj_sub)){
 
 # create dataframe for exposed production and build datafrmae
 for(i in 1:length(all_crop_list)){
-  all_crop_list[[i]] <- data.frame("crop" = pollination_production_sum$it_vec[i], "production_prop" = all_crop_list[[i]], "year" = c(seq(2048, 2016, -1)))
+  all_crop_list[[i]] <- data.frame("crop" = pollination_production_sum$it_vec[i], "production_prop" = all_crop_list[[i]], "year" = c(seq(2050, 2016, -1)))
 }
   
 rbindlist(all_crop_list) %>%
@@ -497,8 +498,8 @@ rbindlist(all_crop_list) %>%
       geom_line(aes(x = year, y = production_prop)) +
       facet_wrap(~crop) +
       xlab(NULL) +
-      scale_y_continuous("Total production risk (%)", limits = c(0, 100), expand = c(0, 0)) +
+      scale_y_continuous("Production risk (%)", limits = c(0, 100), expand = c(0, 0)) +
       theme_bw() +
       theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5))
 
-ggsave("crop_percentage_prod_change_2.png", scale = 1, dpi = 350)
+ggsave("crop_percentage_prod_change_3.png", scale = 1, dpi = 350)
