@@ -1,6 +1,6 @@
 
 --- 
-title: Climate change and land-use scenarios of crop pollination risk
+title: Key tropical crops at risk from pollinator biodiversity loss due to climate change and land use
 author: 
 - Joseph Millard^1,^^2^\*, Charlotte L. Outhwaite^3^, Lynn V. Dicks^4^, Jeff Ollerton^5^, Silvia Ceausu^3^,
 - Tim Newbold^3^\newline
