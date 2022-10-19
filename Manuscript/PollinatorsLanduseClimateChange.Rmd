@@ -34,11 +34,14 @@ header-includes:
 
 *Corresponding author. Email: joseph.millard@nhm.ac.uk
 
-# Abstract
-Recent studies have highlighted rapid ongoing changes in insect biodiversity, in part driven by the interaction of land-use and climate change. Insect pollinator biodiversity specifically has been shown to be undergoing rapid changes, with potential consequences for the provision of crop pollination. Here, we present a global assessment of the interactive effects of climate change and land use on pollinator abundance, and predictions of the risk to crop pollination worldwide from the inferred changes in pollinator abundance. We show that the combination of agricultural land use and recent climate change is associated with particularly large reductions in the abundance of insect pollinators. We further show that the tropics will likely experience the greatest risk of future pollination shortfalls, putting at risk the production of crops that depend on insect pollination. The risk to these crops is highest, and predicted to increase most rapidly, in regions of sub-Saharan Africa and northern South America, especially in areas used to produce cocoa, mango, pumpkin, melon, watermelon, and coffee. The health, well-being, and livelihoods of billions of people rely to some extent upon the availability and affordability of crops dependent on animal pollination. Climate change and agricultural land use could put these people’s wellbeing at high risk.
+# One sentence summary
+Pollinator abundance losses from agriculture and climate change risk production of key crops in the tropics, especially cocoa
 
-## One sentence summary
-Climate change associated crop pollination risk is highest, and predicted to increase most rapidly, in regions of sub-Saharan Africa and northern South America, especially in areas used to produce cocoa, mango, pumpkin, melon, watermelon, and coffee.
+# Short title
+Pollinator changes and pollination risk
+
+# Abstract
+Recent studies have highlighted rapid ongoing changes in insect biodiversity, in part driven by the interaction of land-use and climate change. Insect pollinator biodiversity specifically has been shown to be changing rapidly, with potential consequences for the provision of crop pollination. The role of land-use-climate interactions in pollinator biodiversity changes remains poorly understood. Here, we present a global assessment of the interactive effects of climate change and land use on pollinator abundance, and predictions of the risk to crop pollination worldwide from the inferred abundance changes. We show that the interactive combination of agricultural land use and recent climate change is associated with particularly large reductions in the abundance of insect pollinators. As a result, it is expected that the tropics will likely experience the greatest risk to crop production from pollinator biodiversity losses. The risk to these crops is highest, and predicted to increase most rapidly, in regions of sub-Saharan Africa and northern South America, especially in areas used to produce cocoa, mango, pumpkin, melon, watermelon, and coffee. The health, well-being, and livelihoods of billions of people rely to some extent upon the availability and affordability of crops dependent on animal pollination. Climate change and agricultural land use could put these people’s wellbeing at high risk, if loss of pollinator abundance translates into crop pollination shortfalls.
 
 # Introduction
 
