@@ -223,7 +223,7 @@ rbindlist(abundance_model) %>%
   scale_linetype_discrete(c("solid", "dashed")) +
   coord_cartesian(xlim = c(0, 1.5), ylim = c(0, 4.3), expand = FALSE) +
   scale_y_continuous(breaks = c(0.9162907, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640)) +
-  xlab("Standardised climate anomaly") +
+  xlab("Standardised temperature anomaly") +
   ylab("Total abundance") +
   theme_bw() +
   theme(panel.grid = element_blank(), legend.position = "none")
