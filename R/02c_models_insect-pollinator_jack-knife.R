@@ -217,7 +217,7 @@ for(m in 1:length(pollinat_bound)){
     geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
     scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
     scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    xlab("Standardised climate anomaly") +
+    xlab("Standardised temperature anomaly") +
     ylab("Total abundance") +
     theme_bw() +
     theme(panel.grid = element_blank())
