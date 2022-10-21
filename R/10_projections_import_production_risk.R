@@ -682,7 +682,7 @@ import_risk_total <- base_map %>%
   annotation_custom(
     grob = std_dev_plot, xmin = 12300000, xmax = 20000000, ymin = 5000000, ymax = 12000000)
 
-ggsave("import_sub_plot.png", scale = 1.4, dpi = 350)
+ggsave("import_sub_plot.png", scale = 1.2, dpi = 350)
 
 # map with just raw import risk per capita
 import_risk_total_log_map <- base_map %>% 
@@ -770,7 +770,7 @@ all_crop_data %>%
         strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
 # import risk plot for total at risk
-ggsave("total_import_risk_2.png", scale = 1.2, dpi = 350)
+ggsave("total_import_risk_2.png", scale = 1, dpi = 350)
 
 # write to csv for Silvia
 write.csv(suppliers, "total_import_risk.csv")
