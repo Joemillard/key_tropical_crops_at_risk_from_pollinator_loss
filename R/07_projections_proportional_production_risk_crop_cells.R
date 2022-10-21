@@ -427,13 +427,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -555,7 +556,7 @@ for(i in 1:length(all_crop_list)){
               vul_prod = sum(production * abundance_change, na.rm = TRUE),
               total_prod = sum(total_production, na.rm = TRUE),
               prop_prod = vul_prod/total_prod) %>%
-    mutate(year = 2049 - j)
+    mutate(year = 2051 - j)
   }
   
   all_crop_fin[[i]] <- rbindlist(median_all_crop)
@@ -589,7 +590,7 @@ rbindlist(all_crop_fin) %>%
                      nudge_x = .04,
                      nudge_y = c(0.02),
                      segment.curvature = 0.1) +
-    scale_size_continuous("Mean producer price \n(2015-2019; USD/tonne)") +
+    scale_size_continuous("Mean producer price \n(2015-2019; US$/tonne)") +
     scale_y_continuous(limits = c(0, 0.6), breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5), labels = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"), expand = c(0, 0)) +
     scale_x_continuous(breaks = c(0, 0.1, 0.2, 0.3), labels = c("0", "0.1", "0.2", "0.3"), limits = c(0, 0.3), expand = c(0, 0)) +
     xlab("Change in crop pollination risk") + 
@@ -597,7 +598,7 @@ rbindlist(all_crop_fin) %>%
     theme_bw() +
     theme(panel.grid = element_blank(), strip.text = element_text(size = 10.5), legend.position = "bottom")
 
-ggsave("top_change_crop_7.png", scale = 0.85, dpi = 350)
+ggsave("top_change_crop_8.png", scale = 0.85, dpi = 350)
 
 # calculate crop with highest proportion of production at risk and write to csv
 rbindlist(all_crop_fin) %>%
