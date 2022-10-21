@@ -279,7 +279,7 @@ for(m in 1:length(pollinat_bound)){
     geom_ribbon(aes(x = StdTmeanAnomaly, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
     scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
     scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    xlab("Standardised climate anomaly") +
+    xlab("Standardised temperature anomaly") +
     ylab("Total abundance") +
     theme_bw() +
     theme(panel.grid = element_blank())
@@ -295,4 +295,4 @@ plot_grid(main_plot_abundance[[1]] +
             scale_y_continuous(limits = c(1, 8), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
             theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_active_month.png", scale = 1, dpi = 350)
+ggsave("pollinating_non-pollinating_active_month.png", scale = 1.2, dpi = 350)
