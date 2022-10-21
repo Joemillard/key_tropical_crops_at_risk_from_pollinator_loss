@@ -36,7 +36,8 @@ population_size <- read.csv("data/population-past-future.csv") %>%
 
 # read in the proportional trade flow data
 trade_flow <- readRDS(here::here("data/trade_flow/proportional_pollination_flow.rds")) %>%
-  select(-country_flow, -total_flow)
+  select(-country_flow, -total_flow) %>%
+  mutate(prop_flow = percent_flow / 100)
 
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
@@ -413,13 +414,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -543,7 +545,7 @@ for(i in 1:length(std_high_abun_adj)){
     group_by(SOVEREIGNT, ISO3, REGION) %>%
     summarise(total_production = sum(pollinator_vulnerability, na.rm = TRUE)) %>% 
     ungroup() %>%
-    mutate(year = 2049 - i)
+    mutate(year = 2051 - i)
 } 
 
 # plot for trends in pollination vulnerability
@@ -555,7 +557,7 @@ change_obj <- rbindlist(country_sums) %>%
 # calculate import risk,a nd convert to index
 joined_flows <- inner_join(trade_flow, change_obj, by = c("reporter_countries" = "SOVEREIGNT")) %>%
   ungroup() %>%
-  mutate(import_risk = total_production * percent_flow) %>%
+  mutate(import_risk = total_production * prop_flow) %>%
   select(partner_countries, year, import_risk) %>%
   group_by(partner_countries, year) %>%
   summarise(total_import_risk = sum(import_risk)) %>%
@@ -571,29 +573,6 @@ change_importers <- joined_flows %>%
   select(partner_countries, index_diff, total_import_risk) %>%
   unique() %>%
   arrange(desc(index_diff))
-
-# build map of global import risk
-import_risk_map <- base_map %>% 
-  fortify() %>%
-  left_join(change_importers, by = c("id" = "partner_countries")) %>%
-  ggplot() +
-  geom_polygon(aes(x = long, y = lat, fill = index_diff, group = group)) +
-  theme_bw() +
-  scale_fill_viridis("Import risk change (2006-2050)",
-                     na.value = "grey", option = "inferno", direction = -1, 
-                     breaks = c(0, 0.5, 1), limits = c(0, 1.5), labels = c("0", "0.5", "1")) +
-  guides(fill = guide_colourbar(ticks = FALSE, title.position="top")) +
-  coord_equal() +
-  theme(panel.background = element_blank(),
-        panel.bord = element_blank(),
-        panel.grid = element_blank(), 
-        axis.text = element_blank(),    
-        axis.ticks = element_blank(), 
-        axis.title = element_blank(), legend.position = "bottom")
-
-ggsave("country_level_import_risk_map.png", scale = 1.2, dpi = 350)
-
-write.csv(change_importers %>% select(-total_import_risk) %>% unique(), "change_import_risk.csv")
 
 # combined with continental data
 change_import_cont <- change_importers %>%
@@ -643,36 +622,9 @@ majority_supplier <- trade_flow %>%
   ungroup() %>%
   filter(percent_flow == maximum)
 
-#country_region <- change_import_cont %>%
-#  select(partner_countries, REGION) %>%
-#  unique()
-
-# add separate regions
-#country_region$main_region[country_region$REGION %in% c("Europe", "North America")] <- "North America & Europe"
-#country_region$main_region[country_region$REGION %in% c("Asia", "Australia")] <- "Asia & Australia"
-#country_region$main_region[country_region$REGION %in% c("Africa")] <- "Africa"
-#country_region$main_region[country_region$REGION %in% c("South America and the Caribbean")] <- "South America & the Caribbean"
-
-# plot the rates of change against supplier
-supplier_risk <- suppliers %>%
-  left_join(country_region, by = "partner_countries") %>%
-  filter(REGION != "Antarctica") %>%
-  ggplot() + 
-  geom_violin(aes(x = n, y = index_diff), orientation = "y", alpha = 0.2, fill = "grey", colour = NA) +
-  geom_point(aes(x = n, y = index_diff, colour = main_region)) +
-  theme_bw() +
-  xlab("Total suppliers") +
-  ylab("Import risk change") +
-  scale_colour_manual("Geographic region", values = c("#000000", "#E69F00", "#009E73", "#56B4E9")) +
-  scale_fill_manual("Geographic region", values = c("#000000", "#E69F00", "#009E73", "#56B4E9")) +
-  scale_x_continuous(expand = c(0, 0), breaks = c(0, 50, 100, 150, 200), limits = c(0, 150)) +
-  scale_y_continuous(expand = c(0, 0), breaks = c(0, 0.5, 1, 1.5), labels = c(0, 0.5, 1, 1.5), limits = c(0, 1.6)) +
-  guides(colour=guide_legend(nrow=2,byrow=TRUE, title.position="top")) +
-  theme(panel.grid = element_blank(), legend.position = "bottom")
-
 # calc total 2050 import risk
 total_import_risk <- joined_flows %>%
-  filter(year == "2048") %>%
+  filter(year == "2050") %>%
   select(partner_countries, year, total_import_risk) %>%
   unique()
 
@@ -682,25 +634,26 @@ suppliers <- total_import_risk %>%
   mutate(per_capita_pollination = total_import_risk/average_pop)
 
 # group the categories of climate anomaly into factors
-suppliers$value_group[suppliers$per_capita_pollination > 0.08204932] <- "75-100"
-suppliers$value_group[suppliers$per_capita_pollination > 0.02742838 & suppliers$per_capita_pollination <= 0.08204932 ] <- "50-75"
-suppliers$value_group[suppliers$per_capita_pollination > 0.007590929 & suppliers$per_capita_pollination <= 0.02742838 ] <- "25-50"
-suppliers$value_group[suppliers$per_capita_pollination <= 0.007590929] <- "0-25"
+suppliers$value_group[suppliers$per_capita_pollination <= quantile(suppliers$per_capita_pollination, 0.25, na.rm = TRUE)] <- "0-25"
+suppliers$value_group[suppliers$per_capita_pollination >= quantile(suppliers$per_capita_pollination, 0.25, na.rm = TRUE)] <- "25-50"
+suppliers$value_group[suppliers$per_capita_pollination >= quantile(suppliers$per_capita_pollination, 0.5, na.rm = TRUE)] <- "50-75"
+suppliers$value_group[suppliers$per_capita_pollination >= quantile(suppliers$per_capita_pollination, 0.75, na.rm = TRUE)] <- "75-100"
 
 # map of standard deviation among scenarios
 std_dev_plot <- ggplotGrob(suppliers %>%
                              mutate(partner_countries = fct_reorder(partner_countries, -per_capita_pollination)) %>%
                              #mutate(value_group = fct_reorder(value_group, -per_capita_pollination)) %>%
                                       ggplot() +
-                                      geom_bar(aes(x = partner_countries, y = log10(per_capita_pollination *10000000), colour = value_group, fill = value_group), stat = "identity") +
+                                      geom_bar(aes(x = partner_countries, y = log10(per_capita_pollination *1000000000), colour = value_group, fill = value_group), stat = "identity") +
                                       scale_y_continuous(expand = c(0, 0), limits = c(0, 7.3),
                                                          breaks = c(7, 5, 3, 1),
-                                                         labels = c(expression("1x10"^1), expression("1x10"^-2), expression("1x10"^-4), expression("1x10"^-6))) +
+                                                         labels = c(expression("1x10"^-2), expression("1x10"^-4), expression("1x10"^-6), expression("1x10"^-8))) +
                                       scale_fill_viridis_d("Percentile", direction = -1, option = "plasma", na.translate = F,
                                                            labels = c("0-25", "25-50", "50-75", "75-100")) +
                              scale_colour_viridis_d("Percentile", direction = -1, option = "plasma", na.translate = F,
                                                   labels = c("0-25", "25-50", "50-75", "75-100")) +
-                                      ylab("Tonnes/capita") +
+
+                                      ylab("Tonnes/capita/annum") +
                                       xlab("Country") +
                                       theme_bw() +
                                       theme(panel.grid = element_blank(), 
@@ -716,7 +669,7 @@ import_risk_total <- base_map %>%
   geom_polygon(aes(x = long, y = lat,  group = group), fill = "grey") +
   geom_polygon(aes(x = long, y = lat, fill = value_group, group = group)) +
   theme_bw() +
-  scale_fill_viridis_d("Import risk\n(Tonnes/capita; percentile)", direction = -1, option = "plasma", na.translate = F,
+  scale_fill_viridis_d("2050 import production risk\n(Tonnes/capita/annum; percentile)", direction = -1, option = "plasma", na.translate = F,
                        labels = c("0-25", "25-50", "50-75", "75-100")) +
   guides(fill = guide_legend(nrow = 2,byrow = TRUE)) +
   coord_equal() +
@@ -737,10 +690,11 @@ import_risk_total_log_map <- base_map %>%
   left_join(suppliers, by = c("id" = "partner_countries")) %>% 
   ggplot() +
   geom_polygon(aes(x = long, y = lat,  group = group), fill = "grey") +
-  geom_polygon(aes(x = long, y = lat, fill = log10(per_capita_pollination *10000000), group = group)) +
+  geom_polygon(aes(x = long, y = lat, fill = log10(per_capita_pollination *1000000000), group = group)) +
   theme_bw() +
-  scale_fill_viridis("Import risk\n(Tonnes/capita)", direction = -1, option = "plasma",
-                     expand = c(0, 0), limits = c(0, 7.3), breaks = c(7, 5, 3, 1),  labels = c(expression("1x10"^1), expression("1x10"^-2), expression("1x10"^-4), expression("1x10"^-6))) +
+  scale_fill_viridis("2050 import risk\n(Tonnes/capita/annum)", direction = -1, option = "plasma",
+                     expand = c(0, 0), limits = c(0, 7.3), breaks = c(7, 5, 3, 1), 
+                     labels = c(expression("1x10"^-2), expression("1x10"^-4), expression("1x10"^-6), expression("1x10"^-8))) +
   coord_equal() +
   theme(panel.background = element_blank(),
         panel.bord = element_blank(),
@@ -810,13 +764,13 @@ all_crop_data %>%
     geom_bar(aes(y = ISO3, x = total_import_risk), stat = "identity") + 
     theme_bw() +
     ylab("Country (ISO3)") +
-    scale_x_continuous("2050 pollination dependent production total import risk (million tonnes/annum)", breaks = c(0, 10000000, 20000000, 30000000), 
-                                  labels = c(0, 10, 20, 30)) +
+    scale_x_continuous("2050 import production risk (thousand tonnes/annum)", breaks = c(0, 100000, 200000, 300000), 
+                                  labels = c(0, 100, 200, 300)) +
     theme(panel.grid = element_blank(), axis.ticks = element_blank(), panel.border = element_blank(),
         strip.background = element_rect(fill = NA), axis.line.x = element_line())
 
 # import risk plot for total at risk
-ggsave("total_import_risk.png", scale = 1.2, dpi = 350)
+ggsave("total_import_risk_2.png", scale = 1.2, dpi = 350)
 
 # write to csv for Silvia
 write.csv(suppliers, "total_import_risk.csv")
