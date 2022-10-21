@@ -405,13 +405,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -540,7 +541,7 @@ for(i in 1:length(std_high_abun_adj)){
               all_production = sum(total_production),
               percent_pollinated = (pollination_production/all_production) * 100) %>%
     ungroup() %>%
-    mutate(year = 2049 - i)
+    mutate(year = 2051 - i)
 } 
 
 # plot for trends in pollination vulnerability
