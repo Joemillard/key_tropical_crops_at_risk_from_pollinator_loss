@@ -288,11 +288,11 @@ for(m in 1:length(pollinat_bound)){
 
 # plot for the pollinating insects and non-pollinating insects - climate anomaly of 4 corresponds to ~100% abundance loss
 plot_grid(main_plot_abundance[[1]] +
-            ggtitle("Pollinating insects") + 
+            ggtitle("(A) Pollinating insects") + 
             scale_y_continuous(limits = c(1, 8), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
             theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
-            ggtitle("Non-pollinating insects") +
+            ggtitle("(B) Non-pollinating insects") +
             scale_y_continuous(limits = c(1, 8), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
             theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_active_month.png", scale = 1.2, dpi = 350)
+ggsave("pollinating_non-pollinating_active_month.png", scale = 1.1, dpi = 350)
