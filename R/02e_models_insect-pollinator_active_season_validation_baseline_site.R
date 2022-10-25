@@ -103,8 +103,6 @@ PREDICTS_pollinators <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - under
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
 
-
-
 # correct for sampling effort
 PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
 
@@ -290,35 +288,33 @@ for(m in 1:length(predict_climate_list)){
   
 }
 
-# reformat data for plotting
-reformat_sensitivity <- function(X, temp_threshold){
+# set up empty percentage change vector
+percentage_change <- c()
+
+for(i in 1:length(model_2c_abundance)){
   
-  data_fin <- X %>%
-    dplyr::filter(standard_anom >= 0) %>%
-    dplyr::filter(standard_anom <= 1) %>%
-    mutate(temp_threshold = temp_threshold) %>%
-    group_by(Predominant_land_use) %>%
-    arrange(standard_anom) %>%
-    mutate(difference_change = (exp(y_value[1]) - exp(tail(y_value, n = 1))) / exp(y_value[1])) %>%
-    mutate(upper_conf_change = (exp(y_value_plus[1]) - exp(tail(y_value_minus, n = 1))) / exp(y_value_plus[1])) %>%
-    mutate(lower_conf_change = (exp(y_value_minus[1]) - exp(tail(y_value_plus, n = 1))) / exp(y_value_minus[1])) %>%
-    ungroup()
+  # predict abundance at 0 warming on cropland
+  zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
+  zero_warming_abundance <- predict(model_2c_abundance[[i]], zero_data, re.form = NA)
+  zero_warming_abundance <- exp(zero_warming_abundance)
   
-  return(data_fin)
+  # predict abundance at 1 STA warming on cropland
+  one_data <- data.frame("standard_anom" = 1, Predominant_land_use = "Cropland")
+  one_warming_abundance <- predict(model_2c_abundance[[i]], one_data, re.form = NA)
+  one_warming_abundance <- exp(one_warming_abundance)
+  
+  # calculate percentage change -- 0.9947735 
+  percentage_change[i] <- (zero_warming_abundance - one_warming_abundance) / zero_warming_abundance
 }
- 
-# calculate difference in y value over 0-1 standard anomaly and plot
-sensitive_object <- mapply(X = abundance_model, FUN = reformat_sensitivity, temp_threshold = temp_threshold, SIMPLIFY = FALSE) %>%
-  rbindlist() %>%
-  dplyr::select(Predominant_land_use, temp_threshold, difference_change, upper_conf_change, lower_conf_change) %>%
-  unique()
-  
+
+# build change of abundance dataframe
+abundance_frame <- data.frame(temp_threshold, percentage_change)
+
 # plot of change according to active season threshold
-sensitive_object %>%
-  filter(Predominant_land_use != "Primary vegetation") %>%
-  mutate(Predominant_land_use = factor(Predominant_land_use, levels = c("Cropland"))) %>%
+abundance_frame %>%
+  mutate(Predominant_land_use = factor("Cropland", levels = c("Cropland"))) %>%
   ggplot() +
-    geom_point(aes(x = temp_threshold, y = (difference_change * -1), colour = Predominant_land_use), position=position_dodge(width=1)) +
+    geom_point(aes(x = temp_threshold, y = (percentage_change * -1), colour = Predominant_land_use), position=position_dodge(width=1)) +
     geom_hline(yintercept = 0, linetype = "dotted") +
     theme_bw() +
     scale_y_continuous(breaks = c(-0.5, -0.25, 0, 0.25, 0.5), labels = c("-50", "-25", "0", "25", "50")) +
