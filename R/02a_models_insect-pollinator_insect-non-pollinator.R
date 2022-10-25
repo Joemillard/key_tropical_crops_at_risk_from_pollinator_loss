@@ -65,6 +65,24 @@ PREDICTS_non_pollinating <- PREDICTS %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
 
+# calculate variation in sampling effect
+PREDICTS_non_pollinating %>%
+  group_by(SS) %>%
+  summarise(sampling_variation = sd(Sampling_effort, na.rm = TRUE)) %>%
+  mutate(varies = ifelse(sampling_variation > 0, 1, 0)) %>%
+  mutate(rows = 1) %>%
+  summarise(total_vary = sum(varies, na.rm = TRUE), total = sum(rows)) %>%
+  mutate(percentage = (total_vary / total) * 100)
+
+# calculate variation in sampling effect
+PREDICTS_pollinators_orig %>%
+  group_by(SS) %>%
+  summarise(sampling_variation = sd(Sampling_effort, na.rm = TRUE)) %>%
+  mutate(varies = ifelse(sampling_variation > 0, 1, 0)) %>%
+  mutate(rows = 1) %>%
+  summarise(total_vary = sum(varies, na.rm = TRUE), total = sum(rows)) %>%
+  mutate(percentage = (total_vary / total) * 100)
+
 # create table of number of unique species
 PREDICTS_non_pollinating %>%
   select(Class, Order, Best_guess_binomial) %>%
