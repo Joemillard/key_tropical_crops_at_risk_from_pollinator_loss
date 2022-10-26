@@ -13,6 +13,19 @@ library(cowplot)
 library(viridis)
 library(parallel)
 
+# read in PREDICTS site active season baseline change
+baseline_change <- read.csv("outputs/predicts_site_baseline_change.csv") %>%
+  mutate(temp_threshold = 10) %>%
+  mutate(approach = "PREDICTS_baseline") %>%
+  rename(percentage_change = x) %>%
+  select(-X)
+
+# read in main text no active season percentage change
+no_active_season <- read.csv("outputs/no_active_season_change.csv") %>%
+  select(-X) %>%
+  mutate(Main_text = "Main text calculation") %>%
+  rename(percentage_change = x)
+
 # number of each month
 month_number <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
 month_number_filt <- paste("\\.", month_number, "\\.", sep = "")
@@ -128,7 +141,7 @@ PRED_sites_sp <- PRED_sites %>%
   SpatialPoints()
 
 # set active temperature threshold, and empty list to assign to
-temp_threshold <- c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+temp_threshold <- c(-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 predict_climate_list <- list()
 
 # record initial time to calculate length of process time
@@ -308,19 +321,23 @@ for(i in 1:length(model_2c_abundance)){
 }
 
 # build change of abundance dataframe
-abundance_frame <- data.frame(temp_threshold, percentage_change)
+abundance_frame <- data.frame(temp_threshold, percentage_change) %>%
+  mutate(approach = "Baseline") %>%
+  rbind(baseline_change)
 
 # plot of change according to active season threshold
 abundance_frame %>%
   mutate(Predominant_land_use = factor("Cropland", levels = c("Cropland"))) %>%
   ggplot() +
-    geom_point(aes(x = temp_threshold, y = (percentage_change * -1), colour = Predominant_land_use), position=position_dodge(width=1)) +
-    geom_hline(yintercept = 0, linetype = "dotted") +
+    geom_point(aes(x = temp_threshold, y = (percentage_change * -1), colour = approach)) +
+    geom_hline(yintercept = 0, linetype = "dotted", alpha = 0.9) +
+    geom_hline(yintercept = (no_active_season$percentage_change * -1), linetype = "dashed", colour = "red") +
     theme_bw() +
-    scale_y_continuous(breaks = c(-0.5, -0.25, 0, 0.25, 0.5), labels = c("-50", "-25", "0", "25", "50")) +
-    ylab("Mean abundance change (%)") +
+    scale_y_continuous(breaks = c(-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5), labels = c("-100", "-75", "-50", "-25", "0", "25", "50")) +
+    ylab("Cropland mean abundance change (%)") +
     xlab("Active season temp. threshold (\u00B0C)") +
-    scale_colour_manual("Land-use type", values = c( "#E69F00")) +
-    theme(panel.grid = element_blank())
+    scale_colour_manual("Active season calculation", values = c("#E69F00", "black"), labels = c("Baseline", "PREDICTS site")) +
+    theme(panel.grid = element_blank()) +
+    guides(colour = guide_legend(order = 2), linetype = guide_legend(order = 1))
 
-ggsave("pollinating-insects_active_season_sensitivity_3.png", scale = 0.9, dpi = 350)
+ggsave("pollinating-insects_active_season_sensitivity_4.png", scale = 0.9, dpi = 350)
