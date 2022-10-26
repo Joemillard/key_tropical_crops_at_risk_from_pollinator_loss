@@ -13,13 +13,15 @@ library(cowplot)
 library(viridis)
 library(snow)
 
+# source in additional functions
+source("R/00_functions.R")
 
 # read in the original predicts database 
 PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/Data/PREDICTS/database.rds") %>%
-  mutate(COL_ID = as.character(COL_ID))
-
-# source in additional functions
-source("R/00_functions.R")
+  mutate(COL_ID = as.character(COL_ID)) %>%
+  filter(Class == "Insecta") %>%
+  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
+  droplevels()
 
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
@@ -39,7 +41,8 @@ PREDICTS_non_pollinating <- PREDICTS %>%
   droplevels()
 
 # bind together the two dataframes
-pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
+#pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
+pollinat_bound <- list(PREDICTS)
 
 # set up vector for filtering for vertebrates and invertebrates
 predict_climate_list <- list()
@@ -104,8 +107,6 @@ calc_anomaly <- function(i){
       
       return(c(avg_temp=avg_temp, Anom = Anom, StdAnom = StdAnom, n_months = n_months))    
       
-      #temperatureVars <- rbind(temperatureVars, c(avg_temp=avg_temp, Anom = Anom, StdAnom = StdAnom, n_months = n_months))
-      
     }else{
       
       # which are the good months
@@ -135,8 +136,6 @@ calc_anomaly <- function(i){
       
       return(c(avg_temp=avg_temp, Anom = Anom, StdAnom = StdAnom, n_months = n_months))
       
-      #temperatureVars <- rbind(temperatureVars, c(avg_temp=avg_temp, Anom = Anom, StdAnom = StdAnom, n_months = n_months))
-      
     }}else{
       avg_temp <- NA
       Anom <- NA
@@ -145,7 +144,6 @@ calc_anomaly <- function(i){
       
       return(c(avg_temp=avg_temp, Anom = Anom, StdAnom = StdAnom, n_months = n_months))    
       
-      #temperatureVars <- rbind(temperatureVars, c(avg_temp=avg_temp, Anom = Anom, StdAnom = StdAnom, n_months = n_months))
     }
 }
 
@@ -168,14 +166,6 @@ for(j in 1:length(pollinat_bound)){
   # set id column for merging back into correct place
   order.sites.div$id_col <- 1:nrow(order.sites.div)
   
-  # CO: I have commented this out as the month in the original format is used in the 
-  # code I have taken from the insects paper.
-  # # PREDICTS sites with the month of the recording
-  # PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
-  #   mutate(Sample_end_latest = paste("X", substr(Sample_end_latest, start = 1, stop = 7), sep = "")) %>%
-  #   mutate(Sample_end_latest = gsub("-", ".", Sample_end_latest)) %>%
-  #   filter(!is.na(Latitude))
-  
   PRED_sites <- order.sites.div %>%
     filter(!is.na(Latitude))
   
@@ -183,13 +173,6 @@ for(j in 1:length(pollinat_bound)){
   # take names of values for 1901 to 1931
   # CO: edited values taken to be those for 1901-1930 (30yr baseline)
   tmp1901_1930 <- tmp[[names(tmp)[1:360]]]
-  
-  # # extract the points for each the predicts coordinates
-  # predicts_sp <- PRED_sites %>%
-  #   select(Longitude, Latitude) %>%
-  #   filter(!is.na(Latitude)) %>%
-  #   SpatialPoints()
-  
   
   #### Added by CO: code to determine anomaly values for each site ####
   wgs84 <- crs(tmp)
@@ -286,13 +269,30 @@ for(m in 1:length(pollinat_bound)){
   
 }
 
+# predict abundance at 0 warming on cropland
+zero_data <- data.frame("StdTmeanAnomaly" = 0, Predominant_land_use = "Cropland")
+zero_warming_abundance <- predict(model_2c_abundance[[1]], zero_data, re.form = NA)
+zero_warming_abundance <- exp(zero_warming_abundance) # 7275.349
+
+# predict abundance at 1 STA warming on cropland
+one_data <- data.frame("StdTmeanAnomaly" = 1, Predominant_land_use = "Cropland")
+one_warming_abundance <- predict(model_2c_abundance[[1]], one_data, re.form = NA)
+one_warming_abundance <- exp(one_warming_abundance) # 38.02435
+
+# calculate percentage change -- 0.9947735 
+baseline_change <- (zero_warming_abundance - one_warming_abundance) / zero_warming_abundance
+
+# write percentage change to disk for active season
+write.csv(baseline_change, "predicts_site_baseline_change.csv")
+
 # plot for the pollinating insects and non-pollinating insects - climate anomaly of 4 corresponds to ~100% abundance loss
 plot_grid(main_plot_abundance[[1]] +
-            ggtitle("(A) Pollinating insects") + 
-            scale_y_continuous(limits = c(1, 8), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
+           # ggtitle("(A) Pollinating insects") + 
+            scale_y_continuous(limits = c(2, 7), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
+            scale_x_continuous(limits = c(0, 2)) +
             theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
             ggtitle("(B) Non-pollinating insects") +
             scale_y_continuous(limits = c(1, 8), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
             theme(legend.position = "bottom"), ncol = 2)
 
-ggsave("pollinating_non-pollinating_active_month.png", scale = 1.1, dpi = 350)
+ggsave("all_insects_PREDICTS_active_month_.png", scale = 1, dpi = 350)
