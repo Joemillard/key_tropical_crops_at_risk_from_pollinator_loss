@@ -266,6 +266,22 @@ for(m in 1:length(pollinat_bound)){
   
 }
 
+# predict abundance at 0 warming on cropland
+zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
+zero_warming_abundance <- predict(model_2c_abundance[[1]], zero_data, re.form = NA)
+zero_warming_abundance <- exp(zero_warming_abundance)
+
+# predict abundance at 1 STA warming on cropland
+one_data <- data.frame("standard_anom" = 1, Predominant_land_use = "Cropland")
+one_warming_abundance <- predict(model_2c_abundance[[1]], one_data, re.form = NA)
+one_warming_abundance <- exp(one_warming_abundance)
+
+# calculate percentage change 
+percentage_change <- (zero_warming_abundance - one_warming_abundance) / zero_warming_abundance
+
+# write percentage change to disk for active season
+write.csv(percentage_change, "outputs/no_active_season_change.csv")
+
 # plot for the pollinating insects and non-pollinating insects - climate anomaly of 4 corresponds to ~100% abundance loss
 plot_grid(main_plot_abundance[[1]] +
             ggtitle("(A) Pollinating insects") + 
