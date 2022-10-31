@@ -141,7 +141,7 @@ PRED_sites_sp <- PRED_sites %>%
   SpatialPoints()
 
 # set active temperature threshold, and empty list to assign to
-temp_threshold <- c(-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+temp_threshold <- c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 predict_climate_list <- list()
 
 # record initial time to calculate length of process time
