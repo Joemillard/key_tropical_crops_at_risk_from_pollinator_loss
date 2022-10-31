@@ -239,10 +239,16 @@ for(m in 1:length(pollinat_bound)){
   
   # species richness, standard anom as a factor
   model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS), data = predict_climate_list[[m]]) 
-  print(AIC(model_2c_abundance[[m]]))
+  #print(AIC(model_2c_abundance[[m]]))
+  
+  # retrive model R squared values
+  print(StatisticalModels::R2GLMER(model_2c_abundance[[m]]))
   
   model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[m]]) 
-  print(AIC(model_2c_abundance[[m]]))
+  #print(AIC(model_2c_abundance[[m]]))
+  
+  # retrive model R squared values
+  print(StatisticalModels::R2GLMER(model_2c_abundance[[m]]))
   
   # run predictions for the model of standard anomaly
   abundance_model[[m]] <- predict_continuous(model = model_2c_abundance[[m]],
@@ -265,6 +271,9 @@ for(m in 1:length(pollinat_bound)){
     theme(panel.grid = element_blank())
   
 }
+
+
+
 
 # predict abundance at 0 warming on cropland
 zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
