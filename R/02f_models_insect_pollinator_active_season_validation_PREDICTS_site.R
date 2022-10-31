@@ -16,13 +16,6 @@ library(snow)
 # source in additional functions
 source("R/00_functions.R")
 
-# read in the original predicts database 
-PREDICTS <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/Data/PREDICTS/database.rds") %>%
-  mutate(COL_ID = as.character(COL_ID)) %>%
-  filter(Class == "Insecta") %>%
-  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
-  droplevels()
-
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
@@ -33,16 +26,8 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
 
-# filter the pollinators from the overall predicts database
-PREDICTS_non_pollinating <- PREDICTS %>%
-  filter(Class == "Insecta") %>%
-  filter(!COL_ID %in% as.character(PREDICTS_pollinators_orig$COL_ID)) %>%
-  dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
-  droplevels()
-
 # bind together the two dataframes
-#pollinat_bound <- list(PREDICTS_pollinators_orig, PREDICTS_non_pollinating)
-pollinat_bound <- list(PREDICTS)
+pollinat_bound <- list(PREDICTS_pollinators_orig)
 
 # set up vector for filtering for vertebrates and invertebrates
 predict_climate_list <- list()
@@ -53,24 +38,24 @@ thresh <- 10
 # charlie's function to calculate PREDICTS site anomaly
 calc_anomaly <- function(i){
   
-  #Get end sample date for sample in predicts
+  # Get end sample date for sample in predicts
   sampDate <- predicts_sp$Sample_end_latest[i]
   
-  #Reformat date for string matching
+  # Reformat date for string matching
   sampDate <- substr(sampDate,1, 7)
   sampDate <- gsub("-", ".", sampDate, fixed = TRUE)
   
-  #Match date in predicts with month in CRU climate data
+  # Match date in predicts with month in CRU climate data
   month_match <- which(names_sub==sampDate)
   
   # edit: use months from 5 year pre-sample, rather than 1 year
   surrounding_months <- names_tmp[(month_match-59):(month_match)]
   
-  #Create a layer for average temperature in the year preceding end sample date
+  # Create a layer for average temperature in the year preceding end sample date
   temp <- tmp[[surrounding_months]]
   
   ## Mask to improve speed
-  mask <- trim(rasterize(SP[1, ], temp[[1]]))
+  mask <- trim(rasterize(SP[i, ], temp[[1]]))
   mapCrop <- crop(temp, mask) 
   
   # there are instances where there are no months above the threshold and
@@ -207,7 +192,7 @@ for(j in 1:length(pollinat_bound)){
     cl = cl,X = (1:nrow(predicts_sp)), FUN = calc_anomaly)))
   
   snow::stopCluster(cl)
-
+  
   # Time difference of 1.165101 hours on Charlie's laptop
   st2 <- Sys.time()
   print(st2 - st1)
@@ -220,7 +205,7 @@ for(j in 1:length(pollinat_bound)){
   predicts_sp$TmeanAnomaly <- temperatureVars$Anom
   predicts_sp$StdTmeanAnomaly <- temperatureVars$StdAnom
   predicts_sp$n_months <- temperatureVars$n_months
-
+  
   predicts_climate <- predicts_sp@data
   
   # add 1 for abundance and simpson diversity
@@ -247,26 +232,6 @@ for(m in 1:length(pollinat_bound)){
   model_2c_abundance[[m]] <- lmerTest::lmer(log(Total_abundance) ~ StdTmeanAnomaly * Predominant_land_use + (1|SS) + (1|SSB), data = predict_climate_list[[m]]) 
   print(AIC(model_2c_abundance[[m]]))
   
-  # run predictions for the model of standard anomaly
-  abundance_model[[m]] <- predict_continuous(model = model_2c_abundance[[m]],
-                                             model_data = predict_climate_list[[m]],
-                                             response_variable = "Total_abundance",
-                                             categorical_variable = c("Predominant_land_use"),
-                                             continuous_variable = c("StdTmeanAnomaly"),
-                                             continuous_transformation = "",
-                                             random_variable = c("SS", "SSB", "SSBS"))
-  
-  # plot for standardised anomaly and land-use for abundance
-  main_plot_abundance[[m]] <- ggplot(abundance_model[[m]]) +
-    geom_line(aes(x = StdTmeanAnomaly, y = y_value, colour = Predominant_land_use), size = 1.5) +
-    geom_ribbon(aes(x = StdTmeanAnomaly, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    xlab("Standardised temperature anomaly") +
-    ylab("Total abundance") +
-    theme_bw() +
-    theme(panel.grid = element_blank())
-  
 }
 
 # predict abundance at 0 warming on cropland
@@ -284,15 +249,3 @@ baseline_change <- (zero_warming_abundance - one_warming_abundance) / zero_warmi
 
 # write percentage change to disk for active season
 write.csv(baseline_change, "predicts_site_baseline_change.csv")
-
-# plot for the pollinating insects and non-pollinating insects - climate anomaly of 4 corresponds to ~100% abundance loss
-plot_grid(main_plot_abundance[[1]] +
-           # ggtitle("(A) Pollinating insects") + 
-            scale_y_continuous(limits = c(2, 7), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
-            scale_x_continuous(limits = c(0, 2)) +
-            theme(legend.position = "bottom"), main_plot_abundance[[2]] + 
-            ggtitle("(B) Non-pollinating insects") +
-            scale_y_continuous(limits = c(1, 8), breaks = c(0.9360934, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468, 7.154615, 7.847763), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560)) +
-            theme(legend.position = "bottom"), ncol = 2)
-
-ggsave("all_insects_PREDICTS_active_month_.png", scale = 1, dpi = 350)
