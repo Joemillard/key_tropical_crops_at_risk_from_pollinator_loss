@@ -272,9 +272,6 @@ for(m in 1:length(pollinat_bound)){
   
 }
 
-
-
-
 # predict abundance at 0 warming on cropland
 zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
 zero_warming_abundance <- predict(model_2c_abundance[[1]], zero_data, re.form = NA)
