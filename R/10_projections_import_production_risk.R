@@ -39,6 +39,8 @@ trade_flow <- readRDS(here::here("data/trade_flow/proportional_pollination_flow_
   select(-country_flow, -total_flow) %>%
   mutate(prop_flow = percent_flow / 100)
 
+# work out how much production stays in a particular country (i.e. is not exported)
+
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
