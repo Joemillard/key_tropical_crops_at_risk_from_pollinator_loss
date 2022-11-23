@@ -21,7 +21,7 @@ source("R/00_functions.R")
 population_size <- read.csv("data/population-past-future.csv") %>%
   filter(Year %in% c(2015, 2016, 2017, 2018, 2019)) %>%
   group_by(Entity) %>%
-  summarise(average_pop = mean(Population..historical.estimates.and.future.projections.))%>%
+  summarise(average_pop = mean(Population..historical.estimates.and.future.projections., na.rm = TRUE))%>%
   filter(!Entity %in% c("Africa", "Asia", "World", "Western Sahara", 
                         "Oceania", "North America", "South America", "Europe")) %>%
   mutate(Entity = gsub("United States", "United States of America", Entity)) %>%
@@ -34,8 +34,8 @@ population_size <- read.csv("data/population-past-future.csv") %>%
   mutate(Entity = gsub("Bahamas", "The Bahamas", Entity))%>%
   mutate(Entity = gsub("Guinea-Bissau", "Guinea Bissau", Entity))
 
-# read in the proportional trade flow data
-trade_flow <- readRDS(here::here("data/trade_flow/proportional_pollination_flow.rds")) %>%
+# read in the proportional trade flow data, now without isolation measure
+trade_flow <- readRDS(here::here("data/trade_flow/proportional_pollination_flow_non_isolation.rds")) %>%
   select(-country_flow, -total_flow) %>%
   mutate(prop_flow = percent_flow / 100)
 
@@ -396,7 +396,7 @@ crop.total_all <- projectRaster(crop.total_all, crs = "+proj=moll +datum=WGS84 +
 crop.total <- projectRaster(crop.total, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
 # calculate total pollination dependent production
-total_production <- sum(crop.total[])
+total_production <- sum(crop.total[], na.rm = TRUE)
 
 ## standardised climate anomaly script
 # calculate the mean and sd of the baseline values
@@ -560,7 +560,7 @@ joined_flows <- inner_join(trade_flow, change_obj, by = c("reporter_countries" =
   mutate(import_risk = total_production * prop_flow) %>%
   select(partner_countries, year, import_risk) %>%
   group_by(partner_countries, year) %>%
-  summarise(total_import_risk = sum(import_risk)) %>%
+  summarise(total_import_risk = sum(import_risk, na.rm = TRUE)) %>%
   mutate(pct_change = total_import_risk/lag(total_import_risk, default = total_import_risk[1])) %>%
   mutate(index = cumprod(pct_change)) %>%
   ungroup()
@@ -743,7 +743,7 @@ top_countries <- suppliers_region %>%
 low_crop_data <- suppliers_region %>%
   filter(!ISO3 %in% top_countries) %>%
   group_by(main_region) %>%
-  summarise(ISO3 = "Other", total_import_risk = sum(total_import_risk))
+  summarise(ISO3 = "Other", total_import_risk = sum(total_import_risk, na.rm = TRUE))
 
 # combine low level production dataframe onto main frame
 all_crop_data <- suppliers_region %>%
@@ -773,4 +773,4 @@ all_crop_data %>%
 ggsave("total_import_risk_2.png", scale = 1, dpi = 350)
 
 # write to csv for Silvia
-write.csv(suppliers, "total_import_risk.csv")
+write.csv(suppliers, "total_import_risk_no_isoation.csv")
