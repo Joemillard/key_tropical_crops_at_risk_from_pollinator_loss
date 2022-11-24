@@ -17,6 +17,12 @@ library(patchwork)
 # source in additional functions
 source("R/00_functions.R")
 
+# bring in basemap for climate site plot 
+base_map <- get_basemap()
+
+# reproject basemap
+base_map <- spTransform(base_map, CRS = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+
 # read in local population sizes
 population_size <- read.csv("data/population-past-future.csv") %>%
   filter(Year %in% c(2015, 2016, 2017, 2018, 2019)) %>%
@@ -38,6 +44,10 @@ population_size <- read.csv("data/population-past-future.csv") %>%
 trade_flow <- readRDS(here::here("data/trade_flow/proportional_pollination_flow_non_isolation.rds")) %>%
   select(-country_flow, -total_flow) %>%
   mutate(prop_flow = percent_flow / 100)
+
+## merge trade_flow with ISO3 codes
+#trade_flow <- base_map@data %>% select(ISO3, SOVEREIGNT) %>%
+#  inner_join(trade_flow, by = c("SOVEREIGNT" = "reporter_countries"))
 
 # work out how much production stays in a particular country (i.e. is not exported)
 
@@ -251,11 +261,7 @@ adjusted_climate <- rbindlist(raster_means) %>%
 # bind the adjusted climate data back onto the predicts sites
 predicts_climate <- inner_join(order.sites.div, adjusted_climate, by = "id_col")
 
-# bring in basemap for climate site plot 
-base_map <- get_basemap()
 
-# reproject basemap
-base_map <- spTransform(base_map, CRS = CRS("+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
 
 # add 1 for abundance and simpson diversity
 predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
@@ -616,13 +622,6 @@ suppliers <- trade_flow %>%
   group_by(partner_countries) %>%
   tally() %>%
   inner_join(all_change, by = "partner_countries")
-
-# calculate the main supplier for each country
-majority_supplier <- trade_flow %>%
-  group_by(reporter_countries) %>%
-  mutate(maximum = max(percent_flow)) %>%
-  ungroup() %>%
-  filter(percent_flow == maximum)
 
 # calc total 2050 import risk
 total_import_risk <- joined_flows %>%
