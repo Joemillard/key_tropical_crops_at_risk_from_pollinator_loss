@@ -2,7 +2,7 @@
 --- 
 title: Key tropical crops at risk from pollinator biodiversity loss due to climate change and land use
 author: 
-- Joseph Millard^1,^^2^\*, Charlotte L. Outhwaite^3^, Silvia Ceausu^3^, Luísa G. Carvalheiro^4,^^5^, 
+- Joseph Millard^1,^^2^\*, Charlotte L. Outhwaite^3^, Silvia Ceaușu^3^, Luísa G. Carvalheiro^4,^^5^, 
 -  Felipe Deodato da Silva Silva^6^, Lynn V. Dicks^7^, Jeff Ollerton^8^, Tim Newbold^3^\newline
 output:
   bookdown::pdf_document2:
