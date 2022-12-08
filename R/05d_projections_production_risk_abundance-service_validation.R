@@ -389,8 +389,8 @@ average_clim_models <- function(yr, RCP, clim_models){
 
 ### working function for abundance/production relationship
 # working curve for linear function - top is concave, bottom is convex
-curve(-sqrt((x-1)^32) + 1)
-curve(sqrt(x^2))
+curve(-sqrt((x-1)^2) + 1)
+curve(sqrt(x^9))
 
 
 # figure for supp info
