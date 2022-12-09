@@ -34,7 +34,7 @@ SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/I
 # filter for main pollinating taxa
 PREDICTS_pollinators <- PREDICTS_pollinators_orig %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
-  dplyr::filter(Order %in% c("Diptera", "Hymenoptera")) %>%
+  dplyr::filter(Phylum %in% "Arthropoda") %>%
   droplevels()
 
 # correct for sampling effort
@@ -511,19 +511,19 @@ for(k in 1:length(RCP_scenarios)){
       std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$layer <= 0] <- zero_warming_abundance
       
       # calculate percentage change from place with 0 warming, and convert to vulnerability
-      std_high_abun_adj[[i]]$abundance_change <- std_high_abun_adj[[i]]$abundance / zero_warming_abundance
+      std_high_abun_adj[[i]]$abundance_change <- 1-(std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
       
-      # if the relationship is concave (or linear) use one linear function (less than 5 in iterator)
-      if(j <= 5){
-        std_high_abun_adj[[i]]$production_change <- 1-(-sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1)
+      # if the relationship is concave (or linear) use one linear function (greater than 5 in iterator)
+      if(j > 5){
+        std_high_abun_adj[[i]]$production_change <- -sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1
       print(j)
         
         }
       
-      # if the relationship is concave use other linear function (greater than 5 in iterator)
+      # if the relationship is convex use other linear function (less than 5 in iterator)
       else{
         print("correct")
-        std_high_abun_adj[[i]]$production_change <- 1-(sqrt(std_high_abun_adj[[i]]$abundance_change^abundance_prod[j]))
+        std_high_abun_adj[[i]]$production_change <- sqrt(std_high_abun_adj[[i]]$abundance_change^abundance_prod[j])
       }
       
       # convert spatial dataframe to coordinates
@@ -549,7 +549,7 @@ for(k in 1:length(RCP_scenarios)){
     
     vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
                                                       "model" = "GFDL|HadGEM2|IPSL|MIROC5",
-                                                      "scenario" = "rcp85", 
+                                                      "scenario" = RCP_scenarios[k], 
                                                       "abundance_service" = abundance_prod[j],
                                                   "linear_relationship" = linear_relationship[j])
   }
@@ -576,11 +576,11 @@ abundance_prod_change <- rbindlist(RCP_plot) %>%
   ggplot() +
   geom_line(aes(x = year, y = vulnerability, colour = abundance_service, group = abundance_group, linetype = linear_relationship)) +
   facet_grid(~scenario) +
-  scale_y_continuous(limits = c(0.7, 2.5), expand = c(0, 0), breaks = c(1, 1.5, 2, 2.5), labels = c("1", "1.5", "2", "2.5")) +
+  scale_y_continuous(limits = c(0.3, 9.2), expand = c(0, 0), breaks = c(1, 3, 5, 7, 9), labels = c(1, 3, 5, 7, 9)) +
   scale_x_continuous(limits = c(2015, 2052), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE) +
   scale_linetype_manual(values = c("dashed", "solid", "dotted")) +
-  ylab("Production risk (index)") +
+  ylab("Production risk (index)\n") +
   xlab("") +
   theme_bw() +
   theme(panel.grid = element_blank(),
@@ -599,7 +599,7 @@ abundance_prod_change_rel <- rbindlist(RCP_plot) %>%
   ggplot() +
   geom_line(aes(x = year, y = vulnerability, colour = abundance_service, group = abundance_group, linetype = linear_relationship)) +
   facet_grid(~scenario) +
-  scale_y_continuous(limits = c(0, 360000000), expand = c(0, 0), breaks = c(0, 80000000, 160000000, 240000000, 320000000), labels = c("0", "80",  "160",  "240", "320")) +
+  scale_y_continuous(limits = c(0, 350000000), expand = c(0, 0), breaks = c(0, 80000000, 160000000, 240000000, 320000000), labels = c("0", "80", "160", "240", "320")) +
   geom_hline(yintercept = 1, linetype="dashed") +  
   scale_x_continuous(limits = c(2015, 2052), expand = c(0, 0), breaks = c(2020, 2025, 2030, 2035, 2040, 2045, 2050)) +
   scale_colour_viridis("Slope parameter", discrete = TRUE) +
