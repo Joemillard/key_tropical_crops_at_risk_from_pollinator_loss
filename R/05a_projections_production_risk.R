@@ -401,8 +401,10 @@ climate_model_combs_adj <- append("GFDL|HadGEM2|IPSL|MIROC5", climate_model_comb
 # set up list for each RCP plot
 RCP_plot <- list()
 
-# vector for percent_unknown - i.e. beyond the max value of ~1.6
-percent_unknown <- c()
+# predict abundance at 0 warming on cropland
+zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
+zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
+zero_warming_abundance <- exp(zero_warming_abundance)
 
 # iterate through each RCP scenario
 for(k in 1:length(RCP_scenarios)){
@@ -416,6 +418,14 @@ for(k in 1:length(RCP_scenarios)){
   for(j in 1:length(climate_model_combs_adj)){   
     
     print(climate_model_combs_adj[j])
+    
+    # set up empty list for standardised climate anomaly
+    std_high_abun_adj <- list()
+    std_anom_high <- list()
+    
+    # set up vector for total production
+    vulnerable_production_list <- list()
+    vulnerable_production <- c()
     
     # iterate through each set of years as a rolling average
     for(i in 1:length(years_list)){
@@ -432,28 +442,9 @@ for(k in 1:length(RCP_scenarios)){
       tmp2069_71_climate_anomaly <- (mean.temp.2069.2071-tmp1901_1930mean)
       tmp2069_71std_climate_anomaly[[i]] <- (mean.temp.2069.2071-tmp1901_1930mean) / tmp1901_1930sd
       
-    }
-    
-    # set up empty list for standardised climate anomaly
-    std_high_abun_adj <- list()
-    std_anom_high <- list()
-    
-    # predict abundance at 0 warming on cropland
-    zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
-    zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
-    zero_warming_abundance <- exp(zero_warming_abundance)
-    
-    # for each set of climate anomaly data, predict abundance reduction for all climate anomaly values in each cell
-    # and then sum abundance adjusted pollination dependence
-    for(i in 1:length(tmp2069_71std_climate_anomaly)){
-      
       # convert the raster to a dataframe to plot with ggplot
       std_high_abun_adj[[i]] <- as(tmp2069_71std_climate_anomaly[[i]], "SpatialPixelsDataFrame")
       std_high_abun_adj[[i]] <- as.data.frame(std_high_abun_adj[[i]])
-      
-      percent_unknown[i] <- length(std_high_abun_adj[[i]]$layer[std_high_abun_adj[[i]]$layer > max_standard_anom]) / length(std_high_abun_adj[[i]]$layer)
-      
-      print(percent_unknown)
       
       # set up prediction data on basis of that set of years
       new_data_pred <- data.frame("standard_anom" = std_high_abun_adj[[i]]$layer, Predominant_land_use = "Cropland")
@@ -474,24 +465,14 @@ for(k in 1:length(RCP_scenarios)){
         unique() %>%
         SpatialPoints()
       
-    }
-    
-    # set up vector for total production
-    vulnerable_production_list <- list()
-    vulnerable_production <- c()
-    
-    # for each set of coordinates, extract the pollination dependent values and sum
-    for(i in 1:length(std_anom_high)){
-      
       # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
       vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
-      vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum()
+      vulnerable_production[i] <- unlist(vulnerable_production_list[[i]] * std_high_abun_adj[[i]]$abundance_change) %>% sum(na.rm = TRUE)
 
       
     }
     vulnerable_production_jack[[j]] <- data.frame("vulnerability" = vulnerable_production, 
-                                                  "model" = climate_model_combs_adj[j],
-                                                  percent_unknown) 
+                                                  "model" = climate_model_combs_adj[j]) 
   }
   
   # create dataframe for exposed production and build datafrmae
