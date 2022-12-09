@@ -39,8 +39,7 @@ tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 # read in the predicts pollinators
 PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - understand response to environmental change/outputs/PREDICTS_pollinators_8_exp.rds") %>%
   dplyr::select(-clade_rank, -confidence)  %>%
-  filter(Class == "Insecta") %>%
-  filter(Order %in% c("Diptera", "Hymenoptera")) %>%
+  dplyr::filter(Phylum %in% "Arthropoda") %>%
   dplyr::filter(Predominant_land_use %in% c("Cropland", "Primary vegetation")) %>%
   droplevels()
 
@@ -221,8 +220,9 @@ rbindlist(abundance_model) %>%
   scale_colour_manual("Land-use type", values = c("#E69F00")) +
   scale_alpha_discrete(range=c(0.15, 1)) +
   scale_linetype_discrete(c("solid", "dashed")) +
-  coord_cartesian(xlim = c(0, 1.5), ylim = c(0, 4.3), expand = FALSE) +
-  scale_y_continuous(breaks = c(0.9162907, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(2.5, 5, 10, 20, 40, 80, 160, 320, 640)) +
+  coord_cartesian(xlim = c(0, 1.65), ylim = c(1.609438, 4.3), expand = FALSE) +
+  scale_x_continuous(breaks = c(0, 0.5, 1, 1.5), labels = c("0", "0.5", "1", "1.5")) +
+  scale_y_continuous(breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
   xlab("Standardised temperature anomaly") +
   ylab("Total abundance") +
   theme_bw() +
