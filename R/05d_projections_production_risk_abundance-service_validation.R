@@ -492,6 +492,10 @@ for(k in 1:length(RCP_scenarios)){
     std_high_abun_adj <- list()
     std_anom_high <- list()
   
+    # set up vector for total production
+    vulnerable_production_list <- list()
+    vulnerable_production <- c()
+    
     # for each set of climate anomaly data, predict abundance reduction for all climate anomaly values in each cell
     # and then sum abundance adjusted pollination dependence
     for(i in 1:length(tmp2069_71std_climate_anomaly)){
@@ -511,19 +515,18 @@ for(k in 1:length(RCP_scenarios)){
       std_high_abun_adj[[i]]$abundance[std_high_abun_adj[[i]]$layer <= 0] <- zero_warming_abundance
       
       # calculate percentage change from place with 0 warming, and convert to vulnerability
-      std_high_abun_adj[[i]]$abundance_change <- 1-(std_high_abun_adj[[i]]$abundance / zero_warming_abundance)
+      std_high_abun_adj[[i]]$abundance_change <- std_high_abun_adj[[i]]$abundance / zero_warming_abundance
       
       # if the relationship is concave (or linear) use one linear function (greater than 5 in iterator)
       if(j > 5){
-        std_high_abun_adj[[i]]$production_change <- -sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1
+        std_high_abun_adj[[i]]$production_change <- 1 - (-sqrt((std_high_abun_adj[[i]]$abundance_change - 1) ^ abundance_prod[j]) + 1)
       print(j)
         
         }
       
       # if the relationship is convex use other linear function (less than 5 in iterator)
       else{
-        print("correct")
-        std_high_abun_adj[[i]]$production_change <- sqrt(std_high_abun_adj[[i]]$abundance_change^abundance_prod[j])
+        std_high_abun_adj[[i]]$production_change <- 1 - (sqrt(std_high_abun_adj[[i]]$abundance_change^abundance_prod[j]))
       }
       
       # convert spatial dataframe to coordinates
@@ -531,15 +534,6 @@ for(k in 1:length(RCP_scenarios)){
         dplyr::select(x, y) %>%
         unique() %>%
         SpatialPoints()
-      
-    }
-        
-    # set up vector for total production
-    vulnerable_production_list <- list()
-    vulnerable_production <- c()
-    
-    # for each set of coordinates, extract the pollination dependent values and sum
-    for(i in 1:length(std_anom_high)){
       
       # convert the climate anomaly raster to a spatial pixels data frame, and then rename the columns
       vulnerable_production_list[[i]] <- extract(crop.total, std_anom_high[[i]], na.rm = FALSE)
