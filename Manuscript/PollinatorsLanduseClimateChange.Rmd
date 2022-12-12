@@ -3,7 +3,7 @@
 title: Key tropical crops at risk from pollinator biodiversity loss due to climate change and land use
 author: 
 - Joseph Millard^1,^^2^\*, Charlotte L. Outhwaite^3^, Silvia Ceaușu^3^, Luísa G. Carvalheiro^4,^^5^, 
--  Felipe Deodato da Silva Silva^6^, Lynn V. Dicks^7^, Jeff Ollerton^8^, Tim Newbold^3^\newline
+-  Felipe Deodato da Silva e Silva^6^, Lynn V. Dicks^7^, Jeff Ollerton^8^, Tim Newbold^3^\newline
 output:
   bookdown::pdf_document2:
     latex_engine: pdflatex
@@ -89,7 +89,7 @@ Interacting effects of climate change and anthropogenic land use are rapidly res
 Thanks to Richard Gregory, Robin Freeman, and colleagues on the GLITRS project for useful discussions and comments. Thanks to Andy Purvis and Melinda Mills, who both provided support and guidance. Thanks also to Opeyemi Adedoja, Sabrina Gavini, Esther Kioko, Michael Kuhlmann, Zong-Xin Ren, and Manu Saunders, who provided input on our set of likely pollinating species, and to all contributors of the PREDICTS database.
 
 # Funding
-JM received PhD funding from the London NERC DTP and the RSPB. JM, TN and CLO receive funding from the UK Natural Environment Research Council (NERC; grant references: NE/R010811/1, NE/V006533/1 and NE/V006800/1). TN and SC receive funding from the UK Economic and Social Research Council (reference: ES/S008160/1). TN is additionally supported by a University Research Fellowship from the Royal Society.
+JM received PhD funding from the London NERC DTP and the RSPB. JM, TN and CLO receive funding from the UK Natural Environment Research Council (NERC; grant references: NE/R010811/1, NE/V006533/1 and NE/V006800/1). TN and SC receive funding from the UK Economic and Social Research Council (reference: ES/S008160/1). TN is additionally supported by a University Research Fellowship from the Royal Society. LGC was funded by the brazilian Conselho Nacional de Desenvolvimento Científico e Tecnológico [CNPq 307625/2021-4].
 
 # Author contributions
 Conceptualization: JM, TN
@@ -98,7 +98,7 @@ Data curation: JM, FDSS
 
 Formal analysis: JM
 
-Methodology: JM, CO, TN, LD, JO, FDSS, LC
+Methodology: JM, CO, TN, LD, JO, FDSS, LGC
 
 Investigation: JM, SC
 
@@ -108,7 +108,7 @@ Supervision: TN
 
 Writing – original draft: JM, TN
 
-Writing – review & editing: JM, TN, CO, LD, JO, SC, FDSS, LC
+Writing – review & editing: JM, TN, CO, LD, JO, SC, FDSS, LGC
 
 # Competing interests
 All authors declare that they have no competing interests.
