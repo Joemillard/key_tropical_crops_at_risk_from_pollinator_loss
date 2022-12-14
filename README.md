@@ -2,29 +2,47 @@
 
 This repository contains all the scripts used for the analysis carried out in the below paper, to be submitted:
 
-> Millard _et al_., (in prep). Worldwide vulnerability of local pollinator abundance and crop pollination to land-use and climate change.
+> Millard _et al_., (in review). Key tropical crops at risk from pollinator biodiversity loss due to climate change and land use
 
 Note that this repository is written relative to an R project file (.Rproj). Those wanting to reproduce this analysis should download the whole repo, and then open via the .Rproj file.
 
 To run the code in this repo you will need to download a series of datasets:
-1. The PREDICTS pollinator subset from either here (https://github.com/Joemillard/Global_effects_of_land-use_intensity_on_local_pollinator-biodiversity/tree/main/outputs) or here (https://figshare.com/articles/dataset/Global_effects_of_land-use_intensity_on_local_pollinator_biodiversity/12815669/2)
+1. The PREDICTS pollinator subset from either here (https://doi.org/10.5281/zenodo.7385950)
 2. Klein et al (2007) pollination dependence ratios from this GitHub repo in the folder (https://github.com/Joemillard/Worldwide-vulnerability-of-local-pollinator-abundance-and-crop-pollination-to-land-use-and-climate/tree/master/data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops)
-3. Estimates of global crop production from here (http://www.earthstat.org/harvested-area-yield-175-crops/)
-4. Historical estimates of climate change from here, same as in the previous paper but here just tmp (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.03/cruts.1905011326.v4.03/)
-5. ISIMIP anomaly projections of future climate change (folder is ISIMIPAnomalies.tar.gz) from onedrive shared by Tim here (https://liveuclac-my.sharepoint.com/:f:/r/personal/ucbttne_ucl_ac_uk/Documents/LandUseClimate/FutureClimate?csf=1&web=1&e=A1ihT0)
+3. Estimates of global crop production from Monfreda et al (2008) (see here to download http://www.earthstat.org/harvested-area-yield-175-crops/)
+4. Historical estimates of climate change from Harris et al (2020) (see here to download https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.03/cruts.1905011326.v4.03/)
+5. ISIMIP anomaly projections of future climate change from Warszawski et al (2014)
 
-The required scripts are as below, with figure numbers from JM's thesis chapter (as of 27/07/2021). Note that for some figures (i.e. Figure 1) I built the two parts of the figure separately, and then combined them manually in PowerPoint. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
+The required scripts are as below, with figure numbers from our initial submission on 14/12/2022. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
 
 ```R/00_functions.R```<br>
-```R/01_map_climate_data.R``` -- Figure 2<br> 
-```R/02a_models_insect-pollinator_insect-non-pollinator.R``` -- Figure 1<br>
-```R/02b_models_vertebrate-pollinator_vertebrate-non-pollinator.R``` -- Figure 1<br>
-```R/02c_models_insect-pollinator_jack-knife.R``` -- Figure S5<br>
-```R/03_map_pollinator_dependent_production.R``` -- Figure 2<br>
-```R/04_map_proportional_production_risk.R``` -- Figure 4<br>
-```R/05a_projections_production_risk.R``` -- Figure 3<br>
-```R/05b_projections_production_risk_validation.R``` -- Figure S2<br>
-```R/05c_projections_production_risk_data_quality.R``` -- Figure S4<br>
-```R/06_projections_proportional_production_risk_country.R``` -- Figure 4<br>
-```R/07_projections_proportional_production_risk_crop_cells.R``` -- Figure 5<br>
-```R/08_projections_proportional_production_risk_crop_total.R``` -- Figure S3<br>
+```R/01_map_climate_data.R``` Figure S8<br>
+```R/01a_map_predicts_sites.R ``` Figure S14<br>
+```R/02a_models_insect-pollinator_insect-non-pollinator.R``` Figure 1<br>
+```R/02c_models_insect-pollinator_jack-knife.R``` Figure S1<br>
+```R/02d_models_insect-pollinator_family_jack-knife.R``` Figure S2<br>
+```R/02e_models_insect-pollinator_active_season_validation_baseline_site.R``` Figure S3<br>
+```R/02f_models_insect_pollinator_active_season_validation_PREDICTS_site.R``` Figure S3<br>
+```R/03_map_pollinator_dependent_production.R``` Figure S8<br>
+```R/04_map_proportional_production_risk.R``` Figure 3A<br>
+```R/04a_map_proportional_production_risk_standard_dev.R``` Figure S10; Figure S9<br>
+```R/05a_projections_production_risk.R``` Figure S4<br>
+```R/05b_projections_production_risk_validation.R``` Figure S5<br>
+```R/05c_projections_production_risk_data_quality.R``` Figure S6<br>
+```R/05d_projections_production_risk_abundance-service_validation.R``` Figure S7<br>
+```R/05e_projections_production_risk_abundance-service_main-figure.R``` Figure 2<br>
+```R/06_projections_proportional_production_risk_country.R``` Figure S12<br>
+```R/06a_projections_total_production_risk_country.R```Figure 3B<br>
+```R/07_projections_proportional_production_risk_crop_cells.R``` Figure S13; Figure S11<br>
+```R/08_projections_proportional_production_risk_crop_total.R```<br>
+```R/09_trade_flow_formatting.R```<br>
+```R/10_projections_import_production_risk.R``` Figure 4<br>
+
+### References
+Harris, I., Osborn, T. J., Jones, P. & Lister, D. 2020. Version 4 of the CRU TS monthly high-resolution gridded multivariate climate dataset. Sci. Data 7, 109 
+
+Klein, A.M., Vaissière, B.E., Cane, J.H., Steffan-Dewenter, I., Cunningham, S.A., Kremen, C. and Tscharntke, T., 2007. Importance of pollinators in changing landscapes for world crops. Proceedings of the royal society B: biological sciences, 274(1608), pp.303-313.
+
+Monfreda, C., Ramankutty, N. and Foley, J.A., 2008. Farming the planet: 2. Geographic distribution of crop areas, yields, physiological types, and net primary production in the year 2000. Global biogeochemical cycles, 22(1).
+
+Warszawski, L. et al. 2014. The inter-sectoral impact model intercomparison project (ISI-MIP): project framework. Proc. Natl Acad. Sci. USA 111, 3228–3232
