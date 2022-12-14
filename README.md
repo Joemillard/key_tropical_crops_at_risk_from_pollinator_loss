@@ -1,4 +1,4 @@
-# Worldwide vulnerability of local pollinator abundance and crop pollination to land-use and climate change
+# Key tropical crops at risk from pollinator biodiversity loss due to climate change and land use
 
 This repository contains all the scripts used for the analysis carried out in the below paper, to be submitted:
 
@@ -7,7 +7,7 @@ This repository contains all the scripts used for the analysis carried out in th
 Note that this repository is written relative to an R project file (.Rproj). Those wanting to reproduce this analysis should download the whole repo, and then open via the .Rproj file.
 
 To run the code in this repo you will need to download a series of datasets:
-1. The PREDICTS pollinator subset from either here (https://doi.org/10.5281/zenodo.7385950)
+1. The PREDICTS pollinator subset from here (https://doi.org/10.5281/zenodo.7385950)
 2. Klein et al (2007) pollination dependence ratios from this GitHub repo in the folder (https://github.com/Joemillard/Worldwide-vulnerability-of-local-pollinator-abundance-and-crop-pollination-to-land-use-and-climate/tree/master/data/KleinPollinationDependentCrops.tar/KleinPollinationDependentCrops)
 3. Estimates of global crop production from Monfreda et al (2008) (see here to download http://www.earthstat.org/harvested-area-yield-175-crops/)
 4. Historical estimates of climate change from Harris et al (2020) (see here to download https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.03/cruts.1905011326.v4.03/)
