@@ -114,7 +114,7 @@ Writing – review & editing: JM, TN, CO, LD, JO, SC, FDSS, LGC
 All authors declare that they have no competing interests.
 
 # Data and materials availability
-All data will be made available on FigShare, and all code on both Zenodo and GitHub.
+All code is currently hosted openly on GitHub here (https://github.com/Joemillard/Worldwide-vulnerability-of-local-pollinator-abundance-and-crop-pollination-to-land-use-and-climate). On publication all data and code will be released on Zenodo.
 
 # Supplementary Materials
 Materials and Methods
