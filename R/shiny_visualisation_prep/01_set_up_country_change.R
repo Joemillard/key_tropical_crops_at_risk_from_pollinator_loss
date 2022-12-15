@@ -55,7 +55,7 @@ PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end
 
 # calculate the means and standard deviation for the beginning of the series
 # take names of values for 1901 to 1931
-tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
+tmp1901_1931 <- tmp[[names(tmp)[1:360]]]
 
 # extract the points for each the predicts coordinates
 PRED_sites_sp <- PRED_sites %>%
@@ -224,6 +224,8 @@ for(i in 1:length(cropdirs)){
 # file paths for each of per hectare application
 unlisted_crops <- unlist(crop.files)
 rate_rasters <- list()
+rate_rasters_adj <- list()
+rate_rasters_all <- list()
 
 # subset the file paths for just those that are pollination dependent to some extent
 # subset as strings to filter from klein_cleaned
@@ -232,9 +234,15 @@ pollinat_crops_simp <- gsub("D:/Extra_data_files/HarvestedAreaYield175Crops_Geot
 pollinat_crops_simp <- gsub('([^/]+$)', "", pollinat_crops_simp)
 pollinat_crops_simp <- gsub('/', "", pollinat_crops_simp)
 
-# read in each of the rasters
+# read in each of the rasters for pollinated crops
 for(i in 1:length(pollinated_crops)){
-  rate_rasters[[i]] <- raster(pollinated_crops[i])
+  rate_rasters[[i]] <- terra::rast(pollinated_crops[i])
+  print(i)
+}
+
+# read in each of the rasters for pollinated crops
+for(i in 1:length(crop.files)){
+  rate_rasters_all[[i]] <- terra::rast(crop.files[[i]])
   print(i)
 }
 
@@ -257,29 +265,18 @@ klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollinati
 klein_cleaned$dependence_ratio[klein_cleaned$Positive.impact.by.animal.pollination == "modest/great"] <- 0.45
 
 # calculate average and standard deviation of pollination dependence for each Monfreda crop
-av_dependence <- function(klein_cleaned){
-  klein_cleaned_av <- klein_cleaned %>%
-    group_by(MonfredaCrop) %>%
-    mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
-    mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
-    ungroup() %>%
-    select(MonfredaCrop, av, standard_dev) %>%
-    unique()
-  
-  return(klein_cleaned_av)
-}
+klein_cleaned_av <- klein_cleaned %>%
+  group_by(MonfredaCrop) %>%
+  mutate(av = mean(dependence_ratio, na.rm = TRUE)) %>%
+  mutate(standard_dev = sd(dependence_ratio, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(MonfredaCrop, av, standard_dev) %>%
+  unique()
 
 # subset klein_cleaned for those with crop data
-subset_klein <- function(klein_cleaned_av){
-  klein_cleaned_filt <- klein_cleaned_av %>%
-    filter(MonfredaCrop %in% pollinat_crops_simp) %>%
-    arrange(MonfredaCrop)
-  
-  return(klein_cleaned_filt)
-}
-
-# run function for average pollination dependence and subset klein for those with crop data
-klein_cleaned_filt <- subset_klein(av_dependence(klein_cleaned))
+klein_cleaned_filt <- klein_cleaned_av %>%
+  filter(MonfredaCrop %in% pollinat_crops_simp) %>%
+  arrange(MonfredaCrop)
 
 # multiply each raster by its pollination dependence for that crop
 rate_rasters_adj <- list()
@@ -288,13 +285,12 @@ for(i in 1:length(rate_rasters)){
   print(i)
 }
 
+rm(rate_rasters)
+
 # sum the production for all the rasters
 # organise all of the rasters into a stack and sum
-crop.total <- stack(rate_rasters_adj) %>% sum(na.rm = T)
-crop.total_all <- stack(rate_rasters) %>% sum(na.rm = T)
-
-# baseplot of proportion needing pollination
-plot((crop.total / crop.total_all) * 100)
+crop.total <- terra::rast(rate_rasters_adj) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
+crop.total_all <- terra::rast(rate_rasters_all) %>% terra::app(fun = "sum", na.rm = TRUE) %>% raster()
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 crop.total_all <- projectRaster(crop.total_all, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -306,8 +302,6 @@ crop.total <- projectRaster(crop.total, crs = "+proj=moll +datum=WGS84 +ellps=WG
 total_production <- sum(crop.total[])
 
 ## standardised climate anomaly script
-# take names of values for 1901 to 1931 - 30 year baseline
-tmp1901_1931 <- tmp[[names(tmp)[1:349]]]
 
 # calculate the mean and sd of the baseline values
 tmp1901_1931mean <- calc(tmp1901_1931, mean)
@@ -324,13 +318,14 @@ hist.mean.temp.1979.2013 <- stackApply(x = hist.mean.temp.1979.2013,indices = re
                                        fun = mean)
 
 # selection of years and empty year list
-years <- 2048:2050
+years <- 2049:2051
 years_list <- list()
 
 # set up list of years
-for(i in 1:33){
-  years <- years - 1
-  years_list[[i]] <- years
+for(i in 0:34){
+  
+  year <- years - i
+  years_list[[i+1]] <- year
 }
 
 # need to run for the average of climate models 
@@ -450,7 +445,7 @@ for(i in 1:length(std_high_abun_adj)){
               upp_conf = quantile(pollinator_vulnerability, probs = c(0.975), na.rm = TRUE), 
               lower_conf = quantile(pollinator_vulnerability, probs = c(0.025), na.rm = TRUE)) %>%
     ungroup() %>%
-    mutate(year = 2049 - i)
+    mutate(year = 2051 - i)
 } 
 
 # plot for trends in pollination vulnerability
@@ -462,4 +457,4 @@ change_obj <- rbindlist(country_sums) %>%
   ungroup()
 
 # save the country change as an rds object
-saveRDS(change_obj, "country_change_pollination_dependence.rds")
+saveRDS(change_obj, "country_change_pollination_dependence_2.rds")
