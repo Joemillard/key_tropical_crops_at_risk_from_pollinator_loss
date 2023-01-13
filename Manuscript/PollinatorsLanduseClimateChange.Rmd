@@ -13,7 +13,7 @@ markdown_extensions:
 - codehilite:
     linenums: true
 always_allow_html: true
-csl: science.csl
+csl: nature.csl
 bibliography: lu_cc_pollin_refs.bib
 header-includes:
   \usepackage{float}
@@ -91,36 +91,17 @@ Thanks to Richard Gregory, Robin Freeman, and colleagues on the GLITRS project f
 # Funding
 JM received PhD funding from the London NERC DTP and the RSPB. JM, TN and CLO receive funding from the UK Natural Environment Research Council (NERC; grant references: NE/R010811/1, NE/V006533/1 and NE/V006800/1). TN and SC receive funding from the UK Economic and Social Research Council (reference: ES/S008160/1). TN is additionally supported by a University Research Fellowship from the Royal Society. LGC was funded by the brazilian Conselho Nacional de Desenvolvimento Científico e Tecnológico [CNPq 307625/2021-4].
 
-# Author contributions
-Conceptualization: JM, TN
-
-Data curation: JM, FDSS
-
-Formal analysis: JM
-
-Methodology: JM, CO, TN, LD, JO, FDSS, LGC
-
-Investigation: JM, SC
-
-Visualization: JM
-
-Supervision: TN
-
-Writing – original draft: JM, TN
-
-Writing – review & editing: JM, TN, CO, LD, JO, SC, FDSS, LGC
+# Contributions
+JM and TN conceived the study. JM, CO, FDSS, JO, LD, LGC, SC, and TN designed the methodology of crop pollination risk and import production risk. All authors edited and approved the final version of the manuscript.
 
 # Competing interests
 All authors declare that they have no competing interests.
 
-# Data and materials availability
-All code is currently hosted openly on GitHub here (https://github.com/Joemillard/Worldwide-vulnerability-of-local-pollinator-abundance-and-crop-pollination-to-land-use-and-climate). On publication all data and code will be released on Zenodo.
+# Data availability
+All code is currently hosted openly on GitHub here (https://github.com/Joemillard/Worldwide-vulnerability-of-local-pollinator-abundance-and-crop-pollination-to-land-use-and-climate). On publication all code will be versioned on Zenodo.
 
-# Supplementary Materials
-Materials and Methods
+# Code availability
+Links to all data are currently hosted openly on GitHub here (https://github.com/Joemillard/Worldwide-vulnerability-of-local-pollinator-abundance-and-crop-pollination-to-land-use-and-climate). On publication all primary data and links will be versioned on Zenodo.
 
-Figs. S1-S14
-
-Tables 1-4
-
-References
+# Materials & Correspondence
+Correspondence should be addressed to Joseph Millard (joseph.millard@nhm.ac.uk)
