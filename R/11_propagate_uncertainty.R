@@ -357,7 +357,7 @@ average_clim_models <- function(yr, RCP, clim_models){
 abundance_prod <- c(2, 4, 8, 16, 32)
 
 # set up vector of climate models
-RCP_scenarios <- c("rcp60", "rcp26")
+RCP_scenarios <- c("rcp60", "rcp26", "rcp85")
 
 climate_model_combs <- c("GFDL","HadGEM2","IPSL","MIROC5")
 climate_model_combs_adj <- c()
@@ -472,29 +472,113 @@ bound_production_risk_year <- split(bound_production_risk, f = bound_production_
 # set up years vector
 years <- 2016:2050
 
-for(i in 1:length(bound_production_risk_year)){
-  # build density plot of values
-  bound_production_risk_year[[i]] %>%
-    ggplot() + 
-      geom_density(aes(vulnerability)) +
-      ggtitle(years[i]) +
-      theme_bw() +
-      theme(panel.grid = element_blank()) +
-      scale_x_continuous(limits = c(60180017, 129127256), "Production risk (million tonnes)", 
-                         breaks = c(60000000, 80000000, 100000000, 120000000, 140000000), labels = c("60", "80", "100", "120", "140")) +
-      scale_y_continuous(limits = c(0, 0.0000005), "Density", labels = c(0, expression("1x10"^-8), expression("2x10"^-8), expression("3x10"^-8), expression("4x10"^-8) ,expression("5x10"^-8)))
+# filter data for just 2016 
+bound_production_risk_year_2016 <- bound_production_risk_year[[1]] %>%
+  slice(sample(1:n()))
 
-  ggsave(paste("outputs/production_animation/production_risk", years[i], ".png", sep = "_"), scale = 1, dpi = 350)
+# convert ensemble to match with other strings
+bound_production_risk_year_2016$model[bound_production_risk_year_2016$model == "GFDL|HadGEM2|MIROC5"] <- "IPSL"
+bound_production_risk_year_2016$model[bound_production_risk_year_2016$model == "GFDL|IPSL|MIROC5"] <- "HadGEM2"
+bound_production_risk_year_2016$model[bound_production_risk_year_2016$model == "GFDL|HadGEM2|IPSL"] <- "MIROC5"
+bound_production_risk_year_2016$model[bound_production_risk_year_2016$model == "HadGEM2|IPSL|MIROC5"] <- "GFDL"
+bound_production_risk_year_2016$model[bound_production_risk_year_2016$model == "GFDL|HadGEM2|IPSL|MIROC5"] <- "All"
+
+bound_production_risk_year_2016$scenario[bound_production_risk_year_2016$scenario == "rcp26"] <- "2.6"
+bound_production_risk_year_2016$scenario[bound_production_risk_year_2016$scenario == "rcp85"] <- "8.5"
+bound_production_risk_year_2016$scenario[bound_production_risk_year_2016$scenario == "rcp60"] <- "6.0"
+
+# rcp scenarios
+RCP_combinations <- data.frame("RCP" = c("2.6", "6.0", "8.5", "RCP"), 
+                               x = c(80000000, 80000000, 80000000, 80000000), 
+                               y = c(13, 14, 15, 16), 
+                               size = c(0.7, 0.7, 0.7, 1.1))
+
+# ensembles
+ensembles <- data.frame("climate_ensemble" = 
+                          c("GFDL", "HadGEM2", "IPSL", "MIROC5", "All", "Ensemble"), 
+                        x = c(100000000, 100000000, 100000000, 100000000, 100000000, 100000000), 
+                        y = c(11, 12, 13, 14, 15, 16), 
+                        size = c(0.7, 0.7, 0.7, 0.7, 0.7, 1.1))
+
+# abundance production relationships
+ab_pr_combinations <- data.frame("Ab_Pr" = c(2, 4, 8, 16, 32, "Slope"), 
+                                 x = c(120000000, 120000000, 120000000, 120000000, 120000000, 120000000), 
+                                 y = c(11, 12, 13, 14, 15, 16), 
+                                 size = c(0.7, 0.7, 0.7, 0.7, 0.7, 1.1))
+
+# image of just the columns for the animation
+ggplot() + 
+  geom_text(aes(x = x, y = y, label = climate_ensemble, size = size), data = ensembles) +
+  geom_text(aes(x = x, y = y, label = Ab_Pr, size = size), data = ab_pr_combinations) +
+  geom_text(aes(x = x, y = y, label = RCP, size = size), data = RCP_combinations) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), 
+        legend.position = "none", 
+        axis.text = element_blank(),
+        axis.ticks = element_blank(), 
+        axis.title = element_blank(), 
+        panel.border = element_blank()) +
+  scale_size_area(na.value = "black") +
+  scale_x_continuous(limits = c(0, 129127256), "Production risk (million tonnes)", 
+                     breaks = c(0, 20000000, 40000000, 60000000, 80000000, 100000000, 120000000, 140000000), labels = c("0", "20", "40", "60", "80", "100", "120", "140")) +
+  scale_y_continuous("Frequency", limits = c(0, 20), expand = c(0, 0))
+
+ggsave("text_simulations.png", scale = 1, dpi = 350)
+
+# posterior risk for a single year in 2016
+for(i in 1:nrow(bound_production_risk_year_2016)){
+  
+  # rcp scenarios
+  RCP_combinations <- data.frame("RCP" = c("2.6", "6.0", "8.5", "RCP"), 
+                                 x = c(80000000, 80000000, 80000000, 80000000), 
+                                 y = c(13, 14, 15, 16), 
+                                 size = c(0.7, 0.7, 0.7, 1.1))
+  
+  # ensembles
+  ensembles <- data.frame("climate_ensemble" = 
+                            c("GFDL", "HadGEM2", "IPSL", "MIROC5", "All", "Ensemble"), 
+                          x = c(100000000, 100000000, 100000000, 100000000, 100000000, 100000000), 
+                          y = c(11, 12, 13, 14, 15, 16), 
+                          size = c(0.7, 0.7, 0.7, 0.7, 0.7, 1.1))
+  
+  # abundance production relationships
+  ab_pr_combinations <- data.frame("Ab_Pr" = c(2, 4, 8, 16, 32, "Slope"), 
+                                   x = c(120000000, 120000000, 120000000, 120000000, 120000000, 120000000), 
+                                   y = c(11, 12, 13, 14, 15, 16), 
+                                   size = c(0.7, 0.7, 0.7, 0.7, 0.7, 1.1))
+  
+  # build density plot of values
+  ensembles$colour_type[ensembles$climate_ensemble == bound_production_risk_year_2016$model[i]] <- "red"
+  ab_pr_combinations$colour_type[ab_pr_combinations$Ab_Pr == bound_production_risk_year_2016$relationship[i]] <- "red"
+  RCP_combinations$colour_type[RCP_combinations$RCP == bound_production_risk_year_2016$scenario[i]] <- "red"
+  
+  bound_production_risk_year_2016 %>%
+    ungroup() %>%
+    slice(1:i) %>%
+    ggplot() + 
+    geom_histogram(aes(vulnerability), colour = "lightgrey") +
+    geom_text(aes(x = x, y = y, label = climate_ensemble, size = size, colour = colour_type), data = ensembles) +
+    geom_text(aes(x = x, y = y, label = Ab_Pr, size = size, colour = colour_type), data = ab_pr_combinations) +
+    geom_text(aes(x = x, y = y, label = RCP, size = size, colour = colour_type), data = RCP_combinations) +
+    ggtitle(paste("Randomly sampled scenarios = ", i, sep = "")) +
+    theme_bw() +
+    theme(panel.grid = element_blank(), legend.position = "none") +
+    scale_size_area(na.value = "black") +
+    scale_x_continuous(limits = c(0, 129127256), "Production risk (million tonnes)", 
+                       breaks = c(0, 20000000, 40000000, 60000000, 80000000, 100000000, 120000000, 140000000), labels = c("0", "20", "40", "60", "80", "100", "120", "140")) +
+    scale_y_continuous("Frequency", limits = c(0, 20), expand = c(0, 0))
+  
+  ggsave(paste("outputs/production_animation/2016/production_risk_2016", i, ".png", sep = "_"), scale = 1, dpi = 350)
 }
 
 # list all the production files
-image_files <- gtools::mixedsort(list.files("outputs/production_animation/"))
+image_files <- gtools::mixedsort(list.files("outputs/production_animation/2016"))
 image_list <- list()
 
 
 # read back in all the image files
 for(i in 1:length(image_files)){
-  image_list[[i]] <- magick::image_read(paste("outputs/production_animation/", image_files[i], sep = "/"))
+  image_list[[i]] <- magick::image_read(paste("outputs/production_animation/2016", image_files[i], sep = "/"))
   print(i)
 }
 
@@ -502,8 +586,44 @@ for(i in 1:length(image_files)){
 image_vec <- magick::image_join(image_list)
 
 # animate the images and print
-animation <- magick::image_animate(image_vec, fps = 2)
+animation <- magick::image_animate(image_vec, fps = 4)
 print(animation)
 
 # save animation
-magick::image_write(animation, "propagate_uncertainty_2.gif")
+magick::image_write(animation, "compounded_uncertainty_2016.gif")
+
+# posterior risk for all years
+for(i in 1:length(bound_production_risk_year)){
+  # build density plot of values
+  bound_production_risk_year[[i]] %>%
+    ggplot() + 
+      geom_histogram(aes(vulnerability), colour = "lightgrey") +     
+      ggtitle(years[i]) +
+      theme_bw() +
+      theme(panel.grid = element_blank()) +
+      scale_x_continuous(limits = c(0, 150127256), "Production risk (million tonnes)", 
+                       breaks = c(0, 20000000, 40000000, 60000000, 80000000, 100000000, 120000000, 140000000), labels = c("0", "20", "40", "60", "80", "100", "120", "140")) +
+      scale_y_continuous("Frequency", limits = c(0, 22), expand = c(0, 0))
+  
+  ggsave(paste("outputs/production_animation/2016_2050/", years[i], ".png", sep = ""), scale = 1, dpi = 350)
+}
+
+# list all the production files
+image_files <- gtools::mixedsort(list.files("outputs/production_animation/2016_2050"))
+image_list <- list()
+
+# read back in all the image files
+for(i in 1:length(image_files)){
+  image_list[[i]] <- magick::image_read(paste("outputs/production_animation/2016_2050", image_files[i], sep = "/"))
+  print(i)
+}
+
+# join together all the images into vector
+image_vec <- magick::image_join(image_list)
+
+# animate the images and print
+animation <- magick::image_animate(image_vec, fps = 4)
+print(animation)
+
+# save animation
+magick::image_write(animation, "compounded_uncertainty_2016_2050_fast.gif")
