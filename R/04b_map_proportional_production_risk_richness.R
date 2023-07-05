@@ -209,13 +209,16 @@ main_plot_abundance <- abundance_model %>%
   ggplot() +
   geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
   geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  scale_y_continuous("Total abundance", breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
+  scale_y_continuous("Species richness", breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
   scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
   scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  xlab("Standardised climate anomaly") +
-  ylab("Total abundance") +
+  xlab("Standardised temperature anomaly") +
+  ylab("Species richness") +
   theme_bw() +
   theme(panel.grid = element_blank())
+
+# plot for change in richness
+ggsave("richness_change.png", scale = 1, dpi = 350)
 
 #### calculate pollinator dependent production ####
 # select those with semi colon into a multiple rows
