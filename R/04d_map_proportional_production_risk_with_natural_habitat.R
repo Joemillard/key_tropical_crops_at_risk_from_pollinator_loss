@@ -24,6 +24,8 @@ source("R/00_functions.R")
 # load in the mean temperature data from CRU
 tmp <- raster::stack("data/cru_ts4.03.1901.2018.tmp.dat.nc", varname="tmp")
 
+# read in pesticide application
+
 # list the crop specific folders in the directory for external hard drive
 cropdirs <- list.dirs("D:/Extra_data_files/HarvestedAreaYield175Crops_Geotiff/HarvestedAreaYield175Crops_Geotiff/Geotiff", recursive = FALSE)
 
@@ -217,8 +219,6 @@ predicts_sp <- sp::SpatialPointsDataFrame(
   coords = cbind(predicts_climate$Longitude, predicts_climate$Latitude), 
   data = predicts_climate, proj4string = crs(wgs84))
 
-
-
 # load the NH raster layers from the Hoskins et al dataset
 PV <- raster(land_files[1], crs=wgs84)
 SV <- raster(land_files[2], crs=wgs84)
@@ -257,38 +257,62 @@ st2 <- Sys.time()
 
 print(st2 - st1) # Time difference of 8.622247 mins
 
-PRED_climate_habitat$PV_5000 <- natHabitat$PV5
-PRED_climate_habitat$SV_5000 <- natHabitat$SV5
-
-
-
-
+predicts_climate$PV_5000 <- natHabitat$PV5
+predicts_climate$SV_5000 <- natHabitat$SV5
+predicts_climate$nat_hab <- natHabitat$SV5 + natHabitat$PV5
 
 # add 1 for abundance and simpson diversity
-PRED_climate_habitat$Total_abundance <- PRED_climate_habitat$Total_abundance + 1
+predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
+
+# remove cannot decide intensity
+predicts_climate <- predicts_climate %>%
+  filter(Use_intensity != "Cannot decide") %>%
+  filter(Predominant_land_use == "Cropland") %>%
+  mutate(Use_intensity = as.character(Use_intensity))
+
+
+
+# relabel light and minimal intensity as low
+predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Minimal use"] <- "Low"
+predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Light use"] <- "Low"
+predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Intense use"] <- "High"
 
 # run model for total abundance for insect pollinators
-model_2c_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * natural_hab + (1|SS) + (1|SSB), data = PRED_climate_habitat) 
+model_2c_abundance <- lmerTest::lmer(log(Total_abundance) ~ nat_hab * standard_anom + (1|SS) + (1|SSB), data = predicts_climate) 
+model_2d_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Use_intensity + (1|SS) + (1|SSB), data = predicts_climate) 
+model_2e_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * nat_hab * Use_intensity + (1|SS) + (1|SSB), data = predicts_climate) 
 
-# run predictions for the model of standard anomaly
-abundance_model <- predict_continuous(model = model_2c_abundance,
-                                      model_data = predicts_climate,
-                                      response_variable = "Total_abundance",
-                                      categorical_variable = c("Predominant_land_use"),
-                                      continuous_variable = c("standard_anom"),
-                                      continuous_transformation = "",
-                                      random_variable = c("SS", "SSB", "SSBS"))
+AIC(model_2c_abundance, model_2d_abundance, model_2e_abundance)
+
+# create natural habitat cover vector and land-use type
+PV_5000_pred <- rep(rep(seq(from = 0, to = 1, by = 0.05), 21), 2)
+land_use_pred <- c(rep("Low", 441), rep("High", 441))
+
+# create vector for standardised anomaly
+pred_vec <- c()
+for(i in 0:20){
+  
+  pred_vec <- c(pred_vec, rep(i, 21))
+}
+
+# duplicate standard anom vector for cropland and primary vegetation
+pred_vec <- rep(pred_vec, 2)
+
+new_prediction_data <- data.frame("nat_hab" = PV_5000_pred, 
+           "standard_anom" = pred_vec/10, 
+           "Use_intensity" = land_use_pred)
+
+# plot 3 way interaction effect
+new_prediction_data$test_prediction <- predict(model_2e_abundance, new_prediction_data, re.form = NA)
 
 # plot for standardised anomaly and land-use for abundance
-main_plot_abundance <- abundance_model %>% 
+main_plot_abundance <- new_prediction_data %>% 
   ggplot() +
-  geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  scale_y_continuous("Total abundance", breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
-  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  xlab("Standardised climate anomaly") +
-  ylab("Total abundance") +
+  geom_tile(aes(x = standard_anom, y = nat_hab, fill = test_prediction), size = 1.5) +
+  scale_y_continuous("Natural habitat cover", expand = c(0, 0)) +
+  scale_x_continuous("Standardised temperature anomaly", expand = c(0, 0)) +
+  scale_fill_viridis("Total abundance") +
+  facet_wrap(~Use_intensity) +
   theme_bw() +
   theme(panel.grid = element_blank())
 
@@ -530,3 +554,4 @@ vulnerability_2050 <- climate_poll_data_future %>%
         axis.ticks = element_blank(), 
         axis.title = element_blank(),
         legend.position = "bottom")
+        
