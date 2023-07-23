@@ -42,11 +42,13 @@ PREDICTS_pollinators <- CorrectSamplingEffort(PREDICTS_pollinators)
 # calculate site metrics including all species (confirmed and not confirmed pollinator)
 order.sites.div <- SiteMetrics(diversity = PREDICTS_pollinators,
                                extra.cols = c("SSB", "SSBS", "Predominant_land_use", "UN_region"),
-                               sites.are.unique = TRUE,
-                               srEstimators = TRUE)
+                               sites.are.unique = TRUE, srEstimators = "Chao")
 
 # set id column for merging back into correct place
 order.sites.div$id_col <- 1:nrow(order.sites.div)
+
+# round Chao's richness for poisson glmer
+order.sites.div$ChaoR <- round(order.sites.div$ChaoR)
 
 # PREDICTS sites with the month of the recording
 PRED_sites <- order.sites.div %>% select(id_col, Latitude, Longitude, Sample_end_latest) %>%
@@ -189,16 +191,13 @@ predicts_climate %>%
         axis.title = element_blank(),
         legend.position = "bottom")
 
-# add 1 for abundance and simpson diversity
-predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
-
-model_2c_abundance <- glmer(Species_richness ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB) + (1|SSBS), data = predicts_climate, family = poisson) # best model - failed to converge with 0.00144612
+model_2c_abundance <- glmer(ChaoR ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB) + (1|SSBS), data = predicts_climate, family = poisson) # best model - failed to converge with 0.00144612
 
 
 # run predictions for the model of standard anomaly
 abundance_model <- predict_continuous(model = model_2c_abundance,
                                       model_data = predicts_climate,
-                                      response_variable = "Species_richness",
+                                      response_variable = "ChaoR",
                                       categorical_variable = c("Predominant_land_use"),
                                       continuous_variable = c("standard_anom"),
                                       continuous_transformation = "",
@@ -209,7 +208,7 @@ main_plot_abundance <- abundance_model %>%
   ggplot() +
   geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
   geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  scale_y_continuous("Species richness", breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(5, 10, 20, 40, 80, 160, 320)) +
+  scale_y_continuous("Chao richness", breaks = c(0.22314355, 0.9162907, 1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321), labels = c(1.25, 2.5, 5, 10, 20, 40, 80, 160, 320)) +
   scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
   scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
   xlab("Standardised temperature anomaly") +
@@ -218,7 +217,7 @@ main_plot_abundance <- abundance_model %>%
   theme(panel.grid = element_blank())
 
 # plot for change in richness
-ggsave("richness_change.png", scale = 1, dpi = 350)
+ggsave("chao_richness_change.png", scale = 1, dpi = 350)
 
 #### calculate pollinator dependent production ####
 # select those with semi colon into a multiple rows
@@ -459,4 +458,4 @@ vulnerability_2050 <- climate_poll_data_future %>%
         axis.title = element_blank(),
         legend.position = "bottom")
 
-ggsave("vulnerability_weighted_production_map_richness.png", scale = 1.1, dpi = 350)
+ggsave("vulnerability_weighted_production_map_chao_richness.png", scale = 1.1, dpi = 350)
