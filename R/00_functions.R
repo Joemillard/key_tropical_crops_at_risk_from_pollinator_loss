@@ -1,3 +1,12 @@
+##Function for standardizing and centering predictor variables on very different scales, e.g. percNH
+StdCenterPredictor <- function(x) {
+  variable <- x
+  sd <- sd(na.omit(variable))
+  mean <- mean(na.omit(variable))
+  variable.s <- (variable - mean)/sd
+  return(variable.s)
+}
+
 # build base map for fertiliser/climate plot
 get_basemap <- function(){
   

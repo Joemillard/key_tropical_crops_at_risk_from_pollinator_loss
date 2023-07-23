@@ -174,35 +174,74 @@ predicts_climate %>%
         axis.title = element_blank(),
         legend.position = "bottom")
 
-# effect of mean temp and standardised temp anomaly
-climate_only <- predicts_climate %>%
-  select(mean_value, standard_anom) %>%
-  unique()
+# what's the distribution of cropland and primary vegetation annual mean temperatures
+predicts_climate %>%
+  ggplot() + 
+    geom_density(aes(x = mean_value, fill = Predominant_land_use, colour = Predominant_land_use), alpha = 0.2) +
+    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+    scale_y_continuous("Density", expand = c(0, 0), limits = c(0, 0.28)) +
+    xlab("Mean annual temperature") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
 
-climate_model <- lm(standard_anom ~ mean_value, data = climate_only)
+predicts_climate %>%
+  ggplot() + 
+  geom_density(aes(x = standard_anom, fill = Predominant_land_use, colour = Predominant_land_use), alpha = 0.2) +
+  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+  scale_y_continuous("Density", expand = c(0, 0), limits = c(0, 6.1)) +
+  xlab("Standardised temperature anomaly") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
 
-performance::check_model(climate_model)
+
+# centre the predictors
+predicts_climate$mean_value <- StdCenterPredictor(predicts_climate$mean_value)
+predicts_climate$standard_anom <- StdCenterPredictor(predicts_climate$standard_anom)
+
+
+
+# filter for just primary
+predicts_climate_primary <- predicts_climate %>%
+  filter(Predominant_land_use == "Primary vegetation")
 
 # species richness, standard anom as a factor
-model_abundance_mean_val_int <- lmerTest::lmer(log(Total_abundance) ~ Predominant_land_use * mean_value + standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate)
-model_abundance_mean_val <- lmerTest::lmer(log(Total_abundance) ~ mean_value * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
-model_abundance_anom <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
-model_abundance_anom_mean <- lmerTest::lmer(log(Total_abundance) ~ mean_value + standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
-model_abundance_anom_non_stan <- lmerTest::lmer(log(Total_abundance) ~ anomaly * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
-
-# extract model AIC values
-AIC(model_abundance_mean_val_int, model_abundance_mean_val, model_abundance_anom, model_abundance_anom_mean, model_abundance_anom_non_stan)
-
-# extract model R squared values
-StatisticalModels::R2GLMER(model_abundance_mean_val)
-StatisticalModels::R2GLMER(model_abundance_mean_val_int)
-StatisticalModels::R2GLMER(model_abundance_anom)
+pri_model_abundance_mean_anom <- lmerTest::lmer(log(Total_abundance) ~ mean_value + standard_anom + (1|SS) + (1|SSB), data = predicts_climate_primary)
+pri_model_abundance_mean <- lmerTest::lmer(log(Total_abundance) ~ mean_value  + (1|SS) + (1|SSB), data = predicts_climate_primary) 
+pri_model_abundance_anom <- lmerTest::lmer(log(Total_abundance) ~ standard_anom + (1|SS) + (1|SSB), data = predicts_climate_primary) 
 
 # extract model summaries
-summary(model_abundance_mean_val_int)
-summary(model_abundance_mean_val)
-summary(model_abundance_anom)
-summary(model_abundance_anom_mean)
+summary(pri_model_abundance_mean_anom)
+summary(pri_model_abundance_mean)
+summary(pri_model_abundance_anom)
+
+AIC(pri_model_abundance_mean_anom, pri_model_abundance_mean, pri_model_abundance_anom)
+
+
+# filter for just primary
+predicts_climate_cropland <- predicts_climate %>%
+  filter(Predominant_land_use == "Cropland")
+
+# species richness, standard anom as a factor
+cro_model_abundance_mean_anom <- lmerTest::lmer(log(Total_abundance) ~ mean_value + standard_anom + (1|SS) + (1|SSB), data = predicts_climate_cropland)
+cro_model_abundance_mean <- lmerTest::lmer(log(Total_abundance) ~ mean_value  + (1|SS) + (1|SSB), data = predicts_climate_cropland) 
+cro_model_abundance_anom <- lmerTest::lmer(log(Total_abundance) ~ standard_anom + (1|SS) + (1|SSB), data = predicts_climate_cropland) 
+
+# extract model summaries
+summary(cro_model_abundance_mean_anom)
+summary(cro_model_abundance_mean)
+summary(cro_model_abundance_anom)
+
+AIC(cro_model_abundance_mean_anom, cro_model_abundance_mean, cro_model_abundance_anom)
+
+
+performance::check_model(model_abundance_anom_mean)
+
+
+
+
+
 
 car::vif(model_abundance_anom_non_stan)
 
@@ -223,6 +262,7 @@ main_plot_abundance <- ggplot(abundance_model) +
   geom_line(aes(x = mean_value, y = y_value, colour = Predominant_land_use), size = 1.5) +
   geom_ribbon(aes(x = mean_value, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
   scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+  scale_y_continuous(limits = c(0.3, 6.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
   scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
   xlab("Mean temperature") +
   ylab("Total abundance") +
