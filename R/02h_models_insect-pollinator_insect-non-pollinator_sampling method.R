@@ -202,3 +202,5 @@ abundance_plot_list <- ggplot(all_abundance_data) +
   ylab("Total abundance") +
   theme_bw() +
   theme(panel.grid = element_blank())
+
+ggsave("sampling_method_back_knife.png", scale = 1, dpi = 350)
