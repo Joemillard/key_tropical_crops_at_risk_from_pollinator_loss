@@ -20,6 +20,23 @@ PREDICTS_pollinators_orig <- readRDS("C:/Users/joeym/Documents/PhD/Aims/Aim 2 - 
   droplevels() %>%
   mutate(Sampling_method = as.character(Sampling_method))
 
+# calc longest gap between start and end date
+data.frame("day" = as.numeric(as.Date(PREDICTS_pollinators_orig$Sample_end_latest) - as.Date(PREDICTS_pollinators_orig$Sample_start_earliest))) %>%
+  arrange(day) %>%
+  mutate(row_id = row_number()) %>%
+  mutate(row_percentile = row_id / max(row_id)) %>%
+  ggplot() + 
+    geom_histogram(aes(day)) +
+    theme_bw() +
+    scale_y_continuous(expand = c(0, 0), limits = c(0, 61000)) +
+    ylab("Record count") +
+    xlab("Sampling period (days)") +
+    theme(panel.grid = element_blank(),
+        text = element_text(size = 13),
+        strip.text = element_text(size = 14))
+
+ggsave("sampling_period_time.png", scale = 1, dpi = 350)
+
 # grouping sampling methods
 PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep nets"] <- "Sweep net"
 PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep_nets"] <- "Sweep net"
