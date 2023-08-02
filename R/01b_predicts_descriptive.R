@@ -38,24 +38,27 @@ data.frame("day" = as.numeric(as.Date(PREDICTS_pollinators_orig$Sample_end_lates
 ggsave("sampling_period_time.png", scale = 1, dpi = 350)
 
 # grouping sampling methods
-PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep nets"] <- "Sweep net"
-PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep_nets"] <- "Sweep net"
-PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep_netting"] <- "Sweep net"
-PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep net"] <- "Sweep net"
-PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "pit-fall traps"] <- "Pit-fall traps"
-PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "pit-fall traps"] <- "Sweep net"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep nets"] <- "sweep net"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep_nets"] <- "sweep net"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "sweep_netting"] <- "sweep net"
 PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "various"] <- "multiple"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "soil cores along transects"] <- "soil core"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "pitfall trap transects"] <- "pit-fall traps"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "baited pit-fall traps"] <- "pit-fall traps"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "aerial flight-inception  trap"] <- "flight trap"
+PREDICTS_pollinators_orig$Sampling_method[PREDICTS_pollinators_orig$Sampling_method == "aerial nets"] <- "flight trap"
+
 
 # plot of sampling method frequency
 PREDICTS_pollinators_orig %>% 
   group_by(Sampling_method) %>%
-  tally() %>%
+  tally() %>% 
   ungroup() %>%
   mutate(Sampling_method = stringr::str_to_sentence(Sampling_method)) %>%
   mutate(Sampling_method = forcats::fct_reorder(Sampling_method, -n)) %>%
   ggplot() +
     geom_bar(aes(x = Sampling_method, y = n), stat = "identity", fill = "black") +
-    scale_y_continuous("Frequency", expand = c(0, 0), limits = c(0, 62000)) +
+    scale_y_continuous("Frequency", expand = c(0, 0), limits = c(0, 67000)) +
     scale_x_discrete("Sampling method") +
     theme_bw() +
     theme(panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))
