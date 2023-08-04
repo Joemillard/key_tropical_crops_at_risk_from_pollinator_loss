@@ -252,23 +252,23 @@ for(m in 1:length(pollinat_bound)){
   
   # run predictions for the model of standard anomaly
   abundance_model[[m]] <- predict_continuous(model = model_2c_abundance[[m]],
-                                             model_data = predict_climate_list[[m]],
-                                             response_variable = "Total_abundance",
-                                             categorical_variable = c("Predominant_land_use"),
-                                             continuous_variable = c("standard_anom"),
-                                             continuous_transformation = "",
-                                             random_variable = c("SS", "SSB", "SSBS"))
+                                           model_data = predict_climate_list[[m]],
+                                           response_variable = "Total_abundance",
+                                           categorical_variable = c("Predominant_land_use"),
+                                           continuous_variable = c("standard_anom"),
+                                           continuous_transformation = "",
+                                           random_variable = c("SS", "SSB", "SSBS"))
   
   # plot for standardised anomaly and land-use for abundance
-  main_plot_abundance[[m]] <- ggplot(abundance_model[[m]]) +
-    geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-    geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-    scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-    xlab("Standardised temperature anomaly") +
-    ylab("Total abundance") +
-    theme_bw() +
-    theme(panel.grid = element_blank())
+ main_plot_abundance[[m]] <- ggplot(abundance_model[[m]]) +
+   geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
+   geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
+   scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+   scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
+   xlab("Standardised temperature anomaly") +
+   ylab("Total abundance") +
+   theme_bw() +
+   theme(panel.grid = element_blank())
   
 }
 
