@@ -446,6 +446,25 @@ abundance_prod_plot <- data.table::rbindlist(frames_convex) %>%
   theme(panel.grid = element_blank(), legend.position = "right",
         legend.box = "horizontal")
 
+# output figure for main text
+abundance_prod_plot <- data.table::rbindlist(frames_convex) %>% 
+  rbind(data.table::rbindlist(frames_concave), frames_linear) %>%
+  mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
+  mutate(Slope_type = factor(Slope_type, levels = c("Convex", "Linear", "Concave"))) %>%
+  filter(Slope_type != "Concave") %>%
+  ggplot() +
+  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope_group, linetype = Slope_type), size = 1) +
+  theme_bw() +
+  scale_x_continuous("Pollinator abundance", expand = c(0, 0), labels = c("0", "0.25", "0.5", "0.75", "1")) + 
+  scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03), labels = c("0", "0.25", "0.5", "0.75", "1")) +
+  scale_colour_viridis("Slope parameter", discrete = TRUE) +
+  scale_linetype_manual("Relationship", values = c("dashed", "solid", "dotted")) +
+  guides(linetype = guide_legend(order = 1), col = guide_legend(order = 2)) +
+  theme(panel.grid = element_blank(), legend.position = "none",
+        legend.box = "horizontal")
+
+ggsave("pollinator_prod_relat.png", scale = 0.4, dpi = 350)
+
 # predict abundance at 0 warming on cropland
 zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
 zero_warming_abundance <- predict(model_2c_abundance, zero_data, re.form = NA)
