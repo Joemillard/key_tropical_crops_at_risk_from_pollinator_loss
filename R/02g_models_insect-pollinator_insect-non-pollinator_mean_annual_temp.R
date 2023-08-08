@@ -204,13 +204,13 @@ predicts_climate %>%
 ggsave("SS_slope.png", scale = 1.1, dpi = 350)
 
 # test model with standardised temperature anomaly in primary vegetation cut off at highest cropland value
-max_cropland_anom <- predicts_climate %>%
-  filter(Predominant_land_use == "Cropland") %>%
-  pull(standard_anom) %>% max(na.rm = TRUE)
+#max_cropland_anom <- predicts_climate %>%
+#  filter(Predominant_land_use == "Cropland") %>%
+#pull(standard_anom) %>% max(na.rm = TRUE)
 
 
-predicts_climate <- predicts_climate %>%
-  filter(standard_anom <= max_cropland_anom)
+#predicts_climate <- predicts_climate %>%
+#  filter(standard_anom <= max_cropland_anom)
 
 
 # add 1 for abundance and simpson diversity
@@ -382,62 +382,11 @@ predicts_climate %>%
 
 ggsave("primary_cropland.png", scale = 1, dpi = 350)
 
-model_abundance_mean_val <- lmerTest::lmer(log(Total_abundance) ~ mean_value * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
 model_abundance_anom <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
-model_abundance_anom_non_stan <- lmerTest::lmer(log(Total_abundance) ~ anomaly * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
-model_abundance_mean_val_all <- lmerTest::lmer(log(Total_abundance) ~ mean_value * Predominant_land_use + standard_anom + standard_anom:Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
+model_abundance_anom_mean <- lmerTest::lmer(log(Total_abundance) ~ mean_value + standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
+model_abundance_anom_all <- lmerTest::lmer(log(Total_abundance) ~ mean_value + mean_value:Predominant_land_use + standard_anom * Predominant_land_use + (1|SS) + (1|SSB), data = predicts_climate) 
 
-AIC(model_abundance_mean_val, model_abundance_anom, model_abundance_anom_non_stan, model_abundance_mean_val_all)
-
-# run predictions for the model of standard anomaly
-abundance_model <- predict_continuous(model = model_abundance_anom,
-                                      model_data = predicts_climate,
-                                      response_variable = "Total_abundance",
-                                      categorical_variable = c("Predominant_land_use"),
-                                      continuous_variable = c("standard_anom"),
-                                      continuous_transformation = "",
-                                      random_variable = c("SS", "SSB", "SSBS"))
-
-# plot for standardised anomaly and land-use for abundance
-mean_plot_abundance <- ggplot(abundance_model) +
-  geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
- # scale_y_continuous(limits = c(0.3, 6.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
-  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  xlab("Mean temperature") +
-  ylab("Total abundance") +
-  theme_bw() +
-  theme(panel.grid = element_blank())
-
-# save plot for mean temperature
-ggsave("mean_temp_plot_prediction.png", scale = 1, dpi = 350)
-
-# run predictions for the model of standard anomaly
-abundance_model <- predict_continuous(model = model_abundance_anom,
-                                      model_data = predicts_climate,
-                                      response_variable = "Total_abundance_RS",
-                                      categorical_variable = c("Predominant_land_use"),
-                                      continuous_variable = c("standard_anom"),
-                                      continuous_transformation = "",
-                                      random_variable = c("SS", "SSB", "SSBS"))
-
-# plot for standardised anomaly and land-use for abundance
-std_plot_abundance <- ggplot(abundance_model) +
-  geom_line(aes(x = standard_anom, y = y_value, colour = Predominant_land_use), size = 1.5) +
-  geom_ribbon(aes(x = standard_anom, y = y_value, fill = Predominant_land_use, ymin = y_value_minus, ymax = y_value_plus), alpha = 0.4) +
-  scale_fill_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  #scale_y_continuous(limits = c(0.3, 6.5), breaks = c(1.609438, 2.302585, 2.995732, 3.6888795, 4.382027, 5.075174, 5.768321, 6.461468), labels = c(5, 10, 20, 40, 80, 160, 320, 640)) +
-  scale_colour_manual("Land-use type", values = c("#009E73", "#E69F00")) +
-  xlab("Std. temperature anomaly") +
-  ylab("Total abundance") +
-  theme_bw() +
-  theme(panel.grid = element_blank())
-
-# save plot for mean temperature
-ggsave("std_anomaly_plot_prediction.png", scale = 1, dpi = 350)
-
-# filter for just primary
+### filter for just primary or cropland
 predicts_climate_primary <- predicts_climate %>%
   filter(Predominant_land_use == "Primary vegetation")
 
