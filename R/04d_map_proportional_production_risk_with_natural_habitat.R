@@ -40,7 +40,7 @@ SSP_directory <- ("D:/Extra_data_files/climate_projections/ISIMIPAnomalies.tar/I
 
 # retrieve in file names for land_use data and then read in the data
 # sequence of land uses is cropland, pasture, primary, seconary, and urban
-land_files <- paste("D:/NHM_postdoc/Global_30s_resolution_land_use_for_2005", list.files("D:/NHM_postdoc/Global_30s_resolution_land_use_for_2005", recursive = TRUE, pattern = ".bil"), sep = "/")
+land_files <- paste("D:/Extra_data_files/habitat_data", list.files("D:/Extra_data_files/habitat_data", recursive = TRUE, pattern = ".bil"), sep = "/")
 
 # reproject on mollweide projection - note warning of missing points to check -- "55946 projected point(s) not finite"
 # mean_weighted_error_project <- projectRaster(mean_weighted_error, crs = "+proj=moll +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
@@ -209,10 +209,16 @@ predicts_climate %>%
         legend.position = "bottom")
 
 # land use vector to subset by
-land_use <- c("Primary vegetation", "Secondary vegetation")
+land_use <- c("Primary vegetation")
 
 # required crs
 wgs84 <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+
+# remove cannot decide intensity
+predicts_climate <- predicts_climate %>%
+  filter(Use_intensity != "Cannot decide") %>%
+  filter(Predominant_land_use == "Cropland") %>%
+  mutate(Use_intensity = as.character(Use_intensity))
 
 # Create spatial map of PREDICTS sites
 predicts_sp <- sp::SpatialPointsDataFrame(
@@ -220,8 +226,8 @@ predicts_sp <- sp::SpatialPointsDataFrame(
   data = predicts_climate, proj4string = crs(wgs84))
 
 # load the NH raster layers from the Hoskins et al dataset
-PV <- raster(land_files[1], crs=wgs84)
-SV <- raster(land_files[2], crs=wgs84)
+PV <- raster(land_files[3], crs=wgs84)
+#SV <- raster(land_files[2], crs=wgs84)
 
 # run in parallel
 nCores <- parallel::detectCores()
@@ -233,7 +239,7 @@ cl <- snow::makeCluster(nCores-1)
 # export data to cores
 snow::clusterExport(
   cl = cl,
-  list = c('predicts_sp','PV','SV','buffer','crop','cellStats'),envir = environment())
+  list = c('predicts_sp','PV', 'buffer','crop','cellStats'), envir = environment())
 
 # Time difference of 31.47568 mins
 
@@ -244,10 +250,10 @@ natHabitat <- data.frame(t(parSapply(cl = cl,X = (1:nrow(predicts_sp)),FUN = fun
   buff5 <- buffer(predicts_sp[i, ], width=5000)
   PV_crop5 <- crop(PV, buff5)
   PV_mean5 <- cellStats(PV_crop5, stat="mean")
-  SV_crop5 <- crop(SV, buff5)
-  SV_mean5 <- cellStats(SV_crop5, stat="mean")
+ # SV_crop5 <- crop(SV, buff5)
+ # SV_mean5 <- cellStats(SV_crop5, stat="mean")
 
-  return(c(PV5=PV_mean5,SV5=SV_mean5))
+  return(c(PV5=PV_mean5))
   
 })))
 
@@ -257,36 +263,30 @@ st2 <- Sys.time()
 
 print(st2 - st1) # Time difference of 8.622247 mins
 
-predicts_climate$PV_5000 <- natHabitat$PV5
-predicts_climate$SV_5000 <- natHabitat$SV5
-predicts_climate$nat_hab <- natHabitat$SV5 + natHabitat$PV5
+predicts_climate$PV_5000 <- pull(as.data.frame(t(natHabitat)))
+#predicts_climate$SV_5000 <- natHabitat$SV5
+#predicts_climate$nat_hab <- natHabitat$SV5 + natHabitat$PV5
 
 # add 1 for abundance and simpson diversity
 predicts_climate$Total_abundance <- predicts_climate$Total_abundance + 1
 
-# remove cannot decide intensity
-predicts_climate <- predicts_climate %>%
-  filter(Use_intensity != "Cannot decide") %>%
-  filter(Predominant_land_use == "Cropland") %>%
-  mutate(Use_intensity = as.character(Use_intensity))
-
 
 
 # relabel light and minimal intensity as low
-predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Minimal use"] <- "Low"
-predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Light use"] <- "Low"
-predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Intense use"] <- "High"
+#predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Minimal use"] <- "Low"
+#predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Light use"] <- "Low"
+#predicts_climate$Use_intensity[predicts_climate$Use_intensity == "Intense use"] <- "High"
 
 # run model for total abundance for insect pollinators
-model_2c_abundance <- lmerTest::lmer(log(Total_abundance) ~ nat_hab * standard_anom + (1|SS) + (1|SSB), data = predicts_climate) 
+model_2c_abundance <- lmerTest::lmer(log(Total_abundance) ~ PV_5000 * standard_anom + (1|SS) + (1|SSB), data = predicts_climate) 
 model_2d_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * Use_intensity + (1|SS) + (1|SSB), data = predicts_climate) 
-model_2e_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * nat_hab * Use_intensity + (1|SS) + (1|SSB), data = predicts_climate) 
+model_2e_abundance <- lmerTest::lmer(log(Total_abundance) ~ standard_anom * PV_5000 * Use_intensity + (1|SS) + (1|SSB), data = predicts_climate) 
 
 AIC(model_2c_abundance, model_2d_abundance, model_2e_abundance)
 
 # create natural habitat cover vector and land-use type
-PV_5000_pred <- rep(rep(seq(from = 0, to = 1, by = 0.05), 21), 2)
-land_use_pred <- c(rep("Low", 441), rep("High", 441))
+PV_5000_pred <- rep(rep(seq(from = 0, to = 1, by = 0.05), 21), 3)
+land_use_pred <- c(rep("Light use", 441), rep("Minimal use", 441), rep("Intense use", 441))
 
 # create vector for standardised anomaly
 pred_vec <- c()
@@ -296,9 +296,9 @@ for(i in 0:20){
 }
 
 # duplicate standard anom vector for cropland and primary vegetation
-pred_vec <- rep(pred_vec, 2)
+pred_vec <- rep(pred_vec, 3)
 
-new_prediction_data <- data.frame("nat_hab" = PV_5000_pred, 
+new_prediction_data <- data.frame("PV_5000" = PV_5000_pred, 
            "standard_anom" = pred_vec/10, 
            "Use_intensity" = land_use_pred)
 
@@ -308,13 +308,15 @@ new_prediction_data$test_prediction <- predict(model_2e_abundance, new_predictio
 # plot for standardised anomaly and land-use for abundance
 main_plot_abundance <- new_prediction_data %>% 
   ggplot() +
-  geom_tile(aes(x = standard_anom, y = nat_hab, fill = test_prediction), size = 1.5) +
+  geom_tile(aes(x = standard_anom, y = PV_5000, fill = test_prediction), size = 1.5) +
   scale_y_continuous("Natural habitat cover", expand = c(0, 0)) +
   scale_x_continuous("Standardised temperature anomaly", expand = c(0, 0)) +
-  scale_fill_viridis("Total abundance") +
+  scale_fill_viridis("Total abundance", direction = -1) +
   facet_wrap(~Use_intensity) +
   theme_bw() +
   theme(panel.grid = element_blank())
+
+
 
 #### calculate pollinator dependent production ####
 # select those with semi colon into a multiple rows
