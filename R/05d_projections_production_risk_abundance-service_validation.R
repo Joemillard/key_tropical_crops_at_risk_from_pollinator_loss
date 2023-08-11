@@ -408,7 +408,7 @@ for(i in 1:length(abundance_prod_convex)){
   frames_convex[[i]] <- data.frame(x, y[[i]], 
                             "Slope_group" = paste(abundance_prod_convex[i], "a", sep = ""),
                             "Slope" = abundance_prod_convex[i],
-                            "Slope_type" = "Convex")
+                            "Slope_type" = "Concave")
 }
 
 # set up empty list objects for each value
@@ -420,7 +420,7 @@ for(i in 1:length(abundance_prod_concave)){
   frames_concave[[i]] <- data.frame(x, y[[i]], 
                             "Slope_group" = paste(abundance_prod_concave[i], "b", sep = ""),
                             "Slope" = abundance_prod_concave[i],
-                            "Slope_type" = "Concave")
+                            "Slope_type" = "Convex")
 }
 
 # run function across sample
@@ -434,7 +434,7 @@ frames_linear <- data.frame(x, "y..i.." = y,
 abundance_prod_plot <- data.table::rbindlist(frames_convex) %>% 
   rbind(data.table::rbindlist(frames_concave), frames_linear) %>%
   mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
-  mutate(Slope_type = factor(Slope_type, levels = c("Convex", "Linear", "Concave"))) %>%
+  mutate(Slope_type = factor(Slope_type, levels = c("Concave", "Linear", "Convex"))) %>%
   ggplot() +
   geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope_group, linetype = Slope_type), size = 1) +
   theme_bw() +
@@ -446,24 +446,27 @@ abundance_prod_plot <- data.table::rbindlist(frames_convex) %>%
   theme(panel.grid = element_blank(), legend.position = "right",
         legend.box = "horizontal")
 
+ggsave("pollinator_prod_relat_supp.png", scale = 0.7, dpi = 350)
+
+
 # output figure for main text
 abundance_prod_plot <- data.table::rbindlist(frames_convex) %>% 
   rbind(data.table::rbindlist(frames_concave), frames_linear) %>%
   mutate(Slope = factor(Slope, levels = c(2, 4, 8, 16, 32), labels = c("2", "4", "8", "16", "32"))) %>%
-  mutate(Slope_type = factor(Slope_type, levels = c("Convex", "Linear", "Concave"))) %>%
-  filter(Slope_type != "Concave") %>%
+  mutate(Slope_type = factor(Slope_type, levels = c("Concave","Linear", "Convex"))) %>%
+  filter(Slope_type != "Convex") %>%
   ggplot() +
-  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope_group, linetype = Slope_type), size = 1) +
+  geom_line(aes(x = x, y = y..i.., colour = Slope, group = Slope_group, linetype = Slope_type), size = 0.7) +
   theme_bw() +
   scale_x_continuous("Pollinator abundance", expand = c(0, 0), labels = c("0", "0.25", "0.5", "0.75", "1")) + 
   scale_y_continuous("Production", expand = c(0, 0), limits = c(0, 1.03), labels = c("0", "0.25", "0.5", "0.75", "1")) +
   scale_colour_viridis("Slope parameter", discrete = TRUE) +
   scale_linetype_manual("Relationship", values = c("dashed", "solid", "dotted")) +
-  guides(linetype = guide_legend(order = 1), col = guide_legend(order = 2)) +
-  theme(panel.grid = element_blank(), legend.position = "none",
-        legend.box = "horizontal")
+  guides(linetype = guide_legend(order = 2), col = guide_legend(order = 1)) +
+  theme(panel.grid = element_blank(), legend.position = "right",
+        legend.box = "vertical")
 
-ggsave("pollinator_prod_relat.png", scale = 0.4, dpi = 350)
+ggsave("pollinator_prod_relat.png", scale = 1, dpi = 350)
 
 # predict abundance at 0 warming on cropland
 zero_data <- data.frame("standard_anom" = 0, Predominant_land_use = "Cropland")
