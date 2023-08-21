@@ -1,8 +1,10 @@
-# Key tropical crops at risk from pollinator biodiversity loss due to climate change and land use
+# Key tropical crops at risk from pollinator loss due to climate change and land use
 
-This repository contains all the scripts used for the analysis carried out in the below paper, to be submitted:
+### Introduction
 
-> Millard _et al_., (in review). Key tropical crops at risk from pollinator biodiversity loss due to climate change and land use
+This repository contains all the scripts used for the analysis carried out in the below paper:
+
+> Millard _et al_., (in review). Key tropical crops at risk from pollinator loss due to climate change and land use
 
 Note that this repository is written relative to an R project file (.Rproj). Those wanting to reproduce this analysis should download the whole repo, and then open via the .Rproj file.
 
@@ -12,6 +14,12 @@ To run the code in this repo you will need to download a series of datasets:
 3. Estimates of global crop production from Monfreda et al (2008) (see here to download http://www.earthstat.org/harvested-area-yield-175-crops/)
 4. Historical estimates of climate change from Harris et al (2020) (see here to download https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.03/cruts.1905011326.v4.03/)
 5. ISIMIP anomaly projections of future climate change from Warszawski et al (2014)
+6. Esimates of global crop prices from the Food and Agriculture Organization of the United Nations (FAO) (see here to download)
+7. Virtual pollination trade flow data from Silva et al (2021) (see here to download https://github.com/virtual-pollination-trade/virtual-biotic-pollination-flow)
+
+------------
+
+### Structure
 
 The required scripts are as below, with figure numbers from our initial submission on 14/12/2022. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
 
@@ -38,7 +46,10 @@ The required scripts are as below, with figure numbers from our initial submissi
 ```R/09_trade_flow_formatting.R```<br>
 ```R/10_projections_import_production_risk.R``` Figure 4<br>
 
+------------
+
 ### References
+
 Harris, I., Osborn, T. J., Jones, P. & Lister, D. 2020. Version 4 of the CRU TS monthly high-resolution gridded multivariate climate dataset. Sci. Data 7, 109 
 
 Klein, A.M., Vaissière, B.E., Cane, J.H., Steffan-Dewenter, I., Cunningham, S.A., Kremen, C. and Tscharntke, T., 2007. Importance of pollinators in changing landscapes for world crops. Proceedings of the royal society B: biological sciences, 274(1608), pp.303-313.
@@ -46,3 +57,9 @@ Klein, A.M., Vaissière, B.E., Cane, J.H., Steffan-Dewenter, I., Cunningham, S.A
 Monfreda, C., Ramankutty, N. and Foley, J.A., 2008. Farming the planet: 2. Geographic distribution of crop areas, yields, physiological types, and net primary production in the year 2000. Global biogeochemical cycles, 22(1).
 
 Warszawski, L. et al. 2014. The inter-sectoral impact model intercomparison project (ISI-MIP): project framework. Proc. Natl Acad. Sci. USA 111, 3228–3232
+
+### Acknowledgements
+
+Thanks to Richard Gregory, Robin Freeman, and colleagues on the GLITRS project for useful discussions and comments. Thanks to Andy Purvis and Melinda Mills, who both provided support and guidance. Thanks also to Opeyemi Adedoja, Sabrina Gavini, Esther Kioko, Michael Kuhlmann, Zong-Xin Ren, and Manu Saunders, who provided input on our set of likely pollinating species, and to all contributors of the PREDICTS database.
+
+### License
