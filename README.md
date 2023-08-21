@@ -24,28 +24,35 @@ To run the code in this repo you will need to download a series of datasets:
 
 The required scripts are as below, with figure numbers from our initial submission on 14/12/2022. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
 
-```R/00_functions.R```<br>
-```R/01_map_climate_data.R``` Figure S8<br>
-```R/01a_map_predicts_sites.R ``` Figure S14<br>
-```R/02a_models_insect-pollinator_insect-non-pollinator.R``` Figure 1<br>
-```R/02c_models_insect-pollinator_jack-knife.R``` Figure S1<br>
-```R/02d_models_insect-pollinator_family_jack-knife.R``` Figure S2<br>
-```R/02e_models_insect-pollinator_active_season_validation_baseline_site.R``` Figure S3<br>
-```R/02f_models_insect_pollinator_active_season_validation_PREDICTS_site.R``` Figure S3<br>
-```R/03_map_pollinator_dependent_production.R``` Figure S8<br>
-```R/04_map_proportional_production_risk.R``` Figure 3A<br>
-```R/04a_map_proportional_production_risk_standard_dev.R``` Figure S10; Figure S9<br>
-```R/05a_projections_production_risk.R``` Figure S4<br>
-```R/05b_projections_production_risk_validation.R``` Figure S5<br>
-```R/05c_projections_production_risk_data_quality.R``` Figure S6<br>
-```R/05d_projections_production_risk_abundance-service_validation.R``` Figure S7<br>
-```R/05e_projections_production_risk_abundance-service_main-figure.R``` Figure 2<br>
-```R/06_projections_proportional_production_risk_country.R``` Figure S12<br>
-```R/06a_projections_total_production_risk_country.R```Figure 3B<br>
-```R/07_projections_proportional_production_risk_crop_cells.R``` Figure S13; Figure S11<br>
-```R/08_projections_proportional_production_risk_crop_total.R```<br>
-```R/09_trade_flow_formatting.R```<br>
-```R/10_projections_import_production_risk.R``` Figure 4<br>
+```R/00_functions.R"```<br>                                                       
+```R/01_map_climate_data.R"```<br>                                                
+```R/01a_map_predicts_sites.R"```<br>                                             
+```R/01b_predicts_descriptive.R"```<br>                                           
+```R/02a_models_insect-pollinator_insect-non-pollinator.R"```<br>                 
+```R/02c_models_insect-pollinator_jack-knife.R"```<br>                            
+```R/02d_models_insect-pollinator_family_jack-knife.R"```<br>                     
+```R/02e_models_insect-pollinator_active_season_validation_baseline_site.R"```<br>
+```R/02f_models_insect_pollinator_active_season_validation_PREDICTS_site.R"```<br>
+```R/02g_models_insect-pollinator_insect-non-pollinator_mean_annual_temp.R"```<br>
+```R/02h_models_insect-pollinator_insect-non-pollinator_sampling method.R"```<br> 
+```R/03_map_pollinator_dependent_production.R"```<br>                             
+```R/04_map_proportional_production_risk.R"```<br>                                
+```R/04a_map_proportional_production_risk_standard_dev.R"```<br>                  
+```R/04b_map_proportional_production_risk_richness.R"```<br>                      
+```R/04c_map_proportional_production_risk_bees.R"```<br>                          
+```R/04d_map_proportional_production_risk_with_natural_habitat.R"```<br>          
+```R/05a_projections_production_risk.R"```<br>                                    
+```R/05b_projections_production_risk_validation.R"```<br>                         
+```R/05c_projections_production_risk_data_quality.R"```<br>                       
+```R/05d_projections_production_risk_abundance-service_validation.R"```<br>       
+```R/05e_projections_production_risk_abundance-service_main-figure.R"```<br>      
+```R/06_projections_proportional_production_risk_country.R"```<br>                
+```R/06a_projections_total_production_risk_country.R"```<br>                      
+```R/07_projections_proportional_production_risk_crop_cells.R"```<br>             
+```R/08_projections_proportional_production_risk_crop_total.R"```<br>             
+```R/09_trade_flow_formatting.R"```<br>                                           
+```R/10_projections_import_production_risk.R"```<br>                              
+```R/11_propagate_uncertainty.R"```<br>  
 
 ------------
 
