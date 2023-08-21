@@ -16,6 +16,7 @@ To run the code in this repo you will need to download a series of datasets:
 5. ISIMIP anomaly projections of future climate change from Warszawski et al (2014)
 6. Esimates of global crop prices from the Food and Agriculture Organization of the United Nations (FAO) (see here to download)
 7. Virtual pollination trade flow data from Silva et al (2021) (see here to download https://github.com/virtual-pollination-trade/virtual-biotic-pollination-flow)
+8. Estimates of global population in the years 2015-2019 taken from Our World in Data (see https://ourworldindata.org/population-sources)
 
 ------------
 
