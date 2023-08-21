@@ -1,5 +1,7 @@
 # Key tropical crops at risk from pollinator loss due to climate change and land use
 
+[![DOI](https://zenodo.org/badge/256482859.svg)](https://zenodo.org/badge/latestdoi/256482859)
+
 ### Introduction
 
 This repository contains all the scripts used for the analysis carried out in the below paper:
