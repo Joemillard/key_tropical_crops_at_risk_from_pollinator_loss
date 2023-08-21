@@ -58,8 +58,12 @@ Monfreda, C., Ramankutty, N. and Foley, J.A., 2008. Farming the planet: 2. Geogr
 
 Warszawski, L. et al. 2014. The inter-sectoral impact model intercomparison project (ISI-MIP): project framework. Proc. Natl Acad. Sci. USA 111, 3228–3232
 
+------------
+
 ### Acknowledgements
 
 Thanks to Richard Gregory, Robin Freeman, and colleagues on the GLITRS project for useful discussions and comments. Thanks to Andy Purvis and Melinda Mills, who both provided support and guidance. Thanks also to Opeyemi Adedoja, Sabrina Gavini, Esther Kioko, Michael Kuhlmann, Zong-Xin Ren, and Manu Saunders, who provided input on our set of likely pollinating species, and to all contributors of the PREDICTS database.
+
+------------
 
 ### License
