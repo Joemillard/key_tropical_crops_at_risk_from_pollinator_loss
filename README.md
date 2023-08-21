@@ -22,7 +22,7 @@ To run the code in this repo you will need to download a series of datasets:
 
 ### Structure
 
-The required scripts are as below, with figure numbers from our initial submission on 14/12/2022. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
+The required scripts are as below, with figure numbers from the revised submission on 21/08/2022. All 'models' scripts introduce the models built for the interaction of climate change and land use. All 'map' scripts represent either the current or future geographic distribution of climate change, crop production, or proportional production risk. All 'projection' scripts project future change over time in either proportional production risk or production risk. 
 
 - ```R/00_functions.R```                                                      
 - ```R/01_map_climate_data.R```                                               
@@ -55,12 +55,17 @@ The required scripts are as below, with figure numbers from our initial submissi
 ------------
 
 ### References
+Food and Agriculture Organization of the United Nations (FAO). Producer prices & crops and livestock products. (2022).
 
 Harris, I., Osborn, T. J., Jones, P. & Lister, D. 2020. Version 4 of the CRU TS monthly high-resolution gridded multivariate climate dataset. Sci. Data 7, 109 
 
 Klein, A.M., Vaissière, B.E., Cane, J.H., Steffan-Dewenter, I., Cunningham, S.A., Kremen, C. and Tscharntke, T., 2007. Importance of pollinators in changing landscapes for world crops. Proceedings of the royal society B: biological sciences, 274(1608), pp.303-313.
 
+Mathieu, E., Rodés-Guirao, L., Roser, M., What are the sources for Our World in Data’s population estimates? Our World in Data (2023) (available at https://ourworldindata.org/population-sources).
+
 Monfreda, C., Ramankutty, N. and Foley, J.A., 2008. Farming the planet: 2. Geographic distribution of crop areas, yields, physiological types, and net primary production in the year 2000. Global biogeochemical cycles, 22(1).
+
+Silva, F. D. S., Carvalheiro, L. G. , Aguirre-Gutiérrez, J., Lucotte, M., Guidoni-Martins, K., Mertens, F. Virtual pollination trade uncovers global dependence on biodiversity of developing countries. Science Advances. 7, eabe6636 (2021).
 
 Warszawski, L. et al. 2014. The inter-sectoral impact model intercomparison project (ISI-MIP): project framework. Proc. Natl Acad. Sci. USA 111, 3228–3232
 
