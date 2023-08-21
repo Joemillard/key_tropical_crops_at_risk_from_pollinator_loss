@@ -14,7 +14,7 @@ To run the code in this repo you will need to download a series of datasets:
 3. Estimates of global crop production from Monfreda et al (2008) (see here to download http://www.earthstat.org/harvested-area-yield-175-crops/)
 4. Historical estimates of climate change from Harris et al (2020) (see here to download https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.03/cruts.1905011326.v4.03/)
 5. ISIMIP anomaly projections of future climate change from Warszawski et al (2014)
-6. Esimates of global crop prices from the Food and Agriculture Organization of the United Nations (FAO) (see here to download)
+6. Esimates of global crop prices from the Food and Agriculture Organization of the United Nations (FAO) (see https://www.fao.org/faostat/en/#data/PP to download)
 7. Virtual pollination trade flow data from Silva et al (2021) (see here to download https://github.com/virtual-pollination-trade/virtual-biotic-pollination-flow)
 8. Estimates of global population in the years 2015-2019, taken from Our World in Data (see https://ourworldindata.org/population-sources)
 
