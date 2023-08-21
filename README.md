@@ -16,7 +16,7 @@ To run the code in this repo you will need to download a series of datasets:
 5. ISIMIP anomaly projections of future climate change from Warszawski et al (2014)
 6. Esimates of global crop prices from the Food and Agriculture Organization of the United Nations (FAO) (see here to download)
 7. Virtual pollination trade flow data from Silva et al (2021) (see here to download https://github.com/virtual-pollination-trade/virtual-biotic-pollination-flow)
-8. Estimates of global population in the years 2015-2019 taken from Our World in Data (see https://ourworldindata.org/population-sources)
+8. Estimates of global population in the years 2015-2019, taken from Our World in Data (see https://ourworldindata.org/population-sources)
 
 ------------
 
@@ -28,31 +28,29 @@ The required scripts are as below, with figure numbers from our initial submissi
 - ```R/01_map_climate_data.R```                                               
 - ```R/01a_map_predicts_sites.R```                                             
 - ```R/01b_predicts_descriptive.R```                                           
-- ```R/02a_models_insect-pollinator_insect-non-pollinator.R```              
-- ```R/02c_models_insect-pollinator_jack-knife.R```                           
-- ```R/02d_models_insect-pollinator_family_jack-knife.R```                     
-- ```R/02e_models_insect-pollinator_active_season_validation_baseline_site.R```
-- ```R/02f_models_insect_pollinator_active_season_validation_PREDICTS_site.R```
-- ```R/02g_models_insect-pollinator_insect-non-pollinator_mean_annual_temp.R```
-- ```R/02h_models_insect-pollinator_insect-non-pollinator_sampling method.R```
+- ```R/02a_models_insect-pollinator_insect-non-pollinator.R``` Figure 1             
+- ```R/02c_models_insect-pollinator_jack-knife.R``` Figure S1                          
+- ```R/02d_models_insect-pollinator_family_jack-knife.R``` Figure S2                     
+- ```R/02e_models_insect-pollinator_active_season_validation_baseline_site.R``` Figure S3
+- ```R/02f_models_insect_pollinator_active_season_validation_PREDICTS_site.R``` Figure S3
+- ```R/02g_models_insect-pollinator_insect-non-pollinator_mean_annual_temp.R``` Figure S25
+- ```R/02h_models_insect-pollinator_insect-non-pollinator_sampling method.R``` Figure S22
 - ```R/03_map_pollinator_dependent_production.R```                             
 - ```R/04_map_proportional_production_risk.R```                            
 - ```R/04a_map_proportional_production_risk_standard_dev.R```                
-- ```R/04b_map_proportional_production_risk_richness.R```                     
-- ```R/04c_map_proportional_production_risk_bees.R```                          
-- ```R/04d_map_proportional_production_risk_with_natural_habitat.R```          
+- ```R/04b_map_proportional_production_risk_richness.R``` Figure S15; Figure S16                    
+- ```R/04c_map_proportional_production_risk_bees.R``` Figure S17                          
 - ```R/05a_projections_production_risk.R```                                   
 - ```R/05b_projections_production_risk_validation.R```                        
 - ```R/05c_projections_production_risk_data_quality.R```                      
 - ```R/05d_projections_production_risk_abundance-service_validation.R```      
-- ```R/05e_projections_production_risk_abundance-service_main-figure.R```      
+- ```R/05e_projections_production_risk_abundance-service_main-figure.R``` Figure S9      
 - ```R/06_projections_proportional_production_risk_country.R```               
 - ```R/06a_projections_total_production_risk_country.R```                      
-- ```R/07_projections_proportional_production_risk_crop_cells.R```             
-- ```R/08_projections_proportional_production_risk_crop_total.R```             
-- ```R/09_trade_flow_formatting.R```                                          
-- ```R/10_projections_import_production_risk.R```                             
-- ```R/11_propagate_uncertainty.R``` 
+- ```R/07_projections_proportional_production_risk_crop_cells.R``` Figure 4             
+- ```R/08_projections_proportional_production_risk_crop_total.R``` Figure 4             
+- ```R/09_trade_flow_formatting.R``` Figure 5                                       
+- ```R/10_projections_import_production_risk.R``` Figure 5
 
 ------------
 
@@ -76,9 +74,7 @@ Thanks to Richard Gregory, Robin Freeman, and colleagues on the GLITRS project f
 
 ### License
 
-MIT License
-
-Copyright (c) 2023 Joe Millard
+MIT License, Copyright (c) 2023 Joe Millard
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
